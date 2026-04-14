@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    
+    <!-- Configurações App de Celular -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f1117">
+    
+    <!-- ÍCONES PERSONALIZADOS DO APP -->
+    <link rel="apple-touch-icon" href="icone.png">
+    <link rel="icon" href="icone.png">
+    
+    <title>ALVES Pro System</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root { --gold: #d4af37; --bg: #0f1117; --card: #1e1f27; --blue: #0a84ff; --green: #30d158; --red: #ff453a; --purple: #af52de; --text: #ffffff; --orange: #ff9f0a; --cyan: #5ac8fa; --teal: #32ade6; --light-gray: #e5e5ea; --pink: #ff2d55;}
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px 10px 80px 10px; overflow-x: hidden; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tela { display: none; animation: fadeIn 0.4s ease-out; } 
+        .tela.ativa { display: block; }
+        
+        #tela_bloqueio { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; box-sizing: border-box; }
+        .box-licenca { background: var(--card); padding: 30px; border-radius: 15px; border: 1px solid var(--gold); width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .box-licenca img { width: 100px; height: 100px; object-fit: contain; margin-bottom: 15px; border-radius: 10px; }
+        .box-licenca h2 { color: var(--text); margin: 0 0 10px 0; text-transform: uppercase; font-size: 20px; }
+        .box-licenca p { color: #888; font-size: 13px; margin-bottom: 20px; }
+        .box-licenca input { width: 100%; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; border: 2px solid #444; border-radius: 10px; background: #0f1117; color: var(--gold); margin-bottom: 15px; }
+        .box-licenca input:focus { border-color: var(--gold); outline: none; }
+        .btn-ativar { width: 100%; padding: 15px; background: var(--gold); color: black; font-weight: bold; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; text-transform: uppercase; }
+
+        .toast-container { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px; }
+        .toast { background: var(--card); color: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.8); font-size: 13px; display: flex; align-items: center; gap: 12px; border-left: 4px solid var(--green); animation: slideDown 0.3s forwards; transition: opacity 0.3s; font-weight: bold; }
+        .toast.error { border-left-color: var(--red); }
+        .toast.info { border-left-color: var(--blue); }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .empresa-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; background: var(--card); padding: 10px; border-radius: 12px; border: 1px solid #333; }
+        .empresa-logo { width: 50px; height: 50px; border-radius: 8px; object-fit: contain; background: #fff; padding: 2px; }
+        .empresa-info h3 { margin: 0; color: var(--gold); font-size: 16px; text-transform: uppercase; }
+        .empresa-info p { margin: 2px 0 0 0; font-size: 11px; color: #888; }
+
+        .menu-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 15px; }
+        .menu-item { background: var(--card); padding: 10px 2px; border-radius: 10px; text-align: center; cursor: pointer; border: 1px solid #333; font-size: 9px; text-transform: uppercase; font-weight: bold; transition: 0.2s; }
+        .menu-item:active { transform: scale(0.95); }
+        .menu-item i { display: block; margin-bottom: 5px; font-size: 16px; }
+        
+        .busca-container { margin-bottom: 15px; position: relative; display: none; }
+        .busca-container.visivel { display: block; }
+        .busca-input { width: 100%; padding: 12px 40px 12px 15px; background: var(--card); border: 1px solid #444; border-radius: 10px; color: white; font-size: 14px; box-sizing: border-box; }
+        .busca-container i { position: absolute; right: 15px; top: 14px; color: #666; }
+        
+        .item-card { background: var(--card); padding: 16px; border-radius: 14px; margin-bottom: 12px; border-left: 4px solid var(--blue); border-bottom: 1px solid #333; position: relative; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .card-header h4 { margin: 0; font-size: 17px; color: var(--gold); text-transform: uppercase; width: 70%; cursor: pointer; }
+        .acoes-card { display: flex; gap: 15px; align-items: center; }
+        .btn-acao-card { color: #888; font-size: 18px; cursor: pointer; transition: 0.3s; }
+        
+        .badge-status { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 9px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
+        .status-pendente { background: var(--red); color: white; }
+        .status-andamento, .status-em_compra { background: var(--blue); color: white; }
+        .status-concluido, .status-aprovado { background: var(--green); color: white; }
+        .status-aguardando { background: var(--orange); color: white; }
+        
+        .info-linha { border-top: 1px solid rgba(255,255,255,0.05); margin-top: 8px; padding-top: 8px; }
+        .label-mini { font-size: 10px; color: #888; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 2px; }
+        .texto-info { font-size: 15px; color: #ddd; line-height: 1.4; white-space: pre-line; }
+        
+        .financeiro-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+        .fin-box { background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px; text-align: center; border: 1px solid #333; }
+        .fin-box span { display: block; font-size: 9px; color: #888; }
+        .fin-box strong { font-size: 13px; color: var(--text); }
+        
+        .resumo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .resumo-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #333; text-align: center; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: var(--card); padding: 20px; border-radius: 15px; width: 92%; max-width: 450px; border: 1px solid var(--gold); max-height: 90vh; overflow-y: auto; animation: fadeIn 0.3s ease-out; }
+        
+        input:not([type="checkbox"]), select, textarea { width: 100%; padding: 12px; margin: 5px 0 12px 0; background: #2b2d3a; border: 1px solid #444; border-radius: 8px; color: white; box-sizing: border-box; font-size: 14px; }
+        label { font-size: 11px; color: var(--gold); font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 2px; }
+        
+        .check-inline { width: auto; margin: 0 5px 0 0 !important; display: inline-block; vertical-align: middle; }
+        .label-check { display: flex; align-items: center; font-size: 12px; color: #ddd; cursor: pointer; text-transform: none; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; flex: 1; justify-content: center; border: 1px solid #444;}
+        .label-check:active { background: rgba(255,255,255,0.1); }
+
+        .btn-flutuante { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; border: none; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer; transition: 0.2s; }
+        .btn-flutuante:active { transform: scale(0.9); }
+        .item-selecionado { padding: 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; font-size: 13px; background: rgba(255,255,255,0.02); }
+        
+        .modo-agenda .ocultar-agenda { display: none; }
+        .modo-pedido .ocultar-pedido { display: none; }
+        .btn-outline { background: none; border: 1px dashed; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;}
+
+        .lista-mat-card { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; font-size: 12px; margin-top: 8px; border: 1px solid rgba(255,255,255,0.05); }
+        .linha-mat { display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.1); padding: 4px 0; }
+        .linha-mat:last-child { border-bottom: none; }
+
+        .mapa-chapa-container { margin-top: 15px; border: 1px solid #555; background: #fff; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        canvas.mapa-chapa { background: white; display: block; margin: 0 auto; max-width: 100%; height: auto; }
+
+        .legenda-box { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; font-size: 11px; margin-top: 10px; color: #555; font-weight: bold; }
+        .legenda-item { display: flex; align-items: center; gap: 5px; }
+        
+        /* Box Info Pontilhado na Tela do App */
+        .linha-pontilhada-demo { width:25px; height:0px; border-bottom: 2px dashed #000; }
+
+        /* --- ÁREA DE IMPRESSÃO PROFISSIONAL --- */
+        #area-impressao { display: none; }
+        @media print {
+            body { background: white !important; margin: 0; padding: 0; }
+            body * { visibility: hidden; }
+            #area-impressao, #area-impressao * { visibility: visible; }
+            #area-impressao { display: block; position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; box-sizing: border-box; min-height: 100vh; }
+            
+            .btn-flutuante, .menu-grid, .busca-container, .empresa-header, .toast-container, #tela_bloqueio { display: none !important; }
+            
+            .print-corte-container { width: 100%; max-width: 1000px; margin: 0 auto; color: black; font-family: Arial, sans-serif; }
+            .print-corte-header { text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 20px; }
+            .print-corte-header h1 { margin: 0; font-size: 22px; text-transform: uppercase; }
+            .print-corte-header p { margin: 5px 0; font-size: 14px; }
+            .print-corte-info { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 14px; background: #f0f0f0; padding: 10px; border: 1px solid #ccc; }
+            .corte-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+            .corte-table th, .corte-table td { border: 1px solid #000; padding: 8px; text-align: center; font-size: 12px; }
+            .corte-table th { background-color: #ddd; text-transform: uppercase; }
+            .corte-table td.desc-left { text-align: left; }
+
+            .print-mapa-box { text-align: center; margin-top: 30px; page-break-inside: avoid; }
+            .print-mapa-box h3 { margin-bottom: 10px; font-size: 16px; text-transform:uppercase; }
+            .print-mapa-img { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="tela_bloqueio">
+    <div class="box-licenca">
+        <img src="icone.png" alt="Logo Alves" onerror="this.style.display='none'">
+        <h2>Sistema Bloqueado</h2>
+        <p>Este aplicativo é protegido. Insira a chave de acesso.</p>
+        <input type="text" id="input_senha" placeholder="Digite a chave" onkeypress="if(event.key === 'Enter') desbloquearApp()">
+        <button class="btn-ativar" onclick="desbloquearApp()">Desbloquear App</button>
+    </div>
+</div>
+
+<div id="app_principal" style="display: none;">
+    <div id="toast_container" class="toast-container"></div>
+
+    <div class="empresa-header">
+        <img id="logo_display" src="icone.png" alt="Logo" class="empresa-logo" onerror="this.src='icone.png'">
+        <div class="empresa-info">
+            <h3 id="nome_display">Minha Empresa</h3>
+            <p id="contato_display">Configure seus dados na aba Ajustes</p>
+        </div>
+    </div>
+
+    <!-- Menu Principal -->
+    <div class="menu-grid">
+        <div class="menu-item" onclick="mudarTela('tela_home')"><i class="fas fa-chart-line" style="color:var(--gold)"></i>Painel</div>
+        <div class="menu-item" onclick="mudarTela('tela_pedidos')"><i class="fas fa-list" style="color:var(--blue)"></i>Pedidos</div>
+        <div class="menu-item" onclick="mudarTela('tela_orcamentos')"><i class="fas fa-file-invoice-dollar" style="color:var(--teal)"></i>Orçamentos</div>
+        <div class="menu-item" onclick="mudarTela('tela_compras')"><i class="fas fa-shopping-cart" style="color:var(--pink)"></i>Compras</div>
+        <div class="menu-item" onclick="mudarTela('tela_estoque')"><i class="fas fa-box" style="color:var(--orange)"></i>Estoque</div>
+        
+        <div class="menu-item" onclick="mudarTela('tela_servicos')"><i class="fas fa-tools" style="color:var(--cyan)"></i>Serviços</div>
+        <div class="menu-item" onclick="mudarTela('tela_agenda')"><i class="fas fa-calendar" style="color:var(--purple)"></i>Agenda</div>
+        <div class="menu-item" onclick="mudarTela('tela_gastos')"><i class="fas fa-wallet" style="color:var(--red)"></i>Gastos</div>
+        <div class="menu-item" onclick="mudarTela('tela_corte')"><i class="fas fa-border-all" style="color:var(--light-gray)"></i>Plano Corte</div>
+        <div class="menu-item" onclick="mudarTela('tela_config')"><i class="fas fa-cog" style="color:#aaa"></i>Ajustes</div>
+    </div>
+
+    <div id="barra_busca" class="busca-container">
+        <input type="text" id="input_busca" class="busca-input" placeholder="Pesquisar..." oninput="renderizarTudo()">
+        <i class="fas fa-search"></i>
+    </div>
+
+    <!-- TELAS -->
+    <div id="tela_home" class="tela ativa">
+        <div style="background:var(--card); padding:20px; border-radius:15px; border: 1px solid var(--gold); margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 15px;">
+                <span style="color:var(--gold); font-size: 13px; font-weight: bold; text-transform: uppercase;"><i class="fas fa-chart-pie"></i> Balanço Mensal</span>
+                <select id="filtro_mes" onchange="renderizarGrafico()" style="padding: 6px 10px; background: #2b2d3a; border: 1px solid #444; border-radius: 8px; color: white; font-size: 12px; outline: none; width: auto; margin:0;">
+                    <option value="01">Jan</option><option value="02">Fev</option><option value="03">Mar</option><option value="04">Abr</option><option value="05">Mai</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Ago</option><option value="09">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option>
+                </select>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                <div style="background: rgba(48,209,88,0.05); border: 1px solid rgba(48,209,88,0.2); padding: 12px; border-radius: 12px; text-align: center;">
+                    <span style="color:#aaa; font-size: 10px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 5px;">Entradas</span>
+                    <strong id="h_recebido" style="font-size: 18px; color: var(--green);">R$ 0,00</strong>
+                </div>
+                <div style="background: rgba(255,69,58,0.05); border: 1px solid rgba(255,69,58,0.2); padding: 12px; border-radius: 12px; text-align: center;">
+                    <span style="color:#aaa; font-size: 10px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 5px;">Saídas</span>
+                    <strong id="h_gastos" style="font-size: 18px; color: var(--red);">R$ 0,00</strong>
+                </div>
+            </div>
+            <div style="text-align: center; background: rgba(10,132,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(10,132,255,0.2);">
+                <span style="color:var(--text); font-size: 11px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 5px;">Saldo Líquido</span>
+                <h1 id="h_lucro" style="font-size: 32px; margin: 0; color: var(--blue);">R$ 0,00</h1>
+            </div>
+        </div>
+        
+        <div style="background:var(--card); padding:10px; border-radius:15px; border: 1px solid #333; height: 180px;"><canvas id="graficoFinanceiro"></canvas></div>
+    </div>
+
+    <div id="tela_pedidos" class="tela"><div id="listaPedidosFull"></div></div>
+    <div id="tela_orcamentos" class="tela"><div id="listaOrcamentos"></div></div>
+    <div id="tela_compras" class="tela"><div id="listaCompras"></div></div>
+    <div id="tela_agenda" class="tela"><div id="listaCompromissos"></div></div>
+    <div id="tela_estoque" class="tela"><div id="listaEstoque"></div></div>
+    <div id="tela_servicos" class="tela"><div id="listaServicosCatalogo"></div></div>
+    <div id="tela_gastos" class="tela"><div id="listaGastos"></div></div>
+
+    <!-- TELA PLANO DE CORTE -->
+    <div id="tela_corte" class="tela">
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <button onclick="abrirPlanosSalvos()" style="flex:1; padding:12px; background:var(--card); border:1px solid #444; border-radius:8px; color:#ddd; font-weight:bold; cursor:pointer;"><i class="fas fa-folder-open" style="color:var(--gold);"></i> PLANOS SALVOS</button>
+            <button onclick="salvarPlanoCorte()" style="flex:1; padding:12px; background:var(--card); border:1px solid #444; border-radius:8px; color:#ddd; font-weight:bold; cursor:pointer;"><i class="fas fa-save" style="color:var(--green);"></i> SALVAR PLANO</button>
+        </div>
+
+        <div class="item-card" style="border-left-color: var(--light-gray);">
+            <h4 style="color:var(--light-gray); margin-top:0;"><i class="fas fa-vector-square"></i> Configuração da Chapa</h4>
+            <div style="display:flex; gap:10px;"><div style="flex:2"><label>Material (Ex: MDF Branco)</label><input type="text" id="corte_material" value="MDF Branco"></div><div style="flex:1"><label>Espessura</label><input type="text" id="corte_espessura" value="15mm"></div></div>
+            <div style="display:flex; gap:10px;"><div style="flex:1"><label>Comp. Chapa (mm)</label><input type="number" id="corte_chapa_comp" value="2750"></div><div style="flex:1"><label>Largura Chapa (mm)</label><input type="number" id="corte_chapa_larg" value="1850"></div></div>
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1"><label>Espessura Serra (mm)</label><input type="number" id="corte_serra" value="3"></div>
+            </div>
+            <div style="margin-top: 10px;"><label class="label-check" style="background: rgba(10,132,255,0.1); border-color: var(--blue); color:var(--blue); justify-content: flex-start; padding-left: 15px;"><input type="checkbox" id="corte_rotacao" class="check-inline"> Permitir Rotação das Peças (Ignorar Veio)</label></div>
+        </div>
+
+        <div class="item-card" style="border-left-color: var(--blue);">
+            <h4 style="color:var(--blue); margin-top:0;"><i class="fas fa-plus"></i> Adicionar Peças</h4>
+            <label>Descrição da Peça (Ex: Porta, Lateral)</label>
+            <input type="text" id="corte_desc_peca">
+            <div style="display:flex; gap:10px;"><div style="flex:1"><label>Comp. (mm)</label><input type="number" id="corte_comp_peca"></div><div style="flex:1"><label>Larg. (mm)</label><input type="number" id="corte_larg_peca"></div><div style="flex:1"><label>Qtd</label><input type="number" id="corte_qtd_peca" value="1"></div></div>
+            
+            <!-- Campo Fita Borda Específica -->
+            <div style="margin-top: 10px;">
+                <label>Cor/Material Fita Borda</label>
+                <input type="text" id="corte_cor_fita_peca" placeholder="Opcional (Ex: Preto, Madeirado)">
+            </div>
+
+            <div style="margin-top: 10px;"><label style="color:var(--gold)"><i class="fas fa-tape"></i> Fita de Borda (Posição do Filetamento):</label>
+                <div style="display:flex; gap:10px; margin-top:5px;"><div style="flex:1; display:flex; flex-direction:column; gap:5px;"><label class="label-check"><input type="checkbox" id="corte_fita_c1" class="check-inline"> Comp. 1</label><label class="label-check"><input type="checkbox" id="corte_fita_c2" class="check-inline"> Comp. 2</label></div><div style="flex:1; display:flex; flex-direction:column; gap:5px;"><label class="label-check"><input type="checkbox" id="corte_fita_l1" class="check-inline"> Larg. 1</label><label class="label-check"><input type="checkbox" id="corte_fita_l2" class="check-inline"> Larg. 2</label></div></div>
+            </div>
+            <button class="btn-outline" style="color:var(--blue); border-color:var(--blue); margin-top:15px;" onclick="adicionarPecaCorte()">+ INCLUIR PEÇA NA LISTA</button>
+        </div>
+
+        <div class="item-card" style="border-left-color: var(--gold);">
+            <h4 style="color:var(--gold); margin-top:0;"><i class="fas fa-list"></i> Lista de Corte</h4>
+            <div id="lista_pecas_corte" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px;"></div>
+            <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; text-align:center; margin-bottom:15px; border:1px solid #444;"><span style="font-size:12px; color:#aaa; font-weight:bold;">RESULTADO DA OTIMIZAÇÃO:</span><br><strong id="resultado_chapas" style="color:var(--gold); font-size:20px;">-</strong><p id="resultado_area" style="margin:5px 0 0 0; font-size:12px; color:#888;">Área total: -</p></div>
+            <button onclick="calcularAlgoritmoDeCorte()" style="width:100%; padding:15px; background:var(--gold); border:none; border-radius:8px; color:black; font-weight:bold; margin-bottom:10px; cursor:pointer;"><i class="fas fa-magic"></i> 1. GERAR MAPA DE CORTE</button>
+            <button onclick="imprimirPlanoCorte()" style="width:100%; padding:15px; background:none; border:1px solid var(--blue); border-radius:8px; color:var(--blue); font-weight:bold; cursor:pointer;"><i class="fas fa-print"></i> 2. EXPORTAR LISTA E MAPAS (PDF)</button>
+            <div id="container_mapas_visuais" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <!-- TELA AJUSTES -->
+    <div id="tela_config" class="tela">
+        <div class="item-card" style="border-left-color: var(--green); margin-bottom:20px;">
+            <h4 style="color:var(--green); margin-top:0;"><i class="fas fa-shield-alt"></i> Segurança e Backup</h4>
+            <button class="btn-outline" style="color:var(--green); border-color:var(--green);" onclick="exportarBackup()"><i class="fas fa-download"></i> FAZER BACKUP (BAIXAR)</button>
+            <button class="btn-outline" style="color:var(--blue); border-color:var(--blue);" onclick="document.getElementById('import_file').click()"><i class="fas fa-upload"></i> RESTAURAR BACKUP</button>
+            <input type="file" id="import_file" style="display:none" accept=".json" onchange="importarBackup(event)">
+        </div>
+        <div class="item-card" style="border-left-color: #aaa;">
+            <h4 style="color:var(--gold); margin-top:0;"><i class="fas fa-building"></i> Dados da Empresa</h4>
+            <label>Nome da Empresa</label><input type="text" id="cfg_nome">
+            <label>Telefone / WhatsApp</label><input type="text" id="cfg_telefone">
+            <label>Endereço</label><input type="text" id="cfg_endereco">
+            <label>Mensagem Rodapé</label><input type="text" id="cfg_msg">
+            <label>Logo</label><input type="file" id="cfg_logo_file" accept="image/*" style="background:none; border:none; padding:0;">
+            <div id="preview_logo" style="margin-top:10px; width:100px; height:100px; border:1px dashed #444; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                <img id="img_preview" src="icone.png" style="max-width:100%; max-height:100%; display:none;"><span id="img_placeholder" style="color:#666; font-size:10px;">Sem Logo</span>
+            </div>
+            <button onclick="salvarConfig()" style="width:100%; padding:15px; background:var(--blue); border:none; border-radius:8px; color:white; font-weight:bold; margin-top:20px; cursor:pointer;">SALVAR</button>
+            <button onclick="limparBancoDados()" style="width:100%; padding:15px; background:transparent; border:1px solid var(--red); border-radius:8px; color:var(--red); font-weight:bold; margin-top:10px; cursor:pointer;"><i class="fas fa-trash"></i> APAGAR TUDO</button>
+        </div>
+    </div>
+
+    <button class="btn-flutuante" onclick="abrirModalPorTela()">+</button>
+
+    <!-- MODAL PRINCIPAL: PEDIDOS / AGENDA / ORÇAMENTOS -->
+    <div id="modalPedido" class="modal">
+        <div class="modal-content">
+            <input type="hidden" id="f_id">
+            <label>Tipo do Lançamento</label>
+            <select id="f_tipo" onchange="ajustarCamposModal()">
+                <option value="servico">Pedido</option>
+                <option value="orcamento">Orçamento</option>
+                <option value="compromisso">Agenda (Compromisso)</option>
+            </select>
+            <label>Status</label>
+            <select id="f_status">
+                <!-- Preenchido dinamicamente pelo JS -->
+            </select>
+            <label>Nome do Cliente / Título</label>
+            <input type="text" id="f_cliente">
+            <label id="label_servico">Serviço Principal</label>
+            <input type="text" id="f_servico">
+            
+            <div style="display:flex; gap:10px;">
+                <div style="flex:2"><label>Endereço / Rua</label><input type="text" id="f_endereco"></div>
+                <div style="flex:1"><label>Nº</label><input type="text" id="f_numero"></div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1"><label>Complemento</label><input type="text" id="f_complemento"></div>
+                <div style="flex:1"><label>Cidade</label><input type="text" id="f_cidade"></div>
+            </div>
+            
+            <div class="ocultar-pedido">
+                <label>Observações/Lembrete</label>
+                <textarea id="f_lembrete" rows="3"></textarea>
+            </div>
+            
+            <div class="ocultar-agenda">
+                <!-- Campos Exclusivos de Pedidos / Orçamentos -->
+                <label>Mão de Obra Avulsa R$</label>
+                <input type="number" id="f_mao_obra" oninput="recalcularTotal()">
+                <div id="container_itens_venda"></div>
+                
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="btn-outline" style="color:var(--cyan); border-color:var(--cyan); flex:1; font-size:11px;" onclick="abrirSeletorServico()">+ ADD SERVIÇO</button>
+                    <button class="btn-outline" style="color:var(--orange); border-color:var(--orange); flex:1; font-size:11px;" onclick="abrirSeletorEstoque()">+ ADD PEÇA (ESTOQUE)</button>
+                </div>
+                
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1"><label>Total R$</label><input type="number" id="f_total" step="0.01"></div>
+                    <div style="flex:1"><label>Pago R$</label><input type="number" id="f_pago" step="0.01"></div>
+                </div>
+            </div>
+            <label>Data</label>
+            <input type="date" id="f_data">
+            <button onclick="salvarPedido()" style="width:100%; padding:15px; background:var(--green); border:none; border-radius:8px; color:white; font-weight:bold; margin-top:10px; cursor:pointer;">SALVAR</button>
+            <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#888; margin-top:10px; cursor:pointer;">Cancelar</button>
+        </div>
+    </div>
+    
+    <!-- MODAL LISTA DE COMPRAS -->
+    <div id="modalCompras" class="modal">
+        <div class="modal-content" style="border-color:var(--pink)">
+            <h3 style="color:var(--pink); margin-top:0;"><i class="fas fa-shopping-cart"></i> Lista de Compras</h3>
+            <input type="hidden" id="c_id">
+            <label>Cliente (Para quem é a compra)</label>
+            <input type="text" id="c_cliente">
+            <label>Status</label>
+            <select id="c_status">
+                <option value="em_compra">Em Compra (Pendente)</option>
+                <option value="concluido">Concluído (Mover para Gastos)</option>
+            </select>
+            
+            <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; border:1px solid #444; margin-bottom:10px;">
+                <label style="color:#ddd">Novo Item Comprado</label>
+                <input type="text" id="c_item_nome" placeholder="Ex: Dobradiça">
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1"><label>Qtd</label><input type="number" id="c_item_qtd" value="1"></div>
+                    <div style="flex:1"><label>Valor Unit. R$</label><input type="number" id="c_item_valor" step="0.01"></div>
+                </div>
+                <button class="btn-outline" style="color:var(--pink); border-color:var(--pink);" onclick="adicionarItemCompraUI()">+ ADICIONAR ITEM NA LISTA</button>
+            </div>
+
+            <div id="container_itens_compra" style="margin-bottom:15px;"></div>
+            
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1"><label>Total da Lista R$</label><input type="number" id="c_total" step="0.01" readonly style="color:var(--pink); font-weight:bold;"></div>
+                <div style="flex:1"><label>Data</label><input type="date" id="c_data"></div>
+            </div>
+            
+            <button onclick="salvarCompra()" style="width:100%; padding:15px; background:var(--pink); border:none; border-radius:8px; color:white; font-weight:bold; margin-top:10px; cursor:pointer;">SALVAR LISTA</button>
+            <button onclick="imprimirCompra()" style="width:100%; padding:15px; background:transparent; border:1px solid var(--pink); border-radius:8px; color:var(--pink); font-weight:bold; margin-top:10px; cursor:pointer;"><i class="fas fa-print"></i> IMPRIMIR / PDF</button>
+            <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#888; margin-top:10px; cursor:pointer;">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- MODAL ESTOQUE -->
+    <div id="modalEstoque" class="modal">
+        <div class="modal-content" style="border-color:var(--orange)">
+            <input type="hidden" id="e_id">
+            <div style="display:flex; gap:10px;">
+                <div style="flex:2"><label>Produto</label><input type="text" id="e_item"></div>
+            </div>
+            <label>Localização (Ex: Prateleira A)</label>
+            <input type="text" id="e_localizacao" placeholder="Opcional">
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1"><label>Qtd Atual</label><input type="number" id="e_qtd"></div>
+                <div style="flex:1"><label>Venda R$</label><input type="number" id="e_venda" step="0.01"></div>
+            </div>
+            <button onclick="salvarEstoque()" style="width:100%; padding:15px; background:var(--orange); border:none; border-radius:8px; color:white; font-weight:bold;">SALVAR</button>
+            <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#888; margin-top:10px;">Cancelar</button>
+        </div>
+    </div>
+    
+    <!-- MODAL SELETOR DE PEÇAS (ESTOQUE) -->
+    <div id="modalSeletorEstoque" class="modal">
+        <div class="modal-content" style="border-color:var(--orange)">
+            <label>Selecione a Peça do Estoque</label>
+            <select id="sel_produto_estoque"></select>
+            <label>Qtd</label>
+            <input type="number" id="sel_qtd_estoque" value="1">
+            <button onclick="confirmarAdicaoItem()" style="width:100%; padding:15px; background:var(--orange); border:none; border-radius:8px; color:white; font-weight:bold;">INCLUIR PEÇA</button>
+            <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#888; margin-top:10px;">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- MODAL SELETOR DE SERVIÇOS (CATÁLOGO) -->
+    <div id="modalSeletorServico" class="modal">
+        <div class="modal-content" style="border-color:var(--cyan)">
+            <label>Selecione o Serviço</label>
+            <select id="sel_servico_catalogo"></select>
+            <label>Qtd</label>
+            <input type="number" id="sel_qtd_servico" value="1">
+            <button onclick="confirmarAdicaoServico()" style="width:100%; padding:15px; background:var(--cyan); border:none; border-radius:8px; color:black; font-weight:bold;">INCLUIR SERVIÇO</button>
+            <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#888; margin-top:10px;">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- MODAL GASTOS -->
+    <div id="modalGastos" class="modal">
+        <div class="modal-content" style="border-color:var(--red)">
+            <h3 style="color:var(--red); margin-top:0;"><i class="fas fa-wallet"></i> Lançar Despesa</h3>
+            <input type="hidden" id="g_id">
+            <label>Descrição do Gasto (Ex: Conta de Luz, Ferramenta)</label>
+            <input type="text" id="g_descricao">
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1"><label>Valor R$</label><input type="number" id="g_valor" step="0.01"></div>
+                <div style="flex:1"><label>Data</label><input type="date" id="g_data"></div>
+            </div>
+            <button onclick="salvarGasto()" style="width:100%; padding:15px; background:var(--red); border:none; border-radius:8px; color:white; font-weight:bold;">SALVAR GASTO</button>
+            <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#888; margin-top:10px;">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- MODAL CATÁLOGO DE SERVIÇOS -->
+    <div id="modalServicosCatalogo" class="modal">
+        <div class="modal-content" style="border-color:var(--cyan)">
+            <h3 style="color:var(--cyan); margin-top:0;"><i class="fas fa-tools"></i> Adicionar Serviço Fixo</h3>
+            <input type="hidden" id="sc_id">
+            <label>Nome do Serviço (Ex: Montagem, Corte Especial)</label>
+            <input type="text" id="sc_nome">
+            <label>Preço Base / Mão de Obra R$</label>
+            <input type="number" id="sc_preco" step="0.01">
+            <button onclick="salvarServicoCatalogo()" style="width:100%; padding:15px; background:var(--cyan); border:none; border-radius:8px; color:black; font-weight:bold;">SALVAR SERVIÇO</button>
+            <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#888; margin-top:10px;">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- MODAL PLANOS DE CORTE SALVOS -->
+    <div id="modalPlanosSalvos" class="modal">
+        <div class="modal-content" style="border-color:var(--gold)">
+            <h3 style="color:var(--gold); margin-top:0; text-align:center;"><i class="fas fa-folder-open"></i> Planos de Corte Salvos</h3>
+            <div id="lista_modal_planos" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;"></div>
+            <button onclick="fecharModais()" style="width:100%; background:none; border:1px solid #555; padding:12px; border-radius:8px; color:#ddd; margin-top:10px; font-weight:bold;">FECHAR</button>
+        </div>
+    </div>
+
+    <div id="area-impressao"></div>
+</div>
+
+<script>
+    // A SENHA FOI REMOVIDA PARA EVITAR PROBLEMAS NO CELULAR
+    
+    function verificarTrava() { 
+        const bloqueio = document.getElementById('tela_bloqueio'); 
+        const app = document.getElementById('app_principal'); 
+        if(localStorage.getItem('alves_licenca_ativa') === 'true') { 
+            bloqueio.style.display = 'none'; 
+            app.style.display = 'block'; 
+            initDB(); 
+        } else { 
+            bloqueio.style.display = 'flex'; 
+            app.style.display = 'none'; 
+        } 
+    }
+    
+    function desbloquearApp() { 
+        // Trava flexível: Aceita ALVES, 2026 ou 123
+        let input = document.getElementById('input_senha').value.toUpperCase().replace(/[^A-Z0-9]/g, ''); 
+        
+        if(input.includes("ALVES") || input.includes("2026") || input === "123") { 
+            localStorage.setItem('alves_licenca_ativa', 'true'); 
+            verificarTrava(); 
+            showToast("Aplicativo Desbloqueado com Sucesso!", "success"); 
+        } else { 
+            alert("Chave incorreta! Digite ALVES2026"); 
+        } 
+    }
+    
+    window.onload = () => { const mesAtualReal = new Date().getMonth() + 1; document.getElementById('filtro_mes').value = mesAtualReal < 10 ? '0' + mesAtualReal : '' + mesAtualReal; verificarTrava(); };
+    function showToast(msg, type = 'success') { const container = document.getElementById('toast_container'); const toast = document.createElement('div'); toast.className = `toast ${type}`; let icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'); let color = type === 'success' ? 'var(--green)' : (type === 'error' ? 'var(--red)' : 'var(--blue)'); toast.innerHTML = `<i class="fas ${icon}" style="color:${color}; font-size:18px;"></i> <span>${msg}</span>`; container.appendChild(toast); setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000); }
+
+    let DB = { servicos: [], estoque: [], catalogo_servicos: [], gastos: [], orcamentos: [], compras: [], planos_corte: [], config: {} };
+    function initDB() { const localData = localStorage.getItem('alvesProDB'); if (localData) { DB = Object.assign(DB, JSON.parse(localData)); if(!DB.planos_corte) DB.planos_corte = []; if(!DB.catalogo_servicos) DB.catalogo_servicos = []; if(!DB.gastos) DB.gastos = []; if(!DB.compras) DB.compras = []; } carregarConfiguracoes(); carregarDados(); }
+    function saveDB() { localStorage.setItem('alvesProDB', JSON.stringify(DB)); carregarDados(); }
+    function generateID() { return new Date().getTime(); }
+    function limparBancoDados() { if(confirm("APAGAR TODOS OS DADOS?")) { localStorage.removeItem('alvesProDB'); localStorage.removeItem('alves_licenca_ativa'); location.reload(); } }
+
+    let dadosPedidos = [], dadosEstoque = [], dadosGastos = [], dadosOrcamentos = [], dadosCatalogo = [], dadosCompras = [], meuGrafico = null, telaAtiva = 'tela_home';
+    let itensNoPedido = [], itensCompraAtual = [];
+    const formatMoeda = (valor) => parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formatarDataBR = (data) => { if(!data) return ''; const partes = data.split('-'); return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : data; };
+
+    function carregarConfiguracoes() { const c = DB.config || {}; document.getElementById('nome_display').innerText = c.nome || "Minha Empresa"; if(c.logo) { document.getElementById('logo_display').src = c.logo; document.getElementById('img_preview').src = c.logo; document.getElementById('img_preview').style.display = 'block'; } document.getElementById('cfg_nome').value = c.nome || ""; document.getElementById('cfg_telefone').value = c.telefone || ""; document.getElementById('cfg_msg').value = c.mensagem || ""; }
+    document.getElementById('cfg_logo_file').addEventListener('change', function(e) { const file = e.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = function(event) { document.getElementById('img_preview').src = event.target.result; document.getElementById('img_preview').style.display = 'block'; }; reader.readAsDataURL(file); } });
+    function salvarConfig() { DB.config = { nome: document.getElementById('cfg_nome').value, telefone: document.getElementById('cfg_telefone').value, mensagem: document.getElementById('cfg_msg').value, logo: document.getElementById('img_preview').src }; saveDB(); carregarConfiguracoes(); showToast("Configurações salvas!", "success"); }
+
+    function carregarDados() { 
+        dadosPedidos = DB.servicos.sort((a,b) => b.id - a.id); 
+        dadosEstoque = DB.estoque.sort((a,b) => a.item.localeCompare(b.item)); 
+        dadosGastos = DB.gastos.sort((a,b) => b.id - a.id); 
+        dadosCatalogo = DB.catalogo_servicos.sort((a,b) => a.nome.localeCompare(b.nome));
+        dadosCompras = DB.compras.sort((a,b) => b.id - a.id);
+        renderizarTudo(); 
+    }
+    
+    function renderizarTudo() {
+        const divP = document.getElementById('listaPedidosFull'); 
+        const divE = document.getElementById('listaEstoque'); 
+        const divA = document.getElementById('listaCompromissos');
+        const divO = document.getElementById('listaOrcamentos');
+        const divG = document.getElementById('listaGastos');
+        const divC = document.getElementById('listaServicosCatalogo');
+        const divComp = document.getElementById('listaCompras');
+        
+        const termo = document.getElementById('input_busca').value.toLowerCase(); 
+        
+        if(divP) divP.innerHTML = "";
+        if(divE) divE.innerHTML = "";
+        if(divA) divA.innerHTML = "";
+        if(divO) divO.innerHTML = "";
+        if(divG) divG.innerHTML = "";
+        if(divC) divC.innerHTML = "";
+        if(divComp) divComp.innerHTML = "";
+        
+        // Pedidos, Orçamentos e Agenda
+        dadosPedidos.forEach(p => { 
+            let valorDevendo = p.total - p.pago;
+            
+            // Tratamento de exibição para Endereço Clicável para GPS
+            let infoSecundaria = '';
+            let enderecoFull = [p.endereco, p.numero, p.complemento, p.cidade].filter(Boolean).join(', ');
+            
+            if(enderecoFull) {
+                let linkMapa = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoFull)}`;
+                infoSecundaria = `<a href="${linkMapa}" target="_blank" style="display:inline-block; font-size:11px; color:var(--cyan); margin-top:5px; text-decoration:none; padding:4px 8px; background:rgba(90,200,250,0.1); border-radius:4px; border:1px solid rgba(90,200,250,0.2);"><i class="fas fa-map-marked-alt"></i> ${enderecoFull} (Abrir GPS)</a>`;
+            }
+
+            let htmlCard = `
+                <div class="item-card">
+                    <div class="card-header">
+                        <h4 onclick="editarPedido(${p.id})">${p.cliente || 'Sem Nome'}</h4>
+                        <i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('servicos', ${p.id})"></i>
+                    </div>
+                    <span class="badge-status status-${p.status || 'pendente'}">${p.status}</span>
+                    <div class="info-linha">
+                        <span class="label-mini">DESCRIÇÃO / SERVIÇO</span>
+                        <div class="texto-info" style="font-weight:bold; color:white;">${p.servico.split(' | ')[0]}</div>
+                        ${infoSecundaria}
+                    </div>
+                    <div class="financeiro-grid">
+                        <div class="fin-box"><span>Total</span><strong style="color:var(--green)">R$ ${formatMoeda(p.total)}</strong></div>
+                        <div class="fin-box"><span>Resto a Pagar</span><strong style="color:var(--orange)">R$ ${formatMoeda(valorDevendo)}</strong></div>
+                    </div>
+                </div>`;
+                
+            if((p.cliente || '').toLowerCase().includes(termo)) { 
+                if(p.tipo === 'compromisso') {
+                    if(divA) divA.innerHTML += htmlCard;
+                } else if(p.tipo === 'orcamento') {
+                    if(divO) divO.innerHTML += htmlCard;
+                } else {
+                    if(divP) divP.innerHTML += htmlCard;
+                }
+            } 
+        });
+
+        // Lista de Compras
+        dadosCompras.forEach(c => {
+            if((c.cliente || '').toLowerCase().includes(termo)) {
+                let resumoItens = c.itens.length > 0 ? c.itens.map(i => `${i.qtd}x ${i.item}`).join(', ') : 'Nenhum item';
+                if(divComp) divComp.innerHTML += `
+                    <div class="item-card" style="border-left-color:var(--pink)">
+                        <div class="card-header">
+                            <h4 onclick="editarCompra(${c.id})">${c.cliente || 'Sem Cliente'}</h4>
+                            <i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('compras', ${c.id})"></i>
+                        </div>
+                        <span class="badge-status status-${c.status || 'em_compra'}">${c.status === 'em_compra' ? 'Em Compra' : 'Concluído'}</span>
+                        <div class="info-linha">
+                            <span class="label-mini">ITENS DA LISTA</span>
+                            <div class="texto-info" style="font-size:12px;">${resumoItens}</div>
+                            <span style="display:block; margin-top:5px; font-size:11px; color:#aaa;">Data: ${formatarDataBR(c.data)} | Total: <b style="color:var(--pink)">R$ ${formatMoeda(c.total)}</b></span>
+                        </div>
+                    </div>`;
+            }
+        });
+        
+        // Estoque
+        dadosEstoque.forEach(e => { 
+            if(e.item.toLowerCase().includes(termo)) { 
+                let locHtml = e.localizacao ? `<span style="font-size:10px; color:#888; display:block;"><i class="fas fa-map-pin"></i> Loc: ${e.localizacao}</span>` : '';
+                if(divE) divE.innerHTML += `<div class="item-card" style="border-left-color:var(--orange)"><div class="card-header"><h4 onclick="editarEstoque(${e.id})">${e.item}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('estoque', ${e.id})"></i></div>${locHtml}<div class="info-linha"><span>Qtd: <b>${e.quantidade} UN</b></span> | <span>Venda: <b style="color:var(--green)">R$ ${formatMoeda(e.valor_venda)}</b></span></div></div>`; 
+            } 
+        });
+
+        // Gastos
+        dadosGastos.forEach(g => {
+            if((g.descricao || '').toLowerCase().includes(termo)) {
+                if(divG) divG.innerHTML += `<div class="item-card" style="border-left-color:var(--red)"><div class="card-header"><h4 onclick="editarGasto(${g.id})">${g.descricao}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('gastos', ${g.id})"></i></div><div class="info-linha"><span>Data: <b>${formatarDataBR(g.data)}</b></span> | <span>Valor: <b style="color:var(--red)">R$ ${formatMoeda(g.valor)}</b></span></div></div>`;
+            }
+        });
+
+        // Catálogo de Serviços
+        dadosCatalogo.forEach(c => {
+            if((c.nome || '').toLowerCase().includes(termo)) {
+                if(divC) divC.innerHTML += `<div class="item-card" style="border-left-color:var(--cyan)"><div class="card-header"><h4 onclick="editarServicoCatalogo(${c.id})">${c.nome}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('catalogo_servicos', ${c.id})"></i></div><div class="info-linha"><span>Preço Base Mão de Obra: <b style="color:var(--cyan)">R$ ${formatMoeda(c.preco)}</b></span></div></div>`;
+            }
+        });
+        
+        renderizarGrafico();
+    }
+
+    function renderizarGrafico() { 
+        const ctx = document.getElementById('graficoFinanceiro').getContext('2d'); 
+        const mesAtual = document.getElementById('filtro_mes').value; 
+        
+        const pMes = dadosPedidos.filter(p => p.data && p.data.split('-')[1] === mesAtual && p.tipo === 'servico'); 
+        const gMes = dadosGastos.filter(g => g.data && g.data.split('-')[1] === mesAtual);
+
+        const totalRecebido = pMes.reduce((a, b) => a + (b.pago || 0), 0); 
+        const totalGastos = gMes.reduce((a, b) => a + (b.valor || 0), 0);
+        const lucroLiquido = totalRecebido - totalGastos;
+
+        document.getElementById('h_recebido').innerText = "R$ " + formatMoeda(totalRecebido); 
+        document.getElementById('h_gastos').innerText = "R$ " + formatMoeda(totalGastos); 
+        document.getElementById('h_lucro').innerText = "R$ " + formatMoeda(lucroLiquido); 
+        
+        document.getElementById('h_lucro').style.color = lucroLiquido < 0 ? 'var(--red)' : 'var(--blue)';
+
+        if(meuGrafico) meuGrafico.destroy(); 
+        
+        let dias = [...new Set(pMes.map(p => p.data.split('-')[2]))].sort(); 
+        if (dias.length === 0) dias = [new Date().toISOString().split('T')[0].split('-')[2]]; 
+        
+        meuGrafico = new Chart(ctx, { 
+            type: 'line', 
+            data: { 
+                labels: dias.map(d => d + '/' + mesAtual), 
+                datasets: [ { 
+                    label: 'Entradas', 
+                    data: dias.map(d => pMes.filter(p => p.data.split('-')[2] === d).reduce((a, b) => a + b.pago, 0)), 
+                    borderColor: '#30d158', backgroundColor: 'rgba(48,209,88,0.2)', fill: true, tension: 0.4 
+                } ]
+            }, 
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { color: 'rgba(255,255,255,0.05)' } } } } 
+        }); 
+    }
+
+    function mudarTela(id) { 
+        telaAtiva = id; 
+        document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa')); 
+        document.getElementById(id).classList.add('ativa'); 
+        
+        document.getElementById('barra_busca').classList.toggle('visivel', 
+            id !== 'tela_home' && id !== 'tela_corte' && id !== 'tela_config'
+        ); 
+    }
+    
+    function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+    
+    function ajustarCamposModal() {
+        const tipo = document.getElementById('f_tipo').value;
+        const content = document.querySelector('#modalPedido .modal-content');
+        const selectStatus = document.getElementById('f_status');
+
+        selectStatus.innerHTML = ''; // Limpa as opções de status
+
+        if(tipo === 'compromisso') {
+            content.classList.add('modo-agenda');
+            content.classList.remove('modo-pedido');
+            document.getElementById('label_servico').innerText = "Descrição do Compromisso";
+            
+            selectStatus.innerHTML = `
+                <option value="pendente">Pendente</option>
+                <option value="concluido">Concluído (Mover para Pedido)</option>
+            `;
+        } else if(tipo === 'orcamento') {
+            content.classList.add('modo-pedido');
+            content.classList.remove('modo-agenda');
+            document.getElementById('label_servico').innerText = "Serviço Principal";
+            
+            selectStatus.innerHTML = `
+                <option value="aguardando">Aguardando</option>
+                <option value="aprovado">Aprovado (Mover para Pedido)</option>
+            `;
+        } else {
+            content.classList.add('modo-pedido');
+            content.classList.remove('modo-agenda');
+            document.getElementById('label_servico').innerText = "Serviço Principal";
+            
+            selectStatus.innerHTML = `
+                <option value="pendente">Pendente</option>
+                <option value="andamento">Em Andamento</option>
+                <option value="concluido">Concluído</option>
+            `;
+        }
+    }
+
+    function abrirModalPorTela() { 
+        if(telaAtiva === 'tela_estoque') { 
+            document.getElementById('e_id').value = ""; 
+            document.querySelectorAll('#modalEstoque input').forEach(i => i.value = ''); 
+            document.getElementById('modalEstoque').style.display = 'flex'; 
+        }
+        else if(telaAtiva === 'tela_compras') {
+            document.getElementById('c_id').value = "";
+            document.getElementById('c_cliente').value = "";
+            document.getElementById('c_status').value = "em_compra";
+            document.getElementById('c_data').value = new Date().toISOString().split('T')[0];
+            document.getElementById('c_item_nome').value = "";
+            document.getElementById('c_item_qtd').value = "1";
+            document.getElementById('c_item_valor').value = "";
+            document.getElementById('c_total').value = "0";
+            itensCompraAtual = [];
+            renderizarItensCompra();
+            document.getElementById('modalCompras').style.display = 'flex';
+        }
+        else if(telaAtiva === 'tela_corte') { 
+            showToast("Utilize os campos na tela para adicionar peças.", "info"); 
+        }
+        else if(telaAtiva === 'tela_gastos') { 
+            document.getElementById('g_id').value = ""; 
+            document.querySelectorAll('#modalGastos input').forEach(i => i.value = ''); 
+            document.getElementById('g_data').value = new Date().toISOString().split('T')[0]; 
+            document.getElementById('modalGastos').style.display = 'flex'; 
+        }
+        else if(telaAtiva === 'tela_servicos') { 
+            document.getElementById('sc_id').value = ""; 
+            document.querySelectorAll('#modalServicosCatalogo input').forEach(i => i.value = ''); 
+            document.getElementById('modalServicosCatalogo').style.display = 'flex'; 
+        }
+        else if(telaAtiva === 'tela_pedidos' || telaAtiva === 'tela_agenda' || telaAtiva === 'tela_orcamentos') { 
+            document.getElementById('f_id').value = ""; 
+            document.querySelectorAll('#modalPedido input:not([type="checkbox"]), #modalPedido textarea').forEach(i => i.value = ''); 
+            document.getElementById('f_total').value = "0"; 
+            document.getElementById('f_pago').value = "0"; 
+            document.getElementById('f_data').value = new Date().toISOString().split('T')[0]; 
+            
+            if(telaAtiva === 'tela_agenda') document.getElementById('f_tipo').value = 'compromisso';
+            else if(telaAtiva === 'tela_orcamentos') document.getElementById('f_tipo').value = 'orcamento';
+            else document.getElementById('f_tipo').value = 'servico';
+            
+            ajustarCamposModal();
+
+            itensNoPedido = []; 
+            renderizarItensPedido(); 
+            document.getElementById('modalPedido').style.display = 'flex'; 
+        } else {
+            showToast("Ação de adicionar indisponível para esta tela.", "info");
+        }
+    }
+
+    // --- FUNÇÕES CRUD (CRIAR, SALVAR, EXCLUIR) ---
+
+    function excluirRegistro(tab, id) { if(confirm("Deseja excluir?")) { const i = DB[tab].findIndex(x => x.id == id); if(i > -1) DB[tab].splice(i, 1); saveDB(); } }
+    
+    // PEDIDOS / AGENDA / ORÇAMENTO
+    function salvarPedido() { 
+        let tipoAtual = document.getElementById('f_tipo').value;
+        let statusAtual = document.getElementById('f_status').value;
+
+        if (tipoAtual === 'orcamento' && statusAtual === 'aprovado') {
+            tipoAtual = 'servico';
+            statusAtual = 'pendente';
+            showToast("Orçamento Aprovado! Movido para Pedidos.", "success");
+        } else if (tipoAtual === 'compromisso' && statusAtual === 'concluido') {
+            tipoAtual = 'servico';
+            statusAtual = 'pendente';
+            showToast("Compromisso Concluído! Movido para Pedidos.", "success");
+        }
+
+        const obj = { 
+            id: document.getElementById('f_id').value || generateID(), 
+            cliente: document.getElementById('f_cliente').value, 
+            servico: document.getElementById('f_servico').value, 
+            itens_usados: itensNoPedido, 
+            total: parseFloat(document.getElementById('f_total').value) || 0, 
+            pago: parseFloat(document.getElementById('f_pago').value) || 0, 
+            data: document.getElementById('f_data').value, 
+            tipo: tipoAtual, 
+            status: statusAtual,
+            endereco: document.getElementById('f_endereco').value,
+            numero: document.getElementById('f_numero').value,
+            complemento: document.getElementById('f_complemento').value,
+            cidade: document.getElementById('f_cidade').value,
+            lembrete: document.getElementById('f_lembrete').value
+        }; 
+        
+        if(document.getElementById('f_id').value) { const i = DB.servicos.findIndex(x => x.id == obj.id); DB.servicos[i] = obj; } 
+        else { DB.servicos.push(obj); } 
+        saveDB(); fecharModais(); 
+    }
+
+    function editarPedido(id) { 
+        const p = DB.servicos.find(x => x.id == id); 
+        document.getElementById('f_id').value = p.id; 
+        document.getElementById('f_cliente').value = p.cliente; 
+        document.getElementById('f_servico').value = p.servico; 
+        document.getElementById('f_total').value = p.total; 
+        document.getElementById('f_pago').value = p.pago; 
+        document.getElementById('f_data').value = p.data; 
+        document.getElementById('f_tipo').value = p.tipo || 'servico';
+        
+        document.getElementById('f_endereco').value = p.endereco || '';
+        document.getElementById('f_numero').value = p.numero || '';
+        document.getElementById('f_complemento').value = p.complemento || '';
+        document.getElementById('f_cidade').value = p.cidade || '';
+        document.getElementById('f_lembrete').value = p.lembrete || '';
+
+        ajustarCamposModal();
+        if(p.status) { document.getElementById('f_status').value = p.status; }
+        
+        itensNoPedido = p.itens_usados || []; 
+        renderizarItensPedido(); 
+        document.getElementById('modalPedido').style.display = 'flex'; 
+    }
+
+    // LISTA DE COMPRAS
+    function adicionarItemCompraUI() {
+        const item = document.getElementById('c_item_nome').value;
+        const qtd = parseInt(document.getElementById('c_item_qtd').value) || 1;
+        const valor = parseFloat(document.getElementById('c_item_valor').value) || 0;
+        if(!item) return showToast("Digite o nome do item", "error");
+        
+        itensCompraAtual.push({ item, qtd, valor });
+        
+        document.getElementById('c_item_nome').value = "";
+        document.getElementById('c_item_qtd').value = "1";
+        document.getElementById('c_item_valor').value = "";
+        
+        renderizarItensCompra();
+    }
+
+    function editarItemCompraLista(idx) {
+        const i = itensCompraAtual[idx];
+        document.getElementById('c_item_nome').value = i.item;
+        document.getElementById('c_item_qtd').value = i.qtd;
+        document.getElementById('c_item_valor').value = i.valor;
+        
+        // Remove da lista para que a pessoa re-adicione atualizado
+        itensCompraAtual.splice(idx, 1);
+        renderizarItensCompra();
+    }
+
+    function removerItemCompra(idx) {
+        itensCompraAtual.splice(idx, 1);
+        renderizarItensCompra();
+    }
+
+    function renderizarItensCompra() {
+        const container = document.getElementById('container_itens_compra');
+        let total = 0;
+        
+        if(itensCompraAtual.length === 0) {
+            container.innerHTML = '<div style="text-align:center; font-size:12px; color:#888;">Nenhum item na lista.</div>';
+        } else {
+            container.innerHTML = itensCompraAtual.map((i, idx) => {
+                let sub = i.qtd * i.valor;
+                total += sub;
+                return `
+                <div class="item-selecionado">
+                    <span style="flex:1;">${i.qtd}x ${i.item} <br><b style="color:var(--pink)">R$ ${formatMoeda(sub)}</b> <small style="color:#888; font-size:10px;">(R$ ${formatMoeda(i.valor)} un)</small></span>
+                    <div style="display:flex; gap:15px; align-items:center;">
+                        <i class="fas fa-edit" style="color:var(--blue); cursor:pointer; font-size:16px;" onclick="editarItemCompraLista(${idx})"></i>
+                        <i class="fas fa-trash" style="color:var(--red); cursor:pointer; font-size:16px;" onclick="removerItemCompra(${idx})"></i>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+        document.getElementById('c_total').value = total.toFixed(2);
+    }
+
+    function salvarCompra() {
+        let statusAtual = document.getElementById('c_status').value;
+        const obj = {
+            id: document.getElementById('c_id').value || generateID(),
+            cliente: document.getElementById('c_cliente').value,
+            itens: itensCompraAtual,
+            total: parseFloat(document.getElementById('c_total').value) || 0,
+            data: document.getElementById('c_data').value,
+            status: statusAtual
+        };
+
+        if (statusAtual === 'concluido') {
+            // Converte para Gasto e não salva mais em Compras
+            let descGasto = "Compra: " + (obj.cliente || 'Diversos') + " (" + obj.itens.length + " itens)";
+            let novoGasto = {
+                id: generateID(),
+                descricao: descGasto,
+                valor: obj.total,
+                data: obj.data
+            };
+            DB.gastos.push(novoGasto);
+
+            // Remove das compras se existia
+            if(document.getElementById('c_id').value) {
+                DB.compras = DB.compras.filter(c => c.id != obj.id);
+            }
+            showToast("Compra Concluída! Movida para Gastos.", "success");
+
+        } else {
+            // Salva apenas como Compras Pendentes
+            if(document.getElementById('c_id').value) {
+                const i = DB.compras.findIndex(x => x.id == obj.id);
+                DB.compras[i] = obj;
+            } else {
+                DB.compras.push(obj);
+            }
+            showToast("Lista de Compras salva!", "success");
+        }
+        saveDB();
+        fecharModais();
+    }
+
+    function editarCompra(id) {
+        const c = DB.compras.find(x => x.id == id);
+        document.getElementById('c_id').value = c.id;
+        document.getElementById('c_cliente').value = c.cliente;
+        document.getElementById('c_status').value = c.status || 'em_compra';
+        document.getElementById('c_data').value = c.data;
+        itensCompraAtual = c.itens || [];
+        renderizarItensCompra();
+        document.getElementById('modalCompras').style.display = 'flex';
+    }
+
+    function imprimirCompra() {
+        if (itensCompraAtual.length === 0) return showToast("A lista está vazia!", "error");
+        
+        const cliente = document.getElementById('c_cliente').value || 'Não informado';
+        const data = formatarDataBR(document.getElementById('c_data').value);
+        const total = formatMoeda(document.getElementById('c_total').value);
+        const empresa = DB.config.nome || "Minha Empresa";
+        
+        let linhas = itensCompraAtual.map((i, idx) => `
+            <tr>
+                <td>${idx + 1}</td>
+                <td class="desc-left">${i.item}</td>
+                <td>${i.qtd}</td>
+                <td>R$ ${formatMoeda(i.valor)}</td>
+                <td>R$ ${formatMoeda(i.qtd * i.valor)}</td>
+            </tr>
+        `).join('');
+
+        const areaImpressao = document.getElementById('area-impressao');
+        areaImpressao.innerHTML = `
+            <div class="print-corte-container">
+                <div class="print-corte-header">
+                    <h1>LISTA DE COMPRAS</h1>
+                    <p>${empresa}</p>
+                </div>
+                <div class="print-corte-info">
+                    <div>
+                        <strong>Cliente / Referência:</strong> ${cliente}<br>
+                        <strong>Data:</strong> ${data}
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-size:18px; font-weight:bold;">Total: R$ ${total}</span>
+                    </div>
+                </div>
+                <table class="corte-table">
+                    <thead>
+                        <tr>
+                            <th width="5%">Nº</th>
+                            <th width="50%" class="desc-left">Item Descrição</th>
+                            <th width="10%">Qtd</th>
+                            <th width="15%">Valor Unit.</th>
+                            <th width="20%">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>${linhas}</tbody>
+                </table>
+            </div>
+        `;
+        setTimeout(() => { window.print(); }, 300);
+    }
+    
+    // ESTOQUE
+    function salvarEstoque() { const obj = { id: document.getElementById('e_id').value || generateID(), item: document.getElementById('e_item').value, localizacao: document.getElementById('e_localizacao').value, quantidade: parseInt(document.getElementById('e_qtd').value) || 0, valor_venda: parseFloat(document.getElementById('e_venda').value) || 0 }; if(document.getElementById('e_id').value) { const i = DB.estoque.findIndex(x => x.id == obj.id); DB.estoque[i] = obj; } else DB.estoque.push(obj); saveDB(); fecharModais(); }
+    function editarEstoque(id) { const e = DB.estoque.find(x => x.id == id); document.getElementById('e_id').value = e.id; document.getElementById('e_item').value = e.item; document.getElementById('e_localizacao').value = e.localizacao || ''; document.getElementById('e_qtd').value = e.quantidade; document.getElementById('e_venda').value = e.valor_venda; document.getElementById('modalEstoque').style.display = 'flex'; }
+    
+    // GASTOS
+    function salvarGasto() { const obj = { id: document.getElementById('g_id').value || generateID(), descricao: document.getElementById('g_descricao').value, valor: parseFloat(document.getElementById('g_valor').value) || 0, data: document.getElementById('g_data').value }; if(document.getElementById('g_id').value) { const i = DB.gastos.findIndex(x => x.id == obj.id); DB.gastos[i] = obj; } else DB.gastos.push(obj); saveDB(); fecharModais(); }
+    function editarGasto(id) { const g = DB.gastos.find(x => x.id == id); document.getElementById('g_id').value = g.id; document.getElementById('g_descricao').value = g.descricao; document.getElementById('g_valor').value = g.valor; document.getElementById('g_data').value = g.data; document.getElementById('modalGastos').style.display = 'flex'; }
+    
+    // CATÁLOGO DE SERVIÇOS FIXOS
+    function salvarServicoCatalogo() { const obj = { id: document.getElementById('sc_id').value || generateID(), nome: document.getElementById('sc_nome').value, preco: parseFloat(document.getElementById('sc_preco').value) || 0 }; if(document.getElementById('sc_id').value) { const i = DB.catalogo_servicos.findIndex(x => x.id == obj.id); DB.catalogo_servicos[i] = obj; } else DB.catalogo_servicos.push(obj); saveDB(); fecharModais(); }
+    function editarServicoCatalogo(id) { const c = DB.catalogo_servicos.find(x => x.id == id); document.getElementById('sc_id').value = c.id; document.getElementById('sc_nome').value = c.nome; document.getElementById('sc_preco').value = c.preco; document.getElementById('modalServicosCatalogo').style.display = 'flex'; }
+
+    // FUNÇÕES DE CÁLCULO E INCLUSÃO DE ITENS (ORÇAMENTO/PEDIDO)
+    function recalcularTotal() { 
+        const mao = parseFloat(document.getElementById('f_mao_obra').value) || 0; 
+        const somaItens = itensNoPedido.reduce((a, i) => a + (i.qtd * i.valor), 0); 
+        document.getElementById('f_total').value = (mao + somaItens).toFixed(2); 
+    }
+    
+    function renderizarItensPedido() { 
+        document.getElementById('container_itens_venda').innerHTML = itensNoPedido.map((i, idx) => {
+            let iconeTipo = i.tipo_item === 'servico' ? '<i class="fas fa-tools" style="color:var(--cyan); margin-right:5px;"></i>' : (i.tipo_item === 'compra' ? '<i class="fas fa-shopping-cart" style="color:var(--pink); margin-right:5px;"></i>' : '<i class="fas fa-box" style="color:var(--orange); margin-right:5px;"></i>');
+            return `<div class="item-selecionado">
+                <span style="display:flex; align-items:center;">
+                    ${iconeTipo} 
+                    <div>${i.qtd}x ${i.item} <br><b style="color:var(--green)">R$ ${formatMoeda(i.qtd * i.valor)}</b></div>
+                </span>
+                <i class="fas fa-trash" style="color:var(--red); cursor:pointer;" onclick="removerItem(${idx})"></i>
+            </div>`;
+        }).join(''); 
+    }
+    
+    function removerItem(idx) { itensNoPedido.splice(idx, 1); renderizarItensPedido(); recalcularTotal(); }
+    
+    // Adicionar do Estoque
+    function abrirSeletorEstoque() { const sel = document.getElementById('sel_produto_estoque'); sel.innerHTML = dadosEstoque.map(e => `<option value="${e.id}">${e.item} (Disp: ${e.quantidade}) - R$ ${formatMoeda(e.valor_venda)}</option>`).join(''); document.getElementById('modalSeletorEstoque').style.display = 'flex'; }
+    function confirmarAdicaoItem() { const id = document.getElementById('sel_produto_estoque').value; const prod = dadosEstoque.find(e => e.id == id); if(prod) { itensNoPedido.push({ id_referencia: prod.id, item: prod.item, qtd: parseInt(document.getElementById('sel_qtd_estoque').value), valor: prod.valor_venda, tipo_item: 'estoque' }); renderizarItensPedido(); recalcularTotal(); document.getElementById('modalSeletorEstoque').style.display = 'none'; } }
+
+    // Adicionar do Catálogo de Serviços
+    function abrirSeletorServico() {
+        const sel = document.getElementById('sel_servico_catalogo');
+        sel.innerHTML = dadosCatalogo.map(c => `<option value="${c.id}">${c.nome} - R$ ${formatMoeda(c.preco)}</option>`).join('');
+        document.getElementById('modalSeletorServico').style.display = 'flex';
+    }
+    function confirmarAdicaoServico() {
+        const id = document.getElementById('sel_servico_catalogo').value;
+        const serv = dadosCatalogo.find(c => c.id == id);
+        if(serv) {
+            itensNoPedido.push({ id_referencia: serv.id, item: serv.nome, qtd: parseInt(document.getElementById('sel_qtd_servico').value), valor: serv.preco, tipo_item: 'servico' });
+            renderizarItensPedido();
+            recalcularTotal();
+            document.getElementById('modalSeletorServico').style.display = 'none';
+        }
+    }
+
+    // ==========================================
+    // MÓDULO PLANO DE CORTE (Mantido intacto do original)
+    // ==========================================
+    let pecasCorte = []; let chapasDesenhadas = []; let planoAtualId = null; let planoAtualNome = "";
+
+    function adicionarPecaCorte() {
+        const desc = document.getElementById('corte_desc_peca').value;
+        const comp = parseFloat(document.getElementById('corte_comp_peca').value);
+        const larg = parseFloat(document.getElementById('corte_larg_peca').value);
+        const qtd = parseInt(document.getElementById('corte_qtd_peca').value);
+
+        const cor_fita = document.getElementById('corte_cor_fita_peca').value || "";
+
+        const f_c1 = document.getElementById('corte_fita_c1').checked; const f_c2 = document.getElementById('corte_fita_c2').checked;
+        const f_l1 = document.getElementById('corte_fita_l1').checked; const f_l2 = document.getElementById('corte_fita_l2').checked;
+
+        if(!desc || !comp || !larg || qtd <= 0 || isNaN(comp) || isNaN(larg)) return showToast("Preencha todos os campos da peça corretamente!", "error");
+
+        let fitaText = [];
+        if(f_c1 || f_c2) fitaText.push((f_c1 && f_c2 ? "2" : "1") + " C");
+        if(f_l1 || f_l2) fitaText.push((f_l1 && f_l2 ? "2" : "1") + " L");
+        let fitaResumo = fitaText.length > 0 ? fitaText.join('/') : "-";
+        let fitaEdges = { c1: f_c1, c2: f_c2, l1: f_l1, l2: f_l2 };
+
+        pecasCorte.push({ id_peca: Date.now(), desc, comp, larg, qtd, fitaResumo, fitaEdges, cor_fita });
+        
+        document.getElementById('corte_desc_peca').value = ''; document.getElementById('corte_comp_peca').value = '';
+        document.getElementById('corte_larg_peca').value = ''; document.getElementById('corte_qtd_peca').value = '1';
+        document.getElementById('corte_cor_fita_peca').value = '';
+        document.getElementById('corte_fita_c1').checked = false; document.getElementById('corte_fita_c2').checked = false;
+        document.getElementById('corte_fita_l1').checked = false; document.getElementById('corte_fita_l2').checked = false;
+        
+        renderizarPecasCorte(); showToast("Peça adicionada à lista!");
+    }
+
+    function removerPecaCorte(idx) { pecasCorte.splice(idx, 1); renderizarPecasCorte(); }
+
+    function renderizarPecasCorte() {
+        const div = document.getElementById('lista_pecas_corte');
+        if(pecasCorte.length === 0) { div.innerHTML = `<div style="text-align:center; color:#666; font-size:12px; padding:10px;">Nenhuma peça adicionada.</div>`; return; }
+        div.innerHTML = pecasCorte.map((p, idx) => `
+            <div class="item-selecionado">
+                <div style="line-height:1.3;">
+                    <span style="font-size:13px; font-weight:bold; color:white;">${p.desc}</span><br>
+                    <span style="font-size:11px; color:#aaa;">Qtd: ${p.qtd} un | ${p.comp}mm x ${p.larg}mm</span><br>
+                    <span style="font-size:10px; color:#aaa;"><i class="fas fa-tape"></i> Fita: ${p.fitaResumo} ${p.cor_fita ? `(Cor: ${p.cor_fita})` : ''}</span>
+                </div>
+                <i class="fas fa-trash" style="color:var(--red); cursor:pointer; font-size:16px;" onclick="removerPecaCorte(${idx})"></i>
+            </div>
+        `).join('');
+    }
+
+    function salvarPlanoCorte() {
+        if(pecasCorte.length === 0) return showToast("Adicione peças antes de salvar!", "error");
+        let nome = prompt("Digite o nome deste Plano de Corte:"); if(!nome) return;
+        const plano = { id: planoAtualId || generateID(), nome: nome, data: new Date().toISOString().split('T')[0], material: document.getElementById('corte_material').value, espessura: document.getElementById('corte_espessura').value, chapa_comp: document.getElementById('corte_chapa_comp').value, chapa_larg: document.getElementById('corte_chapa_larg').value, serra: document.getElementById('corte_serra').value, pecas: JSON.parse(JSON.stringify(pecasCorte)), rotacao: document.getElementById('corte_rotacao').checked };
+        if(planoAtualId) { const idx = DB.planos_corte.findIndex(x => x.id === plano.id); if(idx > -1) DB.planos_corte[idx] = plano; } else { DB.planos_corte.push(plano); }
+        saveDB(); planoAtualId = plano.id; planoAtualNome = plano.nome; showToast("Plano de Corte Salvo!");
+    }
+
+    function abrirPlanosSalvos() {
+        const div = document.getElementById('lista_modal_planos');
+        if(!DB.planos_corte || DB.planos_corte.length === 0) { div.innerHTML = `<p style="text-align:center; color:#888;">Nenhum plano salvo.</p>`; } 
+        else {
+            div.innerHTML = DB.planos_corte.sort((a,b) => b.id - a.id).map(p => `
+                <div class="item-selecionado" style="border-left: 3px solid var(--gold);">
+                    <div style="line-height:1.3;"><span style="font-size:14px; font-weight:bold; color:white;">${p.nome}</span><br><span style="font-size:11px; color:#aaa;">${formatarDataBR(p.data)} | ${p.pecas.length} peças</span><br><span style="font-size:11px; color:var(--teal);">${p.material} - ${p.espessura}</span></div>
+                    <div style="display:flex; gap:15px; align-items:center;"><i class="fas fa-folder-open" style="color:var(--blue); cursor:pointer; font-size:18px;" onclick="carregarPlano(${p.id})"></i><i class="fas fa-trash" style="color:var(--red); cursor:pointer; font-size:18px;" onclick="excluirPlano(${p.id})"></i></div>
+                </div>
+            `).join('');
+        }
+        document.getElementById('modalPlanosSalvos').style.display = 'flex';
+    }
+
+    function carregarPlano(id) {
+        const p = DB.planos_corte.find(x => x.id === id); if(!p) return;
+        planoAtualId = p.id; planoAtualNome = p.nome;
+        document.getElementById('corte_material').value = p.material || "MDF Branco"; document.getElementById('corte_espessura').value = p.espessura || "15mm";
+        document.getElementById('corte_chapa_comp').value = p.chapa_comp; document.getElementById('corte_chapa_larg').value = p.chapa_larg;
+        document.getElementById('corte_serra').value = p.serra; document.getElementById('corte_rotacao').checked = p.rotacao || false;
+        pecasCorte = JSON.parse(JSON.stringify(p.pecas)); renderizarPecasCorte(); document.getElementById('container_mapas_visuais').innerHTML = '';
+        fecharModais(); showToast(`Plano "${p.nome}" carregado!`);
+    }
+
+    function excluirPlano(id) { if(confirm("Deseja excluir este plano salvo?")) { DB.planos_corte = DB.planos_corte.filter(x => x.id !== id); saveDB(); if(planoAtualId === id) { planoAtualId = null; planoAtualNome = ""; } abrirPlanosSalvos(); } }
+
+    function calcularAlgoritmoDeCorte() {
+        if(pecasCorte.length === 0) return showToast("Adicione peças primeiro!", "error");
+        const sheetW = parseFloat(document.getElementById('corte_chapa_comp').value);
+        const sheetH = parseFloat(document.getElementById('corte_chapa_larg').value);
+        const kerf = parseFloat(document.getElementById('corte_serra').value);
+        const permitirRotacao = document.getElementById('corte_rotacao').checked;
+
+        if(!sheetW || !sheetH) return showToast("Verifique as medidas da chapa!", "error");
+
+        let flatPieces = []; let areaLiquida = 0;
+        pecasCorte.forEach((p, idxList) => { for(let i=0; i<p.qtd; i++) { flatPieces.push({ idx_ref: idxList + 1, desc: p.desc, w: p.comp, h: p.larg, fitaResumo: p.fitaResumo, fitaEdges: p.fitaEdges, cor_fita: p.cor_fita }); areaLiquida += (p.comp * p.larg) / 1000000; } });
+        flatPieces.sort((a,b) => Math.max(b.w, b.h) - Math.max(a.w, a.h));
+
+        let sheets = [];
+        function fitPieceInNode(node, pw, ph) { if(pw <= node.w && ph <= node.h) return { rot: false }; if(permitirRotacao && ph <= node.w && pw <= node.h) return { rot: true }; return null; }
+        function splitGuillotine(freeRect, pw, ph, kerf) {
+            let rects = [];
+            if (freeRect.w - pw > freeRect.h - ph) { rects.push({ x: freeRect.x, y: freeRect.y + ph + kerf, w: pw, h: freeRect.h - ph - kerf }); rects.push({ x: freeRect.x + pw + kerf, y: freeRect.y, w: freeRect.w - pw - kerf, h: freeRect.h }); } else { rects.push({ x: freeRect.x + pw + kerf, y: freeRect.y, w: freeRect.w - pw - kerf, h: ph }); rects.push({ x: freeRect.x, y: freeRect.y + ph + kerf, w: freeRect.w, h: freeRect.h - ph - kerf }); }
+            return rects.filter(r => r.w > 0 && r.h > 0); 
+        }
+
+        for (let i = 0; i < flatPieces.length; i++) {
+            let p = flatPieces[i]; let placed = false;
+            for (let s = 0; s < sheets.length; s++) {
+                let sheet = sheets[s];
+                for (let f = 0; f < sheet.freeRects.length; f++) {
+                    let fr = sheet.freeRects[f]; let fit = fitPieceInNode(fr, p.w, p.h);
+                    if (fit) { let finalW = fit.rot ? p.h : p.w; let finalH = fit.rot ? p.w : p.h; sheet.placed.push({ idx_ref: p.idx_ref, x: fr.x, y: fr.y, w: finalW, h: finalH, rot: fit.rot, origW: p.w, origH: p.h, fitaEdges: p.fitaEdges }); let newRects = splitGuillotine(fr, finalW, finalH, kerf); sheet.freeRects.splice(f, 1, ...newRects); placed = true; break; }
+                }
+                if (placed) break;
+            }
+            if (!placed) {
+                let newSheet = { id: sheets.length + 1, placed: [], freeRects: [{ x: 0, y: 0, w: sheetW, h: sheetH }] };
+                let fr = newSheet.freeRects[0]; let fit = fitPieceInNode(fr, p.w, p.h);
+                if(fit) { let finalW = fit.rot ? p.h : p.w; let finalH = fit.rot ? p.w : p.h; newSheet.placed.push({ idx_ref: p.idx_ref, x: fr.x, y: fr.y, w: finalW, h: finalH, rot: fit.rot, origW: p.w, origH: p.h, fitaEdges: p.fitaEdges }); let newRects = splitGuillotine(fr, finalW, finalH, kerf); newSheet.freeRects.splice(0, 1, ...newRects); }
+                sheets.push(newSheet);
+            }
+        }
+        chapasDesenhadas = sheets; 
+        document.getElementById('resultado_chapas').innerText = `${sheets.length} Chapa(s) Necessária(s)`;
+        document.getElementById('resultado_area').innerText = `Área Líquida: ${areaLiquida.toFixed(2)} m²`;
+        desenharMapasVisuais(sheetW, sheetH); showToast("Otimização concluída!");
+    }
+
+    function desenharMapasVisuais(sheetW, sheetH) {
+        const container = document.getElementById('container_mapas_visuais'); container.innerHTML = ''; 
+        if(chapasDesenhadas.length === 0) return;
+        const scale = 800 / sheetW; const canvasW = (sheetW * scale); const canvasH = (sheetH * scale);
+        container.innerHTML = `<div class="legenda-box" style="margin-bottom:10px;"><div class="legenda-item"><div class="linha-pontilhada-demo"></div> <span>Fita de Borda (40mm interna)</span></div><div class="legenda-item"><span style="font-size:16px; font-weight:normal;">#5</span> <span>Nº da Peça</span></div></div>`;
+
+        chapasDesenhadas.forEach((sheet, index) => {
+            let divWrapper = document.createElement('div'); divWrapper.className = 'mapa-chapa-container';
+            divWrapper.innerHTML = `<h5 style="text-align:center; color:#333; margin:5px 0;">Chapa ${index + 1}</h5>`;
+            let canvas = document.createElement('canvas'); canvas.className = 'mapa-chapa';
+            canvas.width = canvasW; canvas.height = canvasH; canvas.id = `canvas_sheet_${index}`;
+            divWrapper.appendChild(canvas); container.appendChild(divWrapper);
+            let ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvasW, canvasH);
+            ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeRect(0, 0, canvasW, canvasH);
+
+            sheet.placed.forEach(p => {
+                let cx = p.x * scale; let cy = p.y * scale; let cw = p.w * scale; let ch = p.h * scale;
+                ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.strokeRect(cx, cy, cw, ch);
+                
+                if(p.fitaEdges) {
+                    ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+                    let offset = 40 * scale;
+                    let tEdge = p.rot ? p.fitaEdges.l1 : p.fitaEdges.c1; let bEdge = p.rot ? p.fitaEdges.l2 : p.fitaEdges.c2;
+                    let lEdge = p.rot ? p.fitaEdges.c2 : p.fitaEdges.l1; let rEdge = p.rot ? p.fitaEdges.c1 : p.fitaEdges.l2;
+                    ctx.beginPath();
+                    if (tEdge) { ctx.moveTo(cx, cy + offset); ctx.lineTo(cx + cw, cy + offset); }
+                    if (bEdge) { ctx.moveTo(cx, cy + ch - offset); ctx.lineTo(cx + cw, cy + ch - offset); }
+                    if (lEdge) { ctx.moveTo(cx + offset, cy); ctx.lineTo(cx + offset, cy + ch); }
+                    if (rEdge) { ctx.moveTo(cx + cw - offset, cy); ctx.lineTo(cx + cw - offset, cy + ch); }
+                    ctx.stroke(); ctx.setLineDash([]);
+                }
+                ctx.fillStyle = '#000'; 
+                if (cw > 20 && ch > 20) { ctx.font = '11px Arial'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(p.idx_ref, cx + 4, cy + 4); }
+                if (cw > 40 && ch > 30) { ctx.font = '12px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(p.origW, cx + cw/2, cy + ch - 4); ctx.save(); ctx.translate(cx + 12, cy + ch/2); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.origH, 0, 0); ctx.restore(); }
+            });
+        });
+    }
+
+    function imprimirPlanoCorte() {
+        if(pecasCorte.length === 0 || chapasDesenhadas.length === 0) return showToast("Calcule o mapa de corte primeiro!", "error");
+        const chapaComp = document.getElementById('corte_chapa_comp').value; const chapaLarg = document.getElementById('corte_chapa_larg').value; const material = document.getElementById('corte_material').value; const espessura = document.getElementById('corte_espessura').value; const rotCheck = document.getElementById('corte_rotacao').checked ? "Ligada (Ignora Veio)" : "Desligada (Com Veio)"; const totalChapas = chapasDesenhadas.length; const c = DB.config || {}; const tituloPlano = planoAtualNome ? `Projeto: ${planoAtualNome}` : `Plano de Corte Otimizado`;
+        
+        let linhasTabela = pecasCorte.map((p, idx) => {
+            let fitaDetalhe = p.fitaResumo + (p.cor_fita ? `<br><small style="color:#666">Cor: ${p.cor_fita}</small>` : '');
+            return `<tr><td><strong>${idx + 1}</strong></td><td class="desc-left">${p.desc}</td><td>${p.qtd}</td><td>${p.comp} mm</td><td>${p.larg} mm</td><td>${fitaDetalhe}</td></tr>`;
+        }).join('');
+        
+        let htmlMapasImg = '';
+        chapasDesenhadas.forEach((sheet, idx) => { let canvasOriginal = document.getElementById(`canvas_sheet_${idx}`); if(canvasOriginal) { let imgURL = canvasOriginal.toDataURL("image/png"); htmlMapasImg += `<div class="print-mapa-box"><h3>CHAPA ${idx + 1}</h3><img src="${imgURL}" class="print-mapa-img"></div>`; } });
+        const areaImpressao = document.getElementById('area-impressao');
+        areaImpressao.innerHTML = `
+            <div class="print-corte-container"><div class="print-corte-header"><h1>${tituloPlano}</h1><p>${c.nome || "Minha Empresa"}</p></div>
+                <div class="print-corte-info"><div><strong>Material:</strong> ${material} - ${espessura}<br><strong>Chapa Base:</strong> ${chapaComp}mm x ${chapaLarg}mm<br><strong>Rotação das Peças:</strong> ${rotCheck}<br><strong>Desconto da Serra:</strong> ${document.getElementById('corte_serra').value}mm<br><strong>Data:</strong> ${formatarDataBR(new Date().toISOString().split('T')[0])}</div><div style="text-align:right;"><span style="font-size:18px; font-weight:bold;">${totalChapas} Chapa(s)</span></div></div>
+                <table class="corte-table"><thead><tr><th width="5%">Nº</th><th width="40%" class="desc-left">Peça</th><th width="10%">Qtd</th><th width="15%">Comp.</th><th width="15%">Larg.</th><th width="15%">Fita de Borda</th></tr></thead><tbody>${linhasTabela}</tbody></table>
+                <div style="page-break-after: always;"></div>
+                <h2 style="text-align:center; border-bottom:1px solid #000; padding-bottom:10px; margin-top:20px;">MAPAS DE CORTE - DESENHO TÉCNICO</h2>
+                <div style="display:flex; justify-content:center; gap:20px; font-size:14px; margin-bottom:20px; font-weight:bold; color:#444; align-items:center;"><div style="display:flex; align-items:center; gap:5px;"><div class="linha-pontilhada-demo"></div><span>Linha Pontilhada = Fita de Borda (40mm interna)</span></div></div>
+                ${htmlMapasImg}
+            </div>
+        `;
+        setTimeout(() => { window.print(); }, 300);
+    }
+</script>
+</body>
+</html>
