@@ -132,7 +132,7 @@
             .corte-table td.desc-left { text-align: left; }
 
             .print-mapa-box { text-align: center; margin-top: 30px; page-break-inside: avoid; }
-            .print-mapa-box h3 { margin-bottom: 10px; font-size: 16px; text-transform:uppercase; }
+            .print-mapa-box h3 { margin-bottom: 10px; font-size: 16px; text-transform:uppercase; background:#333; color:white; padding:5px; }
             .print-mapa-img { max-width: 100%; }
         }
     </style>
@@ -223,8 +223,13 @@
             <button onclick="salvarPlanoCorte()" style="flex:1; padding:12px; background:var(--card); border:1px solid #444; border-radius:8px; color:#ddd; font-weight:bold; cursor:pointer;"><i class="fas fa-save" style="color:var(--green);"></i> SALVAR PLANO</button>
         </div>
 
+        <!-- DICA NOVA PARA O USUÁRIO -->
+        <div style="background: rgba(10,132,255,0.1); border-left: 4px solid var(--blue); padding: 10px; border-radius: 8px; font-size: 11px; color: #ddd; margin-bottom: 12px;">
+            <i class="fas fa-info-circle" style="color:var(--blue)"></i> <b>Dica:</b> Para peças de espessuras diferentes, basta alterar o Material/Espessura acima e continuar adicionando as peças. O sistema separará tudo sozinho!
+        </div>
+
         <div class="item-card" style="border-left-color: var(--light-gray);">
-            <h4 style="color:var(--light-gray); margin-top:0;"><i class="fas fa-vector-square"></i> Configuração da Chapa</h4>
+            <h4 style="color:var(--light-gray); margin-top:0;"><i class="fas fa-vector-square"></i> Configuração da Chapa Base</h4>
             <div style="display:flex; gap:10px;"><div style="flex:2"><label>Material (Ex: MDF Branco)</label><input type="text" id="corte_material" value="MDF Branco"></div><div style="flex:1"><label>Espessura</label><input type="text" id="corte_espessura" value="15mm"></div></div>
             <div style="display:flex; gap:10px;"><div style="flex:1"><label>Comp. Chapa (mm)</label><input type="number" id="corte_chapa_comp" value="2750"></div><div style="flex:1"><label>Largura Chapa (mm)</label><input type="number" id="corte_chapa_larg" value="1850"></div></div>
             <div style="display:flex; gap:10px;">
@@ -236,7 +241,6 @@
         <div class="item-card" style="border-left-color: var(--blue);">
             <h4 style="color:var(--blue); margin-top:0;"><i class="fas fa-plus"></i> Adicionar Peças</h4>
             
-            <!-- Nova ordem: Qtd, Comp, Larg e Descrição -->
             <div style="display:flex; gap:10px;">
                 <div style="flex:1"><label>Qtd</label><input type="number" id="corte_qtd_peca" value="1"></div>
                 <div style="flex:1"><label>Comp. (mm)</label><input type="number" id="corte_comp_peca"></div>
@@ -248,7 +252,6 @@
                 <input type="text" id="corte_desc_peca">
             </div>
             
-            <!-- Campo Fita Borda Específica -->
             <div style="margin-top: 10px;">
                 <label>Cor/Material Fita Borda</label>
                 <input type="text" id="corte_cor_fita_peca" placeholder="Opcional (Ex: Preto, Madeirado)">
@@ -264,11 +267,9 @@
             <h4 style="color:var(--gold); margin-top:0;"><i class="fas fa-list"></i> Lista de Corte</h4>
             <div id="lista_pecas_corte" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px;"></div>
             
-            <!-- Adicionado o campo Total de Fita na tela de Resultados -->
             <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; text-align:center; margin-bottom:15px; border:1px solid #444;">
                 <span style="font-size:12px; color:#aaa; font-weight:bold;">RESULTADO DA OTIMIZAÇÃO:</span><br>
                 <strong id="resultado_chapas" style="color:var(--gold); font-size:20px;">-</strong>
-                <p id="resultado_area" style="margin:5px 0 0 0; font-size:12px; color:#888;">Área total: -</p>
                 <p id="resultado_fita" style="margin:5px 0 0 0; font-size:13px; color:var(--cyan); font-weight:bold;">Total de Fita: -</p>
             </div>
             
@@ -480,8 +481,6 @@
 </div>
 
 <script>
-    // A SENHA FOI REMOVIDA PARA EVITAR PROBLEMAS NO CELULAR
-    
     function verificarTrava() { 
         const bloqueio = document.getElementById('tela_bloqueio'); 
         const app = document.getElementById('app_principal'); 
@@ -496,9 +495,7 @@
     }
     
     function desbloquearApp() { 
-        // Trava flexível: Aceita ALVES, 2026 ou 123
         let input = document.getElementById('input_senha').value.toUpperCase().replace(/[^A-Z0-9]/g, ''); 
-        
         if(input.includes("ALVES") || input.includes("2026") || input === "123") { 
             localStorage.setItem('alves_licenca_ativa', 'true'); 
             verificarTrava(); 
@@ -1061,9 +1058,12 @@
     }
 
     // ==========================================
-    // MÓDULO PLANO DE CORTE
+    // MÓDULO PLANO DE CORTE - COM MULTI-MATERIAIS E ESPESSURAS
     // ==========================================
-    let pecasCorte = []; let chapasDesenhadas = []; let planoAtualId = null; let planoAtualNome = "";
+    let pecasCorte = []; 
+    let gruposChapasCalculadas = []; // Substitui o antigo chapasDesenhadas para comportar vários materiais
+    let planoAtualId = null; 
+    let planoAtualNome = "";
 
     function adicionarPecaCorte() {
         const desc = document.getElementById('corte_desc_peca').value;
@@ -1071,12 +1071,20 @@
         const larg = parseFloat(document.getElementById('corte_larg_peca').value);
         const qtd = parseInt(document.getElementById('corte_qtd_peca').value);
 
+        // Pega as configurações atuais da chapa (para associar à peça)
+        const material = document.getElementById('corte_material').value;
+        const espessura = document.getElementById('corte_espessura').value;
+        const chapa_comp = parseFloat(document.getElementById('corte_chapa_comp').value);
+        const chapa_larg = parseFloat(document.getElementById('corte_chapa_larg').value);
+
         const cor_fita = document.getElementById('corte_cor_fita_peca').value || "";
 
         const f_c1 = document.getElementById('corte_fita_c1').checked; const f_c2 = document.getElementById('corte_fita_c2').checked;
         const f_l1 = document.getElementById('corte_fita_l1').checked; const f_l2 = document.getElementById('corte_fita_l2').checked;
 
-        if(!desc || !comp || !larg || qtd <= 0 || isNaN(comp) || isNaN(larg)) return showToast("Preencha todos os campos da peça corretamente!", "error");
+        if(!desc || !comp || !larg || qtd <= 0 || isNaN(comp) || isNaN(larg) || !material || !espessura) {
+            return showToast("Preencha todos os campos da peça e as configurações da chapa!", "error");
+        }
 
         let fitaText = [];
         if(f_c1 || f_c2) fitaText.push((f_c1 && f_c2 ? "2" : "1") + " C");
@@ -1084,7 +1092,11 @@
         let fitaResumo = fitaText.length > 0 ? fitaText.join('/') : "-";
         let fitaEdges = { c1: f_c1, c2: f_c2, l1: f_l1, l2: f_l2 };
 
-        pecasCorte.push({ id_peca: Date.now(), desc, comp, larg, qtd, fitaResumo, fitaEdges, cor_fita });
+        // Adiciona a peça com as informações do material herdadas
+        pecasCorte.push({ 
+            id_peca: Date.now(), desc, comp, larg, qtd, fitaResumo, fitaEdges, cor_fita,
+            material, espessura, chapa_comp, chapa_larg
+        });
         
         document.getElementById('corte_desc_peca').value = ''; document.getElementById('corte_comp_peca').value = '';
         document.getElementById('corte_larg_peca').value = ''; document.getElementById('corte_qtd_peca').value = '1';
@@ -1092,7 +1104,7 @@
         document.getElementById('corte_fita_c1').checked = false; document.getElementById('corte_fita_c2').checked = false;
         document.getElementById('corte_fita_l1').checked = false; document.getElementById('corte_fita_l2').checked = false;
         
-        renderizarPecasCorte(); showToast("Peça adicionada à lista!");
+        renderizarPecasCorte(); showToast(`Peça adicionada como ${material} (${espessura})`);
     }
 
     function removerPecaCorte(idx) { pecasCorte.splice(idx, 1); renderizarPecasCorte(); }
@@ -1100,7 +1112,7 @@
     function renderizarPecasCorte() {
         const div = document.getElementById('lista_pecas_corte');
         
-        // CALCULO DO TOTAL DE FITA AQUI
+        // CALCULO DO TOTAL DE FITA GERAL
         let totalFitaMm = 0;
         pecasCorte.forEach(p => {
             let fitaPeca = 0;
@@ -1111,7 +1123,6 @@
             totalFitaMm += (fitaPeca * p.qtd);
         });
         
-        // Mostra o resultado na tela na div "Total de Fita"
         document.getElementById('resultado_fita').innerText = `Total de Fita: ${(totalFitaMm / 1000).toFixed(2)} Metros`;
 
         if(pecasCorte.length === 0) { 
@@ -1120,9 +1131,11 @@
             return; 
         }
         
+        // Agrupa visualmente no celular
         div.innerHTML = pecasCorte.map((p, idx) => `
             <div class="item-selecionado">
                 <div style="line-height:1.3;">
+                    <span style="font-size:10px; font-weight:bold; color:var(--teal); text-transform:uppercase;">[${p.material} - ${p.espessura}]</span><br>
                     <span style="font-size:13px; font-weight:bold; color:white;">${p.desc}</span><br>
                     <span style="font-size:11px; color:#aaa;">Qtd: ${p.qtd} un | ${p.comp}mm x ${p.larg}mm</span><br>
                     <span style="font-size:10px; color:#aaa;"><i class="fas fa-tape"></i> Fita: ${p.fitaResumo} ${p.cor_fita ? `(Cor: ${p.cor_fita})` : ''}</span>
@@ -1135,8 +1148,18 @@
     function salvarPlanoCorte() {
         if(pecasCorte.length === 0) return showToast("Adicione peças antes de salvar!", "error");
         let nome = prompt("Digite o nome deste Plano de Corte:"); if(!nome) return;
-        const plano = { id: planoAtualId || generateID(), nome: nome, data: new Date().toISOString().split('T')[0], material: document.getElementById('corte_material').value, espessura: document.getElementById('corte_espessura').value, chapa_comp: document.getElementById('corte_chapa_comp').value, chapa_larg: document.getElementById('corte_chapa_larg').value, serra: document.getElementById('corte_serra').value, pecas: JSON.parse(JSON.stringify(pecasCorte)), rotacao: document.getElementById('corte_rotacao').checked };
-        if(planoAtualId) { const idx = DB.planos_corte.findIndex(x => x.id === plano.id); if(idx > -1) DB.planos_corte[idx] = plano; } else { DB.planos_corte.push(plano); }
+        
+        const plano = { 
+            id: planoAtualId || generateID(), 
+            nome: nome, 
+            data: new Date().toISOString().split('T')[0], 
+            serra: document.getElementById('corte_serra').value, 
+            pecas: JSON.parse(JSON.stringify(pecasCorte)), 
+            rotacao: document.getElementById('corte_rotacao').checked 
+        };
+
+        if(planoAtualId) { const idx = DB.planos_corte.findIndex(x => x.id === plano.id); if(idx > -1) DB.planos_corte[idx] = plano; } 
+        else { DB.planos_corte.push(plano); }
         saveDB(); planoAtualId = plano.id; planoAtualNome = plano.nome; showToast("Plano de Corte Salvo!");
     }
 
@@ -1146,7 +1169,7 @@
         else {
             div.innerHTML = DB.planos_corte.sort((a,b) => b.id - a.id).map(p => `
                 <div class="item-selecionado" style="border-left: 3px solid var(--gold);">
-                    <div style="line-height:1.3;"><span style="font-size:14px; font-weight:bold; color:white;">${p.nome}</span><br><span style="font-size:11px; color:#aaa;">${formatarDataBR(p.data)} | ${p.pecas.length} peças</span><br><span style="font-size:11px; color:var(--teal);">${p.material} - ${p.espessura}</span></div>
+                    <div style="line-height:1.3;"><span style="font-size:14px; font-weight:bold; color:white;">${p.nome}</span><br><span style="font-size:11px; color:#aaa;">${formatarDataBR(p.data)} | ${p.pecas.length} peças</span></div>
                     <div style="display:flex; gap:15px; align-items:center;"><i class="fas fa-folder-open" style="color:var(--blue); cursor:pointer; font-size:18px;" onclick="carregarPlano(${p.id})"></i><i class="fas fa-trash" style="color:var(--red); cursor:pointer; font-size:18px;" onclick="excluirPlano(${p.id})"></i></div>
                 </div>
             `).join('');
@@ -1157,29 +1180,65 @@
     function carregarPlano(id) {
         const p = DB.planos_corte.find(x => x.id === id); if(!p) return;
         planoAtualId = p.id; planoAtualNome = p.nome;
-        document.getElementById('corte_material').value = p.material || "MDF Branco"; document.getElementById('corte_espessura').value = p.espessura || "15mm";
-        document.getElementById('corte_chapa_comp').value = p.chapa_comp; document.getElementById('corte_chapa_larg').value = p.chapa_larg;
-        document.getElementById('corte_serra').value = p.serra; document.getElementById('corte_rotacao').checked = p.rotacao || false;
-        pecasCorte = JSON.parse(JSON.stringify(p.pecas)); renderizarPecasCorte(); document.getElementById('container_mapas_visuais').innerHTML = '';
+        document.getElementById('corte_serra').value = p.serra || 3; 
+        document.getElementById('corte_rotacao').checked = p.rotacao || false;
+        
+        pecasCorte = JSON.parse(JSON.stringify(p.pecas)); 
+        
+        // Coloca no formulário a conf do primeiro material só para não ficar vazio
+        if(pecasCorte.length > 0) {
+            document.getElementById('corte_material').value = pecasCorte[0].material || "MDF Branco";
+            document.getElementById('corte_espessura').value = pecasCorte[0].espessura || "15mm";
+            document.getElementById('corte_chapa_comp').value = pecasCorte[0].chapa_comp || 2750;
+            document.getElementById('corte_chapa_larg').value = pecasCorte[0].chapa_larg || 1850;
+        }
+
+        renderizarPecasCorte(); 
+        document.getElementById('container_mapas_visuais').innerHTML = '';
         fecharModais(); showToast(`Plano "${p.nome}" carregado!`);
     }
 
     function excluirPlano(id) { if(confirm("Deseja excluir este plano salvo?")) { DB.planos_corte = DB.planos_corte.filter(x => x.id !== id); saveDB(); if(planoAtualId === id) { planoAtualId = null; planoAtualNome = ""; } abrirPlanosSalvos(); } }
 
+    // ALGORITMO MODIFICADO PARA MULTI-MATERIAIS
     function calcularAlgoritmoDeCorte() {
         if(pecasCorte.length === 0) return showToast("Adicione peças primeiro!", "error");
-        const sheetW = parseFloat(document.getElementById('corte_chapa_comp').value);
-        const sheetH = parseFloat(document.getElementById('corte_chapa_larg').value);
         const kerf = parseFloat(document.getElementById('corte_serra').value);
         const permitirRotacao = document.getElementById('corte_rotacao').checked;
 
-        if(!sheetW || !sheetH) return showToast("Verifique as medidas da chapa!", "error");
+        // 1. Separar as peças por grupo (Material + Espessura)
+        let gruposMaterial = {};
+        pecasCorte.forEach((p, originalIndex) => {
+            let chave = `${p.material} | ${p.espessura}`;
+            if(!gruposMaterial[chave]) {
+                gruposMaterial[chave] = {
+                    nomeMat: p.material,
+                    espessuraMat: p.espessura,
+                    chapa_comp: p.chapa_comp,
+                    chapa_larg: p.chapa_larg,
+                    pecas_flat: [],
+                    areaLiquida: 0
+                };
+            }
+            
+            for(let i=0; i<p.qtd; i++) { 
+                gruposMaterial[chave].pecas_flat.push({ 
+                    idx_ref: originalIndex + 1, 
+                    desc: p.desc, 
+                    w: p.comp, 
+                    h: p.larg, 
+                    fitaResumo: p.fitaResumo, 
+                    fitaEdges: p.fitaEdges, 
+                    cor_fita: p.cor_fita 
+                }); 
+                gruposMaterial[chave].areaLiquida += (p.comp * p.larg) / 1000000; 
+            }
+        });
 
-        let flatPieces = []; let areaLiquida = 0;
-        pecasCorte.forEach((p, idxList) => { for(let i=0; i<p.qtd; i++) { flatPieces.push({ idx_ref: idxList + 1, desc: p.desc, w: p.comp, h: p.larg, fitaResumo: p.fitaResumo, fitaEdges: p.fitaEdges, cor_fita: p.cor_fita }); areaLiquida += (p.comp * p.larg) / 1000000; } });
-        flatPieces.sort((a,b) => Math.max(b.w, b.h) - Math.max(a.w, a.h));
+        gruposChapasCalculadas = []; // Zera a lista de mapas
+        let totalChapasGeral = 0;
+        let totalAreaGeral = 0;
 
-        let sheets = [];
         function fitPieceInNode(node, pw, ph) { if(pw <= node.w && ph <= node.h) return { rot: false }; if(permitirRotacao && ph <= node.w && pw <= node.h) return { rot: true }; return null; }
         function splitGuillotine(freeRect, pw, ph, kerf) {
             let rects = [];
@@ -1187,79 +1246,110 @@
             return rects.filter(r => r.w > 0 && r.h > 0); 
         }
 
-        for (let i = 0; i < flatPieces.length; i++) {
-            let p = flatPieces[i]; let placed = false;
-            for (let s = 0; s < sheets.length; s++) {
-                let sheet = sheets[s];
-                for (let f = 0; f < sheet.freeRects.length; f++) {
-                    let fr = sheet.freeRects[f]; let fit = fitPieceInNode(fr, p.w, p.h);
-                    if (fit) { let finalW = fit.rot ? p.h : p.w; let finalH = fit.rot ? p.w : p.h; sheet.placed.push({ idx_ref: p.idx_ref, x: fr.x, y: fr.y, w: finalW, h: finalH, rot: fit.rot, origW: p.w, origH: p.h, fitaEdges: p.fitaEdges }); let newRects = splitGuillotine(fr, finalW, finalH, kerf); sheet.freeRects.splice(f, 1, ...newRects); placed = true; break; }
+        // 2. Rodar o algoritmo separadamente para cada material
+        Object.keys(gruposMaterial).forEach(chave => {
+            let grupo = gruposMaterial[chave];
+            grupo.pecas_flat.sort((a,b) => Math.max(b.w, b.h) - Math.max(a.w, a.h)); // Ordena do maior pro menor
+            
+            let sheets = [];
+            
+            for (let i = 0; i < grupo.pecas_flat.length; i++) {
+                let p = grupo.pecas_flat[i]; let placed = false;
+                for (let s = 0; s < sheets.length; s++) {
+                    let sheet = sheets[s];
+                    for (let f = 0; f < sheet.freeRects.length; f++) {
+                        let fr = sheet.freeRects[f]; let fit = fitPieceInNode(fr, p.w, p.h);
+                        if (fit) { let finalW = fit.rot ? p.h : p.w; let finalH = fit.rot ? p.w : p.h; sheet.placed.push({ idx_ref: p.idx_ref, x: fr.x, y: fr.y, w: finalW, h: finalH, rot: fit.rot, origW: p.w, origH: p.h, fitaEdges: p.fitaEdges }); let newRects = splitGuillotine(fr, finalW, finalH, kerf); sheet.freeRects.splice(f, 1, ...newRects); placed = true; break; }
+                    }
+                    if (placed) break;
                 }
-                if (placed) break;
+                if (!placed) {
+                    let newSheet = { id: sheets.length + 1, placed: [], freeRects: [{ x: 0, y: 0, w: grupo.chapa_comp, h: grupo.chapa_larg }] };
+                    let fr = newSheet.freeRects[0]; let fit = fitPieceInNode(fr, p.w, p.h);
+                    if(fit) { let finalW = fit.rot ? p.h : p.w; let finalH = fit.rot ? p.w : p.h; newSheet.placed.push({ idx_ref: p.idx_ref, x: fr.x, y: fr.y, w: finalW, h: finalH, rot: fit.rot, origW: p.w, origH: p.h, fitaEdges: p.fitaEdges }); let newRects = splitGuillotine(fr, finalW, finalH, kerf); newSheet.freeRects.splice(0, 1, ...newRects); }
+                    sheets.push(newSheet);
+                }
             }
-            if (!placed) {
-                let newSheet = { id: sheets.length + 1, placed: [], freeRects: [{ x: 0, y: 0, w: sheetW, h: sheetH }] };
-                let fr = newSheet.freeRects[0]; let fit = fitPieceInNode(fr, p.w, p.h);
-                if(fit) { let finalW = fit.rot ? p.h : p.w; let finalH = fit.rot ? p.w : p.h; newSheet.placed.push({ idx_ref: p.idx_ref, x: fr.x, y: fr.y, w: finalW, h: finalH, rot: fit.rot, origW: p.w, origH: p.h, fitaEdges: p.fitaEdges }); let newRects = splitGuillotine(fr, finalW, finalH, kerf); newSheet.freeRects.splice(0, 1, ...newRects); }
-                sheets.push(newSheet);
-            }
-        }
-        chapasDesenhadas = sheets; 
-        document.getElementById('resultado_chapas').innerText = `${sheets.length} Chapa(s) Necessária(s)`;
-        document.getElementById('resultado_area').innerText = `Área Líquida: ${areaLiquida.toFixed(2)} m²`;
-        desenharMapasVisuais(sheetW, sheetH); showToast("Otimização concluída!");
+            
+            totalChapasGeral += sheets.length;
+            totalAreaGeral += grupo.areaLiquida;
+
+            // Salva o grupo calculado
+            gruposChapasCalculadas.push({
+                titulo: `${grupo.nomeMat} - ${grupo.espessuraMat}`,
+                chapa_comp: grupo.chapa_comp,
+                chapa_larg: grupo.chapa_larg,
+                areaLiquida: grupo.areaLiquida,
+                sheets: sheets
+            });
+        });
+
+        document.getElementById('resultado_chapas').innerText = `${totalChapasGeral} Chapa(s) no Total`;
+        document.getElementById('resultado_area').innerText = `Área Líquida: ${totalAreaGeral.toFixed(2)} m²`;
+        
+        desenharMapasVisuais(); 
+        showToast("Otimização concluída!");
     }
 
-    function desenharMapasVisuais(sheetW, sheetH) {
+    function desenharMapasVisuais() {
         const container = document.getElementById('container_mapas_visuais'); container.innerHTML = ''; 
-        if(chapasDesenhadas.length === 0) return;
-        const scale = 800 / sheetW; const canvasW = (sheetW * scale); const canvasH = (sheetH * scale);
+        if(gruposChapasCalculadas.length === 0) return;
+        
         container.innerHTML = `<div class="legenda-box" style="margin-bottom:10px;"><div class="legenda-item"><div class="linha-pontilhada-demo"></div> <span>Fita de Borda (40mm interna)</span></div><div class="legenda-item"><span style="font-size:16px; font-weight:normal;">#5</span> <span>Nº da Peça</span></div></div>`;
 
-        chapasDesenhadas.forEach((sheet, index) => {
-            let divWrapper = document.createElement('div'); divWrapper.className = 'mapa-chapa-container';
-            divWrapper.innerHTML = `<h5 style="text-align:center; color:#333; margin:5px 0;">Chapa ${index + 1}</h5>`;
-            let canvas = document.createElement('canvas'); canvas.className = 'mapa-chapa';
-            canvas.width = canvasW; canvas.height = canvasH; canvas.id = `canvas_sheet_${index}`;
-            divWrapper.appendChild(canvas); container.appendChild(divWrapper);
-            let ctx = canvas.getContext('2d');
-            
-            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvasW, canvasH);
-            ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeRect(0, 0, canvasW, canvasH);
+        gruposChapasCalculadas.forEach((grupo, indexGrupo) => {
+            // Cria um título para separar os materiais na tela do celular
+            let divMaterial = document.createElement('div');
+            divMaterial.innerHTML = `<h3 style="color:var(--cyan); margin-top:20px; border-bottom:1px solid #444; padding-bottom:5px;">${grupo.titulo}</h3>`;
+            container.appendChild(divMaterial);
 
-            sheet.placed.forEach(p => {
-                let cx = p.x * scale; let cy = p.y * scale; let cw = p.w * scale; let ch = p.h * scale;
-                ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.strokeRect(cx, cy, cw, ch);
+            const scale = 800 / grupo.chapa_comp; 
+            const canvasW = (grupo.chapa_comp * scale); 
+            const canvasH = (grupo.chapa_larg * scale);
+
+            grupo.sheets.forEach((sheet, indexChapa) => {
+                let divWrapper = document.createElement('div'); divWrapper.className = 'mapa-chapa-container';
+                divWrapper.innerHTML = `<h5 style="text-align:center; color:#333; margin:5px 0;">Chapa ${indexChapa + 1} (${grupo.titulo})</h5>`;
+                let canvas = document.createElement('canvas'); canvas.className = 'mapa-chapa';
+                canvas.width = canvasW; canvas.height = canvasH; canvas.id = `canvas_g${indexGrupo}_s${indexChapa}`;
+                divWrapper.appendChild(canvas); container.appendChild(divWrapper);
+                let ctx = canvas.getContext('2d');
                 
-                if(p.fitaEdges) {
-                    ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
-                    let offset = 40 * scale;
-                    let tEdge = p.rot ? p.fitaEdges.l1 : p.fitaEdges.c1; let bEdge = p.rot ? p.fitaEdges.l2 : p.fitaEdges.c2;
-                    let lEdge = p.rot ? p.fitaEdges.c2 : p.fitaEdges.l1; let rEdge = p.rot ? p.fitaEdges.c1 : p.fitaEdges.l2;
-                    ctx.beginPath();
-                    if (tEdge) { ctx.moveTo(cx, cy + offset); ctx.lineTo(cx + cw, cy + offset); }
-                    if (bEdge) { ctx.moveTo(cx, cy + ch - offset); ctx.lineTo(cx + cw, cy + ch - offset); }
-                    if (lEdge) { ctx.moveTo(cx + offset, cy); ctx.lineTo(cx + offset, cy + ch); }
-                    if (rEdge) { ctx.moveTo(cx + cw - offset, cy); ctx.lineTo(cx + cw - offset, cy + ch); }
-                    ctx.stroke(); ctx.setLineDash([]);
-                }
-                ctx.fillStyle = '#000'; 
-                if (cw > 20 && ch > 20) { ctx.font = '11px Arial'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(p.idx_ref, cx + 4, cy + 4); }
-                if (cw > 40 && ch > 30) { ctx.font = '12px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(p.origW, cx + cw/2, cy + ch - 4); ctx.save(); ctx.translate(cx + 12, cy + ch/2); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.origH, 0, 0); ctx.restore(); }
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvasW, canvasH);
+                ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeRect(0, 0, canvasW, canvasH);
+
+                sheet.placed.forEach(p => {
+                    let cx = p.x * scale; let cy = p.y * scale; let cw = p.w * scale; let ch = p.h * scale;
+                    ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.strokeRect(cx, cy, cw, ch);
+                    
+                    if(p.fitaEdges) {
+                        ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+                        let offset = 40 * scale;
+                        let tEdge = p.rot ? p.fitaEdges.l1 : p.fitaEdges.c1; let bEdge = p.rot ? p.fitaEdges.l2 : p.fitaEdges.c2;
+                        let lEdge = p.rot ? p.fitaEdges.c2 : p.fitaEdges.l1; let rEdge = p.rot ? p.fitaEdges.c1 : p.fitaEdges.l2;
+                        ctx.beginPath();
+                        if (tEdge) { ctx.moveTo(cx, cy + offset); ctx.lineTo(cx + cw, cy + offset); }
+                        if (bEdge) { ctx.moveTo(cx, cy + ch - offset); ctx.lineTo(cx + cw, cy + ch - offset); }
+                        if (lEdge) { ctx.moveTo(cx + offset, cy); ctx.lineTo(cx + offset, cy + ch); }
+                        if (rEdge) { ctx.moveTo(cx + cw - offset, cy); ctx.lineTo(cx + cw - offset, cy + ch); }
+                        ctx.stroke(); ctx.setLineDash([]);
+                    }
+                    ctx.fillStyle = '#000'; 
+                    if (cw > 20 && ch > 20) { ctx.font = '11px Arial'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(p.idx_ref, cx + 4, cy + 4); }
+                    if (cw > 40 && ch > 30) { ctx.font = '12px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(p.origW, cx + cw/2, cy + ch - 4); ctx.save(); ctx.translate(cx + 12, cy + ch/2); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.origH, 0, 0); ctx.restore(); }
+                });
             });
         });
     }
 
     function imprimirPlanoCorte() {
-        if(pecasCorte.length === 0 || chapasDesenhadas.length === 0) return showToast("Calcule o mapa de corte primeiro!", "error");
-        const chapaComp = document.getElementById('corte_chapa_comp').value; const chapaLarg = document.getElementById('corte_chapa_larg').value; const material = document.getElementById('corte_material').value; const espessura = document.getElementById('corte_espessura').value; const rotCheck = document.getElementById('corte_rotacao').checked ? "Ligada (Ignora Veio)" : "Desligada (Com Veio)"; const totalChapas = chapasDesenhadas.length; const c = DB.config || {}; const tituloPlano = planoAtualNome ? `Projeto: ${planoAtualNome}` : `Plano de Corte Otimizado`;
+        if(pecasCorte.length === 0 || gruposChapasCalculadas.length === 0) return showToast("Calcule o mapa de corte primeiro!", "error");
         
-        let linhasTabela = pecasCorte.map((p, idx) => {
-            let fitaDetalhe = p.fitaResumo + (p.cor_fita ? `<br><small style="color:#666">Cor: ${p.cor_fita}</small>` : '');
-            return `<tr><td><strong>${idx + 1}</strong></td><td class="desc-left">${p.desc}</td><td>${p.qtd}</td><td>${p.comp} mm</td><td>${p.larg} mm</td><td>${fitaDetalhe}</td></tr>`;
-        }).join('');
+        const rotCheck = document.getElementById('corte_rotacao').checked ? "Ligada (Ignora Veio)" : "Desligada (Com Veio)"; 
+        const c = DB.config || {}; 
+        const tituloPlano = planoAtualNome ? `Projeto: ${planoAtualNome}` : `Plano de Corte Otimizado`;
         
-        // CALCULO DO TOTAL DE FITA PARA IMPRESSÃO
+        // CALCULO DO TOTAL DE FITA PARA IMPRESSÃO GERAL
         let totalFitaMmPrint = 0;
         pecasCorte.forEach(p => {
             let fitaPeca = 0;
@@ -1270,32 +1360,69 @@
             totalFitaMmPrint += (fitaPeca * p.qtd);
         });
         let totalFitaMetrosPrint = (totalFitaMmPrint / 1000).toFixed(2);
-        
-        let htmlMapasImg = '';
-        chapasDesenhadas.forEach((sheet, idx) => { let canvasOriginal = document.getElementById(`canvas_sheet_${idx}`); if(canvasOriginal) { let imgURL = canvasOriginal.toDataURL("image/png"); htmlMapasImg += `<div class="print-mapa-box"><h3>CHAPA ${idx + 1}</h3><img src="${imgURL}" class="print-mapa-img"></div>`; } });
+
+        let htmlMapasEMateriais = "";
+
+        // Para cada material gerado, cria uma tabela e seus respectivos mapas
+        gruposChapasCalculadas.forEach((grupo, indexGrupo) => {
+            
+            // Filtra peças que são apenas deste material/espessura
+            let pecasDesteGrupo = pecasCorte.filter(p => p.material === grupo.titulo.split(' - ')[0] && p.espessura === grupo.titulo.split(' - ')[1]);
+            
+            let linhasTabela = pecasDesteGrupo.map(p => {
+                let idxOriginal = pecasCorte.indexOf(p) + 1; // Pega o id real para não confundir o mapa
+                let fitaDetalhe = p.fitaResumo + (p.cor_fita ? `<br><small style="color:#666">Cor: ${p.cor_fita}</small>` : '');
+                return `<tr><td><strong>${idxOriginal}</strong></td><td class="desc-left">${p.desc}</td><td>${p.qtd}</td><td>${p.comp} mm</td><td>${p.larg} mm</td><td>${fitaDetalhe}</td></tr>`;
+            }).join('');
+
+            let htmlMapasImg = '';
+            grupo.sheets.forEach((sheet, indexChapa) => { 
+                let canvasOriginal = document.getElementById(`canvas_g${indexGrupo}_s${indexChapa}`); 
+                if(canvasOriginal) { 
+                    let imgURL = canvasOriginal.toDataURL("image/png"); 
+                    htmlMapasImg += `<div class="print-mapa-box"><h3>CHAPA ${indexChapa + 1}</h3><img src="${imgURL}" class="print-mapa-img"></div>`; 
+                } 
+            });
+
+            htmlMapasEMateriais += `
+                <div style="background:#f0f0f0; padding:10px; border:1px solid #ccc; margin-top:30px; display:flex; justify-content:space-between;">
+                    <div>
+                        <h3 style="margin:0;">${grupo.titulo}</h3>
+                        <strong>Chapa Base:</strong> ${grupo.chapa_comp}mm x ${grupo.chapa_larg}mm<br>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-size:18px; font-weight:bold;">${grupo.sheets.length} Chapa(s)</span>
+                    </div>
+                </div>
+                <table class="corte-table" style="margin-bottom:10px;">
+                    <thead><tr><th width="5%">Nº</th><th width="40%" class="desc-left">Peça</th><th width="10%">Qtd</th><th width="15%">Comp.</th><th width="15%">Larg.</th><th width="15%">Fita de Borda</th></tr></thead>
+                    <tbody>${linhasTabela}</tbody>
+                </table>
+                <h2 style="text-align:center; border-bottom:1px solid #000; padding-bottom:5px; margin-top:20px; font-size:16px;">MAPAS DE CORTE - ${grupo.titulo}</h2>
+                ${htmlMapasImg}
+            `;
+        });
+
         const areaImpressao = document.getElementById('area-impressao');
-        
         areaImpressao.innerHTML = `
             <div class="print-corte-container">
                 <div class="print-corte-header"><h1>${tituloPlano}</h1><p>${c.nome || "Minha Empresa"}</p></div>
-                <div class="print-corte-info">
+                <div class="print-corte-info" style="border:none; padding:0; background:none;">
                     <div>
-                        <strong>Material:</strong> ${material} - ${espessura}<br>
-                        <strong>Chapa Base:</strong> ${chapaComp}mm x ${chapaLarg}mm<br>
                         <strong>Rotação das Peças:</strong> ${rotCheck}<br>
                         <strong>Desconto da Serra:</strong> ${document.getElementById('corte_serra').value}mm<br>
                         <strong>Data:</strong> ${formatarDataBR(new Date().toISOString().split('T')[0])}
                     </div>
                     <div style="text-align:right;">
-                        <span style="font-size:18px; font-weight:bold;">${totalChapas} Chapa(s)</span><br>
-                        <span style="font-size:14px; color:#444; font-weight:bold;">Total Fita: ${totalFitaMetrosPrint} Metros</span>
+                        <span style="font-size:16px; color:#444; font-weight:bold;">Fita Total Necessária (Projeto Todo): ${totalFitaMetrosPrint} Metros</span>
                     </div>
                 </div>
-                <table class="corte-table"><thead><tr><th width="5%">Nº</th><th width="40%" class="desc-left">Peça</th><th width="10%">Qtd</th><th width="15%">Comp.</th><th width="15%">Larg.</th><th width="15%">Fita de Borda</th></tr></thead><tbody>${linhasTabela}</tbody></table>
-                <div style="page-break-after: always;"></div>
-                <h2 style="text-align:center; border-bottom:1px solid #000; padding-bottom:10px; margin-top:20px;">MAPAS DE CORTE - DESENHO TÉCNICO</h2>
-                <div style="display:flex; justify-content:center; gap:20px; font-size:14px; margin-bottom:20px; font-weight:bold; color:#444; align-items:center;"><div style="display:flex; align-items:center; gap:5px;"><div class="linha-pontilhada-demo"></div><span>Linha Pontilhada = Fita de Borda (40mm interna)</span></div></div>
-                ${htmlMapasImg}
+                
+                <div style="display:flex; justify-content:center; gap:20px; font-size:14px; margin-bottom:10px; margin-top:10px; font-weight:bold; color:#444; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:5px;"><div class="linha-pontilhada-demo"></div><span>Linha Pontilhada = Fita de Borda (40mm interna)</span></div>
+                </div>
+
+                ${htmlMapasEMateriais}
             </div>
         `;
         setTimeout(() => { window.print(); }, 300);
