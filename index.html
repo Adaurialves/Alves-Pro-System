@@ -235,9 +235,18 @@
 
         <div class="item-card" style="border-left-color: var(--blue);">
             <h4 style="color:var(--blue); margin-top:0;"><i class="fas fa-plus"></i> Adicionar Peças</h4>
-            <label>Descrição da Peça (Ex: Porta, Lateral)</label>
-            <input type="text" id="corte_desc_peca">
-            <div style="display:flex; gap:10px;"><div style="flex:1"><label>Comp. (mm)</label><input type="number" id="corte_comp_peca"></div><div style="flex:1"><label>Larg. (mm)</label><input type="number" id="corte_larg_peca"></div><div style="flex:1"><label>Qtd</label><input type="number" id="corte_qtd_peca" value="1"></div></div>
+            
+            <!-- Nova ordem: Qtd, Comp, Larg e Descrição -->
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1"><label>Qtd</label><input type="number" id="corte_qtd_peca" value="1"></div>
+                <div style="flex:1"><label>Comp. (mm)</label><input type="number" id="corte_comp_peca"></div>
+                <div style="flex:1"><label>Larg. (mm)</label><input type="number" id="corte_larg_peca"></div>
+            </div>
+            
+            <div style="margin-top: 5px;">
+                <label>Descrição da Peça (Ex: Porta, Lateral)</label>
+                <input type="text" id="corte_desc_peca">
+            </div>
             
             <!-- Campo Fita Borda Específica -->
             <div style="margin-top: 10px;">
@@ -254,7 +263,15 @@
         <div class="item-card" style="border-left-color: var(--gold);">
             <h4 style="color:var(--gold); margin-top:0;"><i class="fas fa-list"></i> Lista de Corte</h4>
             <div id="lista_pecas_corte" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px;"></div>
-            <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; text-align:center; margin-bottom:15px; border:1px solid #444;"><span style="font-size:12px; color:#aaa; font-weight:bold;">RESULTADO DA OTIMIZAÇÃO:</span><br><strong id="resultado_chapas" style="color:var(--gold); font-size:20px;">-</strong><p id="resultado_area" style="margin:5px 0 0 0; font-size:12px; color:#888;">Área total: -</p></div>
+            
+            <!-- Adicionado o campo Total de Fita na tela de Resultados -->
+            <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; text-align:center; margin-bottom:15px; border:1px solid #444;">
+                <span style="font-size:12px; color:#aaa; font-weight:bold;">RESULTADO DA OTIMIZAÇÃO:</span><br>
+                <strong id="resultado_chapas" style="color:var(--gold); font-size:20px;">-</strong>
+                <p id="resultado_area" style="margin:5px 0 0 0; font-size:12px; color:#888;">Área total: -</p>
+                <p id="resultado_fita" style="margin:5px 0 0 0; font-size:13px; color:var(--cyan); font-weight:bold;">Total de Fita: -</p>
+            </div>
+            
             <button onclick="calcularAlgoritmoDeCorte()" style="width:100%; padding:15px; background:var(--gold); border:none; border-radius:8px; color:black; font-weight:bold; margin-bottom:10px; cursor:pointer;"><i class="fas fa-magic"></i> 1. GERAR MAPA DE CORTE</button>
             <button onclick="imprimirPlanoCorte()" style="width:100%; padding:15px; background:none; border:1px solid var(--blue); border-radius:8px; color:var(--blue); font-weight:bold; cursor:pointer;"><i class="fas fa-print"></i> 2. EXPORTAR LISTA E MAPAS (PDF)</button>
             <div id="container_mapas_visuais" style="margin-top: 15px;"></div>
@@ -1044,7 +1061,7 @@
     }
 
     // ==========================================
-    // MÓDULO PLANO DE CORTE (Mantido intacto do original)
+    // MÓDULO PLANO DE CORTE
     // ==========================================
     let pecasCorte = []; let chapasDesenhadas = []; let planoAtualId = null; let planoAtualNome = "";
 
@@ -1082,7 +1099,27 @@
 
     function renderizarPecasCorte() {
         const div = document.getElementById('lista_pecas_corte');
-        if(pecasCorte.length === 0) { div.innerHTML = `<div style="text-align:center; color:#666; font-size:12px; padding:10px;">Nenhuma peça adicionada.</div>`; return; }
+        
+        // CALCULO DO TOTAL DE FITA AQUI
+        let totalFitaMm = 0;
+        pecasCorte.forEach(p => {
+            let fitaPeca = 0;
+            if(p.fitaEdges.c1) fitaPeca += p.comp;
+            if(p.fitaEdges.c2) fitaPeca += p.comp;
+            if(p.fitaEdges.l1) fitaPeca += p.larg;
+            if(p.fitaEdges.l2) fitaPeca += p.larg;
+            totalFitaMm += (fitaPeca * p.qtd);
+        });
+        
+        // Mostra o resultado na tela na div "Total de Fita"
+        document.getElementById('resultado_fita').innerText = `Total de Fita: ${(totalFitaMm / 1000).toFixed(2)} Metros`;
+
+        if(pecasCorte.length === 0) { 
+            div.innerHTML = `<div style="text-align:center; color:#666; font-size:12px; padding:10px;">Nenhuma peça adicionada.</div>`; 
+            document.getElementById('resultado_fita').innerText = `Total de Fita: -`;
+            return; 
+        }
+        
         div.innerHTML = pecasCorte.map((p, idx) => `
             <div class="item-selecionado">
                 <div style="line-height:1.3;">
@@ -1222,12 +1259,38 @@
             return `<tr><td><strong>${idx + 1}</strong></td><td class="desc-left">${p.desc}</td><td>${p.qtd}</td><td>${p.comp} mm</td><td>${p.larg} mm</td><td>${fitaDetalhe}</td></tr>`;
         }).join('');
         
+        // CALCULO DO TOTAL DE FITA PARA IMPRESSÃO
+        let totalFitaMmPrint = 0;
+        pecasCorte.forEach(p => {
+            let fitaPeca = 0;
+            if(p.fitaEdges.c1) fitaPeca += p.comp;
+            if(p.fitaEdges.c2) fitaPeca += p.comp;
+            if(p.fitaEdges.l1) fitaPeca += p.larg;
+            if(p.fitaEdges.l2) fitaPeca += p.larg;
+            totalFitaMmPrint += (fitaPeca * p.qtd);
+        });
+        let totalFitaMetrosPrint = (totalFitaMmPrint / 1000).toFixed(2);
+        
         let htmlMapasImg = '';
         chapasDesenhadas.forEach((sheet, idx) => { let canvasOriginal = document.getElementById(`canvas_sheet_${idx}`); if(canvasOriginal) { let imgURL = canvasOriginal.toDataURL("image/png"); htmlMapasImg += `<div class="print-mapa-box"><h3>CHAPA ${idx + 1}</h3><img src="${imgURL}" class="print-mapa-img"></div>`; } });
         const areaImpressao = document.getElementById('area-impressao');
+        
         areaImpressao.innerHTML = `
-            <div class="print-corte-container"><div class="print-corte-header"><h1>${tituloPlano}</h1><p>${c.nome || "Minha Empresa"}</p></div>
-                <div class="print-corte-info"><div><strong>Material:</strong> ${material} - ${espessura}<br><strong>Chapa Base:</strong> ${chapaComp}mm x ${chapaLarg}mm<br><strong>Rotação das Peças:</strong> ${rotCheck}<br><strong>Desconto da Serra:</strong> ${document.getElementById('corte_serra').value}mm<br><strong>Data:</strong> ${formatarDataBR(new Date().toISOString().split('T')[0])}</div><div style="text-align:right;"><span style="font-size:18px; font-weight:bold;">${totalChapas} Chapa(s)</span></div></div>
+            <div class="print-corte-container">
+                <div class="print-corte-header"><h1>${tituloPlano}</h1><p>${c.nome || "Minha Empresa"}</p></div>
+                <div class="print-corte-info">
+                    <div>
+                        <strong>Material:</strong> ${material} - ${espessura}<br>
+                        <strong>Chapa Base:</strong> ${chapaComp}mm x ${chapaLarg}mm<br>
+                        <strong>Rotação das Peças:</strong> ${rotCheck}<br>
+                        <strong>Desconto da Serra:</strong> ${document.getElementById('corte_serra').value}mm<br>
+                        <strong>Data:</strong> ${formatarDataBR(new Date().toISOString().split('T')[0])}
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-size:18px; font-weight:bold;">${totalChapas} Chapa(s)</span><br>
+                        <span style="font-size:14px; color:#444; font-weight:bold;">Total Fita: ${totalFitaMetrosPrint} Metros</span>
+                    </div>
+                </div>
                 <table class="corte-table"><thead><tr><th width="5%">Nº</th><th width="40%" class="desc-left">Peça</th><th width="10%">Qtd</th><th width="15%">Comp.</th><th width="15%">Larg.</th><th width="15%">Fita de Borda</th></tr></thead><tbody>${linhasTabela}</tbody></table>
                 <div style="page-break-after: always;"></div>
                 <h2 style="text-align:center; border-bottom:1px solid #000; padding-bottom:10px; margin-top:20px;">MAPAS DE CORTE - DESENHO TÉCNICO</h2>
