@@ -132,7 +132,7 @@
             .corte-table td.desc-left { text-align: left; }
 
             .print-mapa-box { text-align: center; margin-top: 30px; page-break-inside: avoid; }
-            .print-mapa-box h3 { margin-bottom: 10px; font-size: 16px; text-transform:uppercase; }
+            .print-mapa-box h3 { margin-bottom: 10px; font-size: 16px; text-transform:uppercase; background:#333; color:white; padding:5px; }
             .print-mapa-img { max-width: 100%; }
         }
     </style>
@@ -223,12 +223,16 @@
             <button onclick="salvarPlanoCorte()" style="flex:1; padding:12px; background:var(--card); border:1px solid #444; border-radius:8px; color:#ddd; font-weight:bold; cursor:pointer;"><i class="fas fa-save" style="color:var(--green);"></i> SALVAR PLANO</button>
         </div>
 
+        <div style="background: rgba(10,132,255,0.1); border-left: 4px solid var(--blue); padding: 10px; border-radius: 8px; font-size: 11px; color: #ddd; margin-bottom: 12px;">
+            <i class="fas fa-info-circle" style="color:var(--blue)"></i> <b>Dica:</b> Para peças de espessuras diferentes, basta alterar o Material/Espessura acima e continuar adicionando as peças. O sistema separará tudo sozinho!
+        </div>
+
         <div class="item-card" style="border-left-color: var(--light-gray);">
-            <h4 style="color:var(--light-gray); margin-top:0;"><i class="fas fa-vector-square"></i> Configuração da Chapa</h4>
+            <h4 style="color:var(--light-gray); margin-top:0;"><i class="fas fa-vector-square"></i> Configuração da Chapa Base</h4>
             <div style="display:flex; gap:10px;"><div style="flex:2"><label>Material (Ex: MDF Branco)</label><input type="text" id="corte_material" value="MDF Branco"></div><div style="flex:1"><label>Espessura</label><input type="text" id="corte_espessura" value="15mm"></div></div>
             <div style="display:flex; gap:10px;"><div style="flex:1"><label>Comp. Chapa (mm)</label><input type="number" id="corte_chapa_comp" value="2750"></div><div style="flex:1"><label>Largura Chapa (mm)</label><input type="number" id="corte_chapa_larg" value="1850"></div></div>
             <div style="display:flex; gap:10px;">
-                <div style="flex:1"><label>Espessura Serra (mm)</label><input type="number" id="corte_serra" value="3"></div>
+                <div style="flex:1"><label>Espessura Serra (mm)</label><input type="number" id="corte_serra" value="4"></div>
             </div>
             <div style="margin-top: 10px;"><label class="label-check" style="background: rgba(10,132,255,0.1); border-color: var(--blue); color:var(--blue); justify-content: flex-start; padding-left: 15px;"><input type="checkbox" id="corte_rotacao" class="check-inline"> Permitir Rotação das Peças (Ignorar Veio)</label></div>
         </div>
@@ -236,7 +240,6 @@
         <div class="item-card" style="border-left-color: var(--blue);">
             <h4 style="color:var(--blue); margin-top:0;"><i class="fas fa-plus"></i> Adicionar Peças</h4>
             
-            <!-- Nova ordem: Qtd, Comp, Larg e Descrição -->
             <div style="display:flex; gap:10px;">
                 <div style="flex:1"><label>Qtd</label><input type="number" id="corte_qtd_peca" value="1"></div>
                 <div style="flex:1"><label>Comp. (mm)</label><input type="number" id="corte_comp_peca"></div>
@@ -248,7 +251,6 @@
                 <input type="text" id="corte_desc_peca">
             </div>
             
-            <!-- Campo Fita Borda Específica -->
             <div style="margin-top: 10px;">
                 <label>Cor/Material Fita Borda</label>
                 <input type="text" id="corte_cor_fita_peca" placeholder="Opcional (Ex: Preto, Madeirado)">
@@ -264,7 +266,6 @@
             <h4 style="color:var(--gold); margin-top:0;"><i class="fas fa-list"></i> Lista de Corte</h4>
             <div id="lista_pecas_corte" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px;"></div>
             
-            <!-- Adicionado o campo Total de Fita na tela de Resultados -->
             <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; text-align:center; margin-bottom:15px; border:1px solid #444;">
                 <span style="font-size:12px; color:#aaa; font-weight:bold;">RESULTADO DA OTIMIZAÇÃO:</span><br>
                 <strong id="resultado_chapas" style="color:var(--gold); font-size:20px;">-</strong>
@@ -480,8 +481,6 @@
 </div>
 
 <script>
-    // A SENHA FOI REMOVIDA PARA EVITAR PROBLEMAS NO CELULAR
-    
     function verificarTrava() { 
         const bloqueio = document.getElementById('tela_bloqueio'); 
         const app = document.getElementById('app_principal'); 
@@ -496,9 +495,7 @@
     }
     
     function desbloquearApp() { 
-        // Trava flexível: Aceita ALVES, 2026 ou 123
         let input = document.getElementById('input_senha').value.toUpperCase().replace(/[^A-Z0-9]/g, ''); 
-        
         if(input.includes("ALVES") || input.includes("2026") || input === "123") { 
             localStorage.setItem('alves_licenca_ativa', 'true'); 
             verificarTrava(); 
@@ -554,17 +551,24 @@
         if(divC) divC.innerHTML = "";
         if(divComp) divComp.innerHTML = "";
         
-        // Pedidos, Orçamentos e Agenda
         dadosPedidos.forEach(p => { 
             let valorDevendo = p.total - p.pago;
-            
-            // Tratamento de exibição para Endereço Clicável para GPS
             let infoSecundaria = '';
             let enderecoFull = [p.endereco, p.numero, p.complemento, p.cidade].filter(Boolean).join(', ');
             
             if(enderecoFull) {
                 let linkMapa = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoFull)}`;
                 infoSecundaria = `<a href="${linkMapa}" target="_blank" style="display:inline-block; font-size:11px; color:var(--cyan); margin-top:5px; text-decoration:none; padding:4px 8px; background:rgba(90,200,250,0.1); border-radius:4px; border:1px solid rgba(90,200,250,0.2);"><i class="fas fa-map-marked-alt"></i> ${enderecoFull} (Abrir GPS)</a>`;
+            }
+
+            // Ocultar quadro financeiro na tela de Agenda (compromisso)
+            let htmlFinanceiro = '';
+            if(p.tipo !== 'compromisso') {
+                htmlFinanceiro = `
+                <div class="financeiro-grid">
+                    <div class="fin-box"><span>Total</span><strong style="color:var(--green)">R$ ${formatMoeda(p.total)}</strong></div>
+                    <div class="fin-box"><span>Resto a Pagar</span><strong style="color:var(--orange)">R$ ${formatMoeda(valorDevendo)}</strong></div>
+                </div>`;
             }
 
             let htmlCard = `
@@ -579,24 +583,16 @@
                         <div class="texto-info" style="font-weight:bold; color:white;">${p.servico.split(' | ')[0]}</div>
                         ${infoSecundaria}
                     </div>
-                    <div class="financeiro-grid">
-                        <div class="fin-box"><span>Total</span><strong style="color:var(--green)">R$ ${formatMoeda(p.total)}</strong></div>
-                        <div class="fin-box"><span>Resto a Pagar</span><strong style="color:var(--orange)">R$ ${formatMoeda(valorDevendo)}</strong></div>
-                    </div>
+                    ${htmlFinanceiro}
                 </div>`;
                 
             if((p.cliente || '').toLowerCase().includes(termo)) { 
-                if(p.tipo === 'compromisso') {
-                    if(divA) divA.innerHTML += htmlCard;
-                } else if(p.tipo === 'orcamento') {
-                    if(divO) divO.innerHTML += htmlCard;
-                } else {
-                    if(divP) divP.innerHTML += htmlCard;
-                }
+                if(p.tipo === 'compromisso') { if(divA) divA.innerHTML += htmlCard; } 
+                else if(p.tipo === 'orcamento') { if(divO) divO.innerHTML += htmlCard; } 
+                else { if(divP) divP.innerHTML += htmlCard; }
             } 
         });
 
-        // Lista de Compras
         dadosCompras.forEach(c => {
             if((c.cliente || '').toLowerCase().includes(termo)) {
                 let resumoItens = c.itens.length > 0 ? c.itens.map(i => `${i.qtd}x ${i.item}`).join(', ') : 'Nenhum item';
@@ -616,7 +612,6 @@
             }
         });
         
-        // Estoque
         dadosEstoque.forEach(e => { 
             if(e.item.toLowerCase().includes(termo)) { 
                 let locHtml = e.localizacao ? `<span style="font-size:10px; color:#888; display:block;"><i class="fas fa-map-pin"></i> Loc: ${e.localizacao}</span>` : '';
@@ -624,14 +619,12 @@
             } 
         });
 
-        // Gastos
         dadosGastos.forEach(g => {
             if((g.descricao || '').toLowerCase().includes(termo)) {
                 if(divG) divG.innerHTML += `<div class="item-card" style="border-left-color:var(--red)"><div class="card-header"><h4 onclick="editarGasto(${g.id})">${g.descricao}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('gastos', ${g.id})"></i></div><div class="info-linha"><span>Data: <b>${formatarDataBR(g.data)}</b></span> | <span>Valor: <b style="color:var(--red)">R$ ${formatMoeda(g.valor)}</b></span></div></div>`;
             }
         });
 
-        // Catálogo de Serviços
         dadosCatalogo.forEach(c => {
             if((c.nome || '').toLowerCase().includes(termo)) {
                 if(divC) divC.innerHTML += `<div class="item-card" style="border-left-color:var(--cyan)"><div class="card-header"><h4 onclick="editarServicoCatalogo(${c.id})">${c.nome}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('catalogo_servicos', ${c.id})"></i></div><div class="info-linha"><span>Preço Base Mão de Obra: <b style="color:var(--cyan)">R$ ${formatMoeda(c.preco)}</b></span></div></div>`;
@@ -694,36 +687,26 @@
         const content = document.querySelector('#modalPedido .modal-content');
         const selectStatus = document.getElementById('f_status');
 
-        selectStatus.innerHTML = ''; // Limpa as opções de status
+        selectStatus.innerHTML = ''; 
 
         if(tipo === 'compromisso') {
             content.classList.add('modo-agenda');
             content.classList.remove('modo-pedido');
             document.getElementById('label_servico').innerText = "Descrição do Compromisso";
             
-            selectStatus.innerHTML = `
-                <option value="pendente">Pendente</option>
-                <option value="concluido">Concluído (Mover para Pedido)</option>
-            `;
+            selectStatus.innerHTML = `<option value="pendente">Pendente</option><option value="concluido">Concluído (Mover para Pedido)</option>`;
         } else if(tipo === 'orcamento') {
             content.classList.add('modo-pedido');
             content.classList.remove('modo-agenda');
             document.getElementById('label_servico').innerText = "Serviço Principal";
             
-            selectStatus.innerHTML = `
-                <option value="aguardando">Aguardando</option>
-                <option value="aprovado">Aprovado (Mover para Pedido)</option>
-            `;
+            selectStatus.innerHTML = `<option value="aguardando">Aguardando</option><option value="aprovado">Aprovado (Mover para Pedido)</option>`;
         } else {
             content.classList.add('modo-pedido');
             content.classList.remove('modo-agenda');
             document.getElementById('label_servico').innerText = "Serviço Principal";
             
-            selectStatus.innerHTML = `
-                <option value="pendente">Pendente</option>
-                <option value="andamento">Em Andamento</option>
-                <option value="concluido">Concluído</option>
-            `;
+            selectStatus.innerHTML = `<option value="pendente">Pendente</option><option value="andamento">Em Andamento</option><option value="concluido">Concluído</option>`;
         }
     }
 
@@ -781,24 +764,14 @@
         }
     }
 
-    // --- FUNÇÕES CRUD (CRIAR, SALVAR, EXCLUIR) ---
-
     function excluirRegistro(tab, id) { if(confirm("Deseja excluir?")) { const i = DB[tab].findIndex(x => x.id == id); if(i > -1) DB[tab].splice(i, 1); saveDB(); } }
     
-    // PEDIDOS / AGENDA / ORÇAMENTO
     function salvarPedido() { 
         let tipoAtual = document.getElementById('f_tipo').value;
         let statusAtual = document.getElementById('f_status').value;
 
-        if (tipoAtual === 'orcamento' && statusAtual === 'aprovado') {
-            tipoAtual = 'servico';
-            statusAtual = 'pendente';
-            showToast("Orçamento Aprovado! Movido para Pedidos.", "success");
-        } else if (tipoAtual === 'compromisso' && statusAtual === 'concluido') {
-            tipoAtual = 'servico';
-            statusAtual = 'pendente';
-            showToast("Compromisso Concluído! Movido para Pedidos.", "success");
-        }
+        if (tipoAtual === 'orcamento' && statusAtual === 'aprovado') { tipoAtual = 'servico'; statusAtual = 'pendente'; showToast("Orçamento Aprovado! Movido para Pedidos.", "success"); } 
+        else if (tipoAtual === 'compromisso' && statusAtual === 'concluido') { tipoAtual = 'servico'; statusAtual = 'pendente'; showToast("Compromisso Concluído! Movido para Pedidos.", "success"); }
 
         const obj = { 
             id: document.getElementById('f_id').value || generateID(), 
@@ -817,8 +790,7 @@
             lembrete: document.getElementById('f_lembrete').value
         }; 
         
-        if(document.getElementById('f_id').value) { const i = DB.servicos.findIndex(x => x.id == obj.id); DB.servicos[i] = obj; } 
-        else { DB.servicos.push(obj); } 
+        if(document.getElementById('f_id').value) { const i = DB.servicos.findIndex(x => x.id == obj.id); DB.servicos[i] = obj; } else { DB.servicos.push(obj); } 
         saveDB(); fecharModais(); 
     }
 
@@ -846,56 +818,32 @@
         document.getElementById('modalPedido').style.display = 'flex'; 
     }
 
-    // LISTA DE COMPRAS
     function adicionarItemCompraUI() {
         const item = document.getElementById('c_item_nome').value;
         const qtd = parseInt(document.getElementById('c_item_qtd').value) || 1;
         const valor = parseFloat(document.getElementById('c_item_valor').value) || 0;
         if(!item) return showToast("Digite o nome do item", "error");
-        
         itensCompraAtual.push({ item, qtd, valor });
-        
-        document.getElementById('c_item_nome').value = "";
-        document.getElementById('c_item_qtd').value = "1";
-        document.getElementById('c_item_valor').value = "";
-        
+        document.getElementById('c_item_nome').value = ""; document.getElementById('c_item_qtd').value = "1"; document.getElementById('c_item_valor').value = "";
         renderizarItensCompra();
     }
 
     function editarItemCompraLista(idx) {
         const i = itensCompraAtual[idx];
-        document.getElementById('c_item_nome').value = i.item;
-        document.getElementById('c_item_qtd').value = i.qtd;
-        document.getElementById('c_item_valor').value = i.valor;
-        
-        // Remove da lista para que a pessoa re-adicione atualizado
-        itensCompraAtual.splice(idx, 1);
-        renderizarItensCompra();
+        document.getElementById('c_item_nome').value = i.item; document.getElementById('c_item_qtd').value = i.qtd; document.getElementById('c_item_valor').value = i.valor;
+        itensCompraAtual.splice(idx, 1); renderizarItensCompra();
     }
 
-    function removerItemCompra(idx) {
-        itensCompraAtual.splice(idx, 1);
-        renderizarItensCompra();
-    }
+    function removerItemCompra(idx) { itensCompraAtual.splice(idx, 1); renderizarItensCompra(); }
 
     function renderizarItensCompra() {
         const container = document.getElementById('container_itens_compra');
         let total = 0;
-        
-        if(itensCompraAtual.length === 0) {
-            container.innerHTML = '<div style="text-align:center; font-size:12px; color:#888;">Nenhum item na lista.</div>';
-        } else {
+        if(itensCompraAtual.length === 0) { container.innerHTML = '<div style="text-align:center; font-size:12px; color:#888;">Nenhum item na lista.</div>'; } 
+        else {
             container.innerHTML = itensCompraAtual.map((i, idx) => {
-                let sub = i.qtd * i.valor;
-                total += sub;
-                return `
-                <div class="item-selecionado">
-                    <span style="flex:1;">${i.qtd}x ${i.item} <br><b style="color:var(--pink)">R$ ${formatMoeda(sub)}</b> <small style="color:#888; font-size:10px;">(R$ ${formatMoeda(i.valor)} un)</small></span>
-                    <div style="display:flex; gap:15px; align-items:center;">
-                        <i class="fas fa-edit" style="color:var(--blue); cursor:pointer; font-size:16px;" onclick="editarItemCompraLista(${idx})"></i>
-                        <i class="fas fa-trash" style="color:var(--red); cursor:pointer; font-size:16px;" onclick="removerItemCompra(${idx})"></i>
-                    </div>
-                </div>`;
+                let sub = i.qtd * i.valor; total += sub;
+                return `<div class="item-selecionado"><span style="flex:1;">${i.qtd}x ${i.item} <br><b style="color:var(--pink)">R$ ${formatMoeda(sub)}</b> <small style="color:#888; font-size:10px;">(R$ ${formatMoeda(i.valor)} un)</small></span><div style="display:flex; gap:15px; align-items:center;"><i class="fas fa-edit" style="color:var(--blue); cursor:pointer; font-size:16px;" onclick="editarItemCompraLista(${idx})"></i><i class="fas fa-trash" style="color:var(--red); cursor:pointer; font-size:16px;" onclick="removerItemCompra(${idx})"></i></div></div>`;
             }).join('');
         }
         document.getElementById('c_total').value = total.toFixed(2);
@@ -903,167 +851,55 @@
 
     function salvarCompra() {
         let statusAtual = document.getElementById('c_status').value;
-        const obj = {
-            id: document.getElementById('c_id').value || generateID(),
-            cliente: document.getElementById('c_cliente').value,
-            itens: itensCompraAtual,
-            total: parseFloat(document.getElementById('c_total').value) || 0,
-            data: document.getElementById('c_data').value,
-            status: statusAtual
-        };
+        const obj = { id: document.getElementById('c_id').value || generateID(), cliente: document.getElementById('c_cliente').value, itens: itensCompraAtual, total: parseFloat(document.getElementById('c_total').value) || 0, data: document.getElementById('c_data').value, status: statusAtual };
 
         if (statusAtual === 'concluido') {
-            // Converte para Gasto e não salva mais em Compras
             let descGasto = "Compra: " + (obj.cliente || 'Diversos') + " (" + obj.itens.length + " itens)";
-            let novoGasto = {
-                id: generateID(),
-                descricao: descGasto,
-                valor: obj.total,
-                data: obj.data
-            };
+            let novoGasto = { id: generateID(), descricao: descGasto, valor: obj.total, data: obj.data };
             DB.gastos.push(novoGasto);
-
-            // Remove das compras se existia
-            if(document.getElementById('c_id').value) {
-                DB.compras = DB.compras.filter(c => c.id != obj.id);
-            }
+            if(document.getElementById('c_id').value) { DB.compras = DB.compras.filter(c => c.id != obj.id); }
             showToast("Compra Concluída! Movida para Gastos.", "success");
-
         } else {
-            // Salva apenas como Compras Pendentes
-            if(document.getElementById('c_id').value) {
-                const i = DB.compras.findIndex(x => x.id == obj.id);
-                DB.compras[i] = obj;
-            } else {
-                DB.compras.push(obj);
-            }
+            if(document.getElementById('c_id').value) { const i = DB.compras.findIndex(x => x.id == obj.id); DB.compras[i] = obj; } else { DB.compras.push(obj); }
             showToast("Lista de Compras salva!", "success");
         }
-        saveDB();
-        fecharModais();
+        saveDB(); fecharModais();
     }
 
-    function editarCompra(id) {
-        const c = DB.compras.find(x => x.id == id);
-        document.getElementById('c_id').value = c.id;
-        document.getElementById('c_cliente').value = c.cliente;
-        document.getElementById('c_status').value = c.status || 'em_compra';
-        document.getElementById('c_data').value = c.data;
-        itensCompraAtual = c.itens || [];
-        renderizarItensCompra();
-        document.getElementById('modalCompras').style.display = 'flex';
-    }
+    function editarCompra(id) { const c = DB.compras.find(x => x.id == id); document.getElementById('c_id').value = c.id; document.getElementById('c_cliente').value = c.cliente; document.getElementById('c_status').value = c.status || 'em_compra'; document.getElementById('c_data').value = c.data; itensCompraAtual = c.itens || []; renderizarItensCompra(); document.getElementById('modalCompras').style.display = 'flex'; }
 
     function imprimirCompra() {
         if (itensCompraAtual.length === 0) return showToast("A lista está vazia!", "error");
+        const cliente = document.getElementById('c_cliente').value || 'Não informado'; const data = formatarDataBR(document.getElementById('c_data').value); const total = formatMoeda(document.getElementById('c_total').value); const empresa = DB.config.nome || "Minha Empresa";
         
-        const cliente = document.getElementById('c_cliente').value || 'Não informado';
-        const data = formatarDataBR(document.getElementById('c_data').value);
-        const total = formatMoeda(document.getElementById('c_total').value);
-        const empresa = DB.config.nome || "Minha Empresa";
-        
-        let linhas = itensCompraAtual.map((i, idx) => `
-            <tr>
-                <td>${idx + 1}</td>
-                <td class="desc-left">${i.item}</td>
-                <td>${i.qtd}</td>
-                <td>R$ ${formatMoeda(i.valor)}</td>
-                <td>R$ ${formatMoeda(i.qtd * i.valor)}</td>
-            </tr>
-        `).join('');
-
+        let linhas = itensCompraAtual.map((i, idx) => `<tr><td>${idx + 1}</td><td class="desc-left">${i.item}</td><td>${i.qtd}</td><td>R$ ${formatMoeda(i.valor)}</td><td>R$ ${formatMoeda(i.qtd * i.valor)}</td></tr>`).join('');
         const areaImpressao = document.getElementById('area-impressao');
-        areaImpressao.innerHTML = `
-            <div class="print-corte-container">
-                <div class="print-corte-header">
-                    <h1>LISTA DE COMPRAS</h1>
-                    <p>${empresa}</p>
-                </div>
-                <div class="print-corte-info">
-                    <div>
-                        <strong>Cliente / Referência:</strong> ${cliente}<br>
-                        <strong>Data:</strong> ${data}
-                    </div>
-                    <div style="text-align:right;">
-                        <span style="font-size:18px; font-weight:bold;">Total: R$ ${total}</span>
-                    </div>
-                </div>
-                <table class="corte-table">
-                    <thead>
-                        <tr>
-                            <th width="5%">Nº</th>
-                            <th width="50%" class="desc-left">Item Descrição</th>
-                            <th width="10%">Qtd</th>
-                            <th width="15%">Valor Unit.</th>
-                            <th width="20%">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>${linhas}</tbody>
-                </table>
-            </div>
-        `;
+        areaImpressao.innerHTML = `<div class="print-corte-container"><div class="print-corte-header"><h1>LISTA DE COMPRAS</h1><p>${empresa}</p></div><div class="print-corte-info"><div><strong>Cliente / Referência:</strong> ${cliente}<br><strong>Data:</strong> ${data}</div><div style="text-align:right;"><span style="font-size:18px; font-weight:bold;">Total: R$ ${total}</span></div></div><table class="corte-table"><thead><tr><th width="5%">Nº</th><th width="50%" class="desc-left">Item Descrição</th><th width="10%">Qtd</th><th width="15%">Valor Unit.</th><th width="20%">Subtotal</th></tr></thead><tbody>${linhas}</tbody></table></div>`;
         setTimeout(() => { window.print(); }, 300);
     }
     
-    // ESTOQUE
     function salvarEstoque() { const obj = { id: document.getElementById('e_id').value || generateID(), item: document.getElementById('e_item').value, localizacao: document.getElementById('e_localizacao').value, quantidade: parseInt(document.getElementById('e_qtd').value) || 0, valor_venda: parseFloat(document.getElementById('e_venda').value) || 0 }; if(document.getElementById('e_id').value) { const i = DB.estoque.findIndex(x => x.id == obj.id); DB.estoque[i] = obj; } else DB.estoque.push(obj); saveDB(); fecharModais(); }
     function editarEstoque(id) { const e = DB.estoque.find(x => x.id == id); document.getElementById('e_id').value = e.id; document.getElementById('e_item').value = e.item; document.getElementById('e_localizacao').value = e.localizacao || ''; document.getElementById('e_qtd').value = e.quantidade; document.getElementById('e_venda').value = e.valor_venda; document.getElementById('modalEstoque').style.display = 'flex'; }
-    
-    // GASTOS
     function salvarGasto() { const obj = { id: document.getElementById('g_id').value || generateID(), descricao: document.getElementById('g_descricao').value, valor: parseFloat(document.getElementById('g_valor').value) || 0, data: document.getElementById('g_data').value }; if(document.getElementById('g_id').value) { const i = DB.gastos.findIndex(x => x.id == obj.id); DB.gastos[i] = obj; } else DB.gastos.push(obj); saveDB(); fecharModais(); }
     function editarGasto(id) { const g = DB.gastos.find(x => x.id == id); document.getElementById('g_id').value = g.id; document.getElementById('g_descricao').value = g.descricao; document.getElementById('g_valor').value = g.valor; document.getElementById('g_data').value = g.data; document.getElementById('modalGastos').style.display = 'flex'; }
-    
-    // CATÁLOGO DE SERVIÇOS FIXOS
     function salvarServicoCatalogo() { const obj = { id: document.getElementById('sc_id').value || generateID(), nome: document.getElementById('sc_nome').value, preco: parseFloat(document.getElementById('sc_preco').value) || 0 }; if(document.getElementById('sc_id').value) { const i = DB.catalogo_servicos.findIndex(x => x.id == obj.id); DB.catalogo_servicos[i] = obj; } else DB.catalogo_servicos.push(obj); saveDB(); fecharModais(); }
     function editarServicoCatalogo(id) { const c = DB.catalogo_servicos.find(x => x.id == id); document.getElementById('sc_id').value = c.id; document.getElementById('sc_nome').value = c.nome; document.getElementById('sc_preco').value = c.preco; document.getElementById('modalServicosCatalogo').style.display = 'flex'; }
 
-    // FUNÇÕES DE CÁLCULO E INCLUSÃO DE ITENS (ORÇAMENTO/PEDIDO)
-    function recalcularTotal() { 
-        const mao = parseFloat(document.getElementById('f_mao_obra').value) || 0; 
-        const somaItens = itensNoPedido.reduce((a, i) => a + (i.qtd * i.valor), 0); 
-        document.getElementById('f_total').value = (mao + somaItens).toFixed(2); 
-    }
-    
-    function renderizarItensPedido() { 
-        document.getElementById('container_itens_venda').innerHTML = itensNoPedido.map((i, idx) => {
-            let iconeTipo = i.tipo_item === 'servico' ? '<i class="fas fa-tools" style="color:var(--cyan); margin-right:5px;"></i>' : (i.tipo_item === 'compra' ? '<i class="fas fa-shopping-cart" style="color:var(--pink); margin-right:5px;"></i>' : '<i class="fas fa-box" style="color:var(--orange); margin-right:5px;"></i>');
-            return `<div class="item-selecionado">
-                <span style="display:flex; align-items:center;">
-                    ${iconeTipo} 
-                    <div>${i.qtd}x ${i.item} <br><b style="color:var(--green)">R$ ${formatMoeda(i.qtd * i.valor)}</b></div>
-                </span>
-                <i class="fas fa-trash" style="color:var(--red); cursor:pointer;" onclick="removerItem(${idx})"></i>
-            </div>`;
-        }).join(''); 
-    }
-    
+    function recalcularTotal() { const mao = parseFloat(document.getElementById('f_mao_obra').value) || 0; const somaItens = itensNoPedido.reduce((a, i) => a + (i.qtd * i.valor), 0); document.getElementById('f_total').value = (mao + somaItens).toFixed(2); }
+    function renderizarItensPedido() { document.getElementById('container_itens_venda').innerHTML = itensNoPedido.map((i, idx) => { let iconeTipo = i.tipo_item === 'servico' ? '<i class="fas fa-tools" style="color:var(--cyan); margin-right:5px;"></i>' : (i.tipo_item === 'compra' ? '<i class="fas fa-shopping-cart" style="color:var(--pink); margin-right:5px;"></i>' : '<i class="fas fa-box" style="color:var(--orange); margin-right:5px;"></i>'); return `<div class="item-selecionado"><span style="display:flex; align-items:center;">${iconeTipo} <div>${i.qtd}x ${i.item} <br><b style="color:var(--green)">R$ ${formatMoeda(i.qtd * i.valor)}</b></div></span><i class="fas fa-trash" style="color:var(--red); cursor:pointer;" onclick="removerItem(${idx})"></i></div>`; }).join(''); }
     function removerItem(idx) { itensNoPedido.splice(idx, 1); renderizarItensPedido(); recalcularTotal(); }
-    
-    // Adicionar do Estoque
     function abrirSeletorEstoque() { const sel = document.getElementById('sel_produto_estoque'); sel.innerHTML = dadosEstoque.map(e => `<option value="${e.id}">${e.item} (Disp: ${e.quantidade}) - R$ ${formatMoeda(e.valor_venda)}</option>`).join(''); document.getElementById('modalSeletorEstoque').style.display = 'flex'; }
     function confirmarAdicaoItem() { const id = document.getElementById('sel_produto_estoque').value; const prod = dadosEstoque.find(e => e.id == id); if(prod) { itensNoPedido.push({ id_referencia: prod.id, item: prod.item, qtd: parseInt(document.getElementById('sel_qtd_estoque').value), valor: prod.valor_venda, tipo_item: 'estoque' }); renderizarItensPedido(); recalcularTotal(); document.getElementById('modalSeletorEstoque').style.display = 'none'; } }
-
-    // Adicionar do Catálogo de Serviços
-    function abrirSeletorServico() {
-        const sel = document.getElementById('sel_servico_catalogo');
-        sel.innerHTML = dadosCatalogo.map(c => `<option value="${c.id}">${c.nome} - R$ ${formatMoeda(c.preco)}</option>`).join('');
-        document.getElementById('modalSeletorServico').style.display = 'flex';
-    }
-    function confirmarAdicaoServico() {
-        const id = document.getElementById('sel_servico_catalogo').value;
-        const serv = dadosCatalogo.find(c => c.id == id);
-        if(serv) {
-            itensNoPedido.push({ id_referencia: serv.id, item: serv.nome, qtd: parseInt(document.getElementById('sel_qtd_servico').value), valor: serv.preco, tipo_item: 'servico' });
-            renderizarItensPedido();
-            recalcularTotal();
-            document.getElementById('modalSeletorServico').style.display = 'none';
-        }
-    }
+    function abrirSeletorServico() { const sel = document.getElementById('sel_servico_catalogo'); sel.innerHTML = dadosCatalogo.map(c => `<option value="${c.id}">${c.nome} - R$ ${formatMoeda(c.preco)}</option>`).join(''); document.getElementById('modalSeletorServico').style.display = 'flex'; }
+    function confirmarAdicaoServico() { const id = document.getElementById('sel_servico_catalogo').value; const serv = dadosCatalogo.find(c => c.id == id); if(serv) { itensNoPedido.push({ id_referencia: serv.id, item: serv.nome, qtd: parseInt(document.getElementById('sel_qtd_servico').value), valor: serv.preco, tipo_item: 'servico' }); renderizarItensPedido(); recalcularTotal(); document.getElementById('modalSeletorServico').style.display = 'none'; } }
 
     // ==========================================
-    // MÓDULO PLANO DE CORTE
+    // MÓDULO PLANO DE CORTE À PROVA DE FALHAS
     // ==========================================
-    let pecasCorte = []; let chapasDesenhadas = []; let planoAtualId = null; let planoAtualNome = "";
+    let pecasCorte = []; 
+    let gruposChapasCalculadas = []; 
+    let planoAtualId = null; 
+    let planoAtualNome = "";
 
     function adicionarPecaCorte() {
         const desc = document.getElementById('corte_desc_peca').value;
@@ -1071,12 +907,19 @@
         const larg = parseFloat(document.getElementById('corte_larg_peca').value);
         const qtd = parseInt(document.getElementById('corte_qtd_peca').value);
 
+        const material = document.getElementById('corte_material').value || "Padrão";
+        const espessura = document.getElementById('corte_espessura').value || "15mm";
+        const chapa_comp = parseFloat(document.getElementById('corte_chapa_comp').value) || 2750;
+        const chapa_larg = parseFloat(document.getElementById('corte_chapa_larg').value) || 1850;
+
         const cor_fita = document.getElementById('corte_cor_fita_peca').value || "";
 
         const f_c1 = document.getElementById('corte_fita_c1').checked; const f_c2 = document.getElementById('corte_fita_c2').checked;
         const f_l1 = document.getElementById('corte_fita_l1').checked; const f_l2 = document.getElementById('corte_fita_l2').checked;
 
-        if(!desc || !comp || !larg || qtd <= 0 || isNaN(comp) || isNaN(larg)) return showToast("Preencha todos os campos da peça corretamente!", "error");
+        if(!desc || !comp || !larg || qtd <= 0 || isNaN(comp) || isNaN(larg)) {
+            return showToast("Preencha todos os campos da peça!", "error");
+        }
 
         let fitaText = [];
         if(f_c1 || f_c2) fitaText.push((f_c1 && f_c2 ? "2" : "1") + " C");
@@ -1084,7 +927,10 @@
         let fitaResumo = fitaText.length > 0 ? fitaText.join('/') : "-";
         let fitaEdges = { c1: f_c1, c2: f_c2, l1: f_l1, l2: f_l2 };
 
-        pecasCorte.push({ id_peca: Date.now(), desc, comp, larg, qtd, fitaResumo, fitaEdges, cor_fita });
+        pecasCorte.push({ 
+            id_peca: Date.now(), desc, comp, larg, qtd, fitaResumo, fitaEdges, cor_fita,
+            material, espessura, chapa_comp, chapa_larg
+        });
         
         document.getElementById('corte_desc_peca').value = ''; document.getElementById('corte_comp_peca').value = '';
         document.getElementById('corte_larg_peca').value = ''; document.getElementById('corte_qtd_peca').value = '1';
@@ -1092,26 +938,26 @@
         document.getElementById('corte_fita_c1').checked = false; document.getElementById('corte_fita_c2').checked = false;
         document.getElementById('corte_fita_l1').checked = false; document.getElementById('corte_fita_l2').checked = false;
         
-        renderizarPecasCorte(); showToast("Peça adicionada à lista!");
+        renderizarPecasCorte(); showToast(`Peça adicionada!`);
     }
 
     function removerPecaCorte(idx) { pecasCorte.splice(idx, 1); renderizarPecasCorte(); }
 
     function renderizarPecasCorte() {
         const div = document.getElementById('lista_pecas_corte');
-        
-        // CALCULO DO TOTAL DE FITA AQUI
         let totalFitaMm = 0;
+        
         pecasCorte.forEach(p => {
             let fitaPeca = 0;
-            if(p.fitaEdges.c1) fitaPeca += p.comp;
-            if(p.fitaEdges.c2) fitaPeca += p.comp;
-            if(p.fitaEdges.l1) fitaPeca += p.larg;
-            if(p.fitaEdges.l2) fitaPeca += p.larg;
-            totalFitaMm += (fitaPeca * p.qtd);
+            if(p.fitaEdges) {
+                if(p.fitaEdges.c1) fitaPeca += p.comp;
+                if(p.fitaEdges.c2) fitaPeca += p.comp;
+                if(p.fitaEdges.l1) fitaPeca += p.larg;
+                if(p.fitaEdges.l2) fitaPeca += p.larg;
+            }
+            totalFitaMm += ((fitaPeca || 0) * (p.qtd || 1));
         });
         
-        // Mostra o resultado na tela na div "Total de Fita"
         document.getElementById('resultado_fita').innerText = `Total de Fita: ${(totalFitaMm / 1000).toFixed(2)} Metros`;
 
         if(pecasCorte.length === 0) { 
@@ -1123,6 +969,7 @@
         div.innerHTML = pecasCorte.map((p, idx) => `
             <div class="item-selecionado">
                 <div style="line-height:1.3;">
+                    <span style="font-size:10px; font-weight:bold; color:var(--teal); text-transform:uppercase;">[${p.material || 'Padrão'} - ${p.espessura || '15mm'}]</span><br>
                     <span style="font-size:13px; font-weight:bold; color:white;">${p.desc}</span><br>
                     <span style="font-size:11px; color:#aaa;">Qtd: ${p.qtd} un | ${p.comp}mm x ${p.larg}mm</span><br>
                     <span style="font-size:10px; color:#aaa;"><i class="fas fa-tape"></i> Fita: ${p.fitaResumo} ${p.cor_fita ? `(Cor: ${p.cor_fita})` : ''}</span>
@@ -1135,8 +982,18 @@
     function salvarPlanoCorte() {
         if(pecasCorte.length === 0) return showToast("Adicione peças antes de salvar!", "error");
         let nome = prompt("Digite o nome deste Plano de Corte:"); if(!nome) return;
-        const plano = { id: planoAtualId || generateID(), nome: nome, data: new Date().toISOString().split('T')[0], material: document.getElementById('corte_material').value, espessura: document.getElementById('corte_espessura').value, chapa_comp: document.getElementById('corte_chapa_comp').value, chapa_larg: document.getElementById('corte_chapa_larg').value, serra: document.getElementById('corte_serra').value, pecas: JSON.parse(JSON.stringify(pecasCorte)), rotacao: document.getElementById('corte_rotacao').checked };
-        if(planoAtualId) { const idx = DB.planos_corte.findIndex(x => x.id === plano.id); if(idx > -1) DB.planos_corte[idx] = plano; } else { DB.planos_corte.push(plano); }
+        
+        const plano = { 
+            id: planoAtualId || generateID(), 
+            nome: nome, 
+            data: new Date().toISOString().split('T')[0], 
+            serra: document.getElementById('corte_serra').value, 
+            pecas: JSON.parse(JSON.stringify(pecasCorte)), 
+            rotacao: document.getElementById('corte_rotacao').checked 
+        };
+
+        if(planoAtualId) { const idx = DB.planos_corte.findIndex(x => x.id === plano.id); if(idx > -1) DB.planos_corte[idx] = plano; } 
+        else { DB.planos_corte.push(plano); }
         saveDB(); planoAtualId = plano.id; planoAtualNome = plano.nome; showToast("Plano de Corte Salvo!");
     }
 
@@ -1146,7 +1003,7 @@
         else {
             div.innerHTML = DB.planos_corte.sort((a,b) => b.id - a.id).map(p => `
                 <div class="item-selecionado" style="border-left: 3px solid var(--gold);">
-                    <div style="line-height:1.3;"><span style="font-size:14px; font-weight:bold; color:white;">${p.nome}</span><br><span style="font-size:11px; color:#aaa;">${formatarDataBR(p.data)} | ${p.pecas.length} peças</span><br><span style="font-size:11px; color:var(--teal);">${p.material} - ${p.espessura}</span></div>
+                    <div style="line-height:1.3;"><span style="font-size:14px; font-weight:bold; color:white;">${p.nome}</span><br><span style="font-size:11px; color:#aaa;">${formatarDataBR(p.data)} | ${p.pecas.length} peças</span></div>
                     <div style="display:flex; gap:15px; align-items:center;"><i class="fas fa-folder-open" style="color:var(--blue); cursor:pointer; font-size:18px;" onclick="carregarPlano(${p.id})"></i><i class="fas fa-trash" style="color:var(--red); cursor:pointer; font-size:18px;" onclick="excluirPlano(${p.id})"></i></div>
                 </div>
             `).join('');
@@ -1157,145 +1014,365 @@
     function carregarPlano(id) {
         const p = DB.planos_corte.find(x => x.id === id); if(!p) return;
         planoAtualId = p.id; planoAtualNome = p.nome;
-        document.getElementById('corte_material').value = p.material || "MDF Branco"; document.getElementById('corte_espessura').value = p.espessura || "15mm";
-        document.getElementById('corte_chapa_comp').value = p.chapa_comp; document.getElementById('corte_chapa_larg').value = p.chapa_larg;
-        document.getElementById('corte_serra').value = p.serra; document.getElementById('corte_rotacao').checked = p.rotacao || false;
-        pecasCorte = JSON.parse(JSON.stringify(p.pecas)); renderizarPecasCorte(); document.getElementById('container_mapas_visuais').innerHTML = '';
+        document.getElementById('corte_serra').value = p.serra || 4; 
+        document.getElementById('corte_rotacao').checked = p.rotacao || false;
+        
+        pecasCorte = JSON.parse(JSON.stringify(p.pecas)); 
+        
+        if(pecasCorte.length > 0) {
+            document.getElementById('corte_material').value = pecasCorte[0].material || "MDF Branco";
+            document.getElementById('corte_espessura').value = pecasCorte[0].espessura || "15mm";
+            document.getElementById('corte_chapa_comp').value = pecasCorte[0].chapa_comp || 2750;
+            document.getElementById('corte_chapa_larg').value = pecasCorte[0].chapa_larg || 1850;
+        }
+
+        renderizarPecasCorte(); 
+        document.getElementById('container_mapas_visuais').innerHTML = '';
         fecharModais(); showToast(`Plano "${p.nome}" carregado!`);
     }
 
     function excluirPlano(id) { if(confirm("Deseja excluir este plano salvo?")) { DB.planos_corte = DB.planos_corte.filter(x => x.id !== id); saveDB(); if(planoAtualId === id) { planoAtualId = null; planoAtualNome = ""; } abrirPlanosSalvos(); } }
 
     function calcularAlgoritmoDeCorte() {
-        if(pecasCorte.length === 0) return showToast("Adicione peças primeiro!", "error");
-        const sheetW = parseFloat(document.getElementById('corte_chapa_comp').value);
-        const sheetH = parseFloat(document.getElementById('corte_chapa_larg').value);
-        const kerf = parseFloat(document.getElementById('corte_serra').value);
-        const permitirRotacao = document.getElementById('corte_rotacao').checked;
+        try {
+            if(pecasCorte.length === 0) return showToast("Adicione peças primeiro!", "error");
+            
+            let serraVal = parseFloat(document.getElementById('corte_serra').value);
+            const kerf = isNaN(serraVal) ? 4 : serraVal; // Espessura da serra (padrão 4mm)
+            const permitirRotacao = document.getElementById('corte_rotacao').checked;
 
-        if(!sheetW || !sheetH) return showToast("Verifique as medidas da chapa!", "error");
+            let gruposMaterial = {};
+            
+            // 1. Agrupamento seguro por Material e Espessura
+            for(let i=0; i<pecasCorte.length; i++) {
+                let p = pecasCorte[i];
+                let nomeMat = p.material || "Padrão";
+                let espMat = p.espessura || "15mm";
+                let chave = nomeMat + "|||" + espMat;
+                
+                if(!gruposMaterial[chave]) {
+                    let chComp = parseFloat(p.chapa_comp);
+                    let chLarg = parseFloat(p.chapa_larg);
+                    if(isNaN(chComp) || chComp <= 0) chComp = parseFloat(document.getElementById('corte_chapa_comp').value) || 2750;
+                    if(isNaN(chLarg) || chLarg <= 0) chLarg = parseFloat(document.getElementById('corte_chapa_larg').value) || 1850;
 
-        let flatPieces = []; let areaLiquida = 0;
-        pecasCorte.forEach((p, idxList) => { for(let i=0; i<p.qtd; i++) { flatPieces.push({ idx_ref: idxList + 1, desc: p.desc, w: p.comp, h: p.larg, fitaResumo: p.fitaResumo, fitaEdges: p.fitaEdges, cor_fita: p.cor_fita }); areaLiquida += (p.comp * p.larg) / 1000000; } });
-        flatPieces.sort((a,b) => Math.max(b.w, b.h) - Math.max(a.w, a.h));
-
-        let sheets = [];
-        function fitPieceInNode(node, pw, ph) { if(pw <= node.w && ph <= node.h) return { rot: false }; if(permitirRotacao && ph <= node.w && pw <= node.h) return { rot: true }; return null; }
-        function splitGuillotine(freeRect, pw, ph, kerf) {
-            let rects = [];
-            if (freeRect.w - pw > freeRect.h - ph) { rects.push({ x: freeRect.x, y: freeRect.y + ph + kerf, w: pw, h: freeRect.h - ph - kerf }); rects.push({ x: freeRect.x + pw + kerf, y: freeRect.y, w: freeRect.w - pw - kerf, h: freeRect.h }); } else { rects.push({ x: freeRect.x + pw + kerf, y: freeRect.y, w: freeRect.w - pw - kerf, h: ph }); rects.push({ x: freeRect.x, y: freeRect.y + ph + kerf, w: freeRect.w, h: freeRect.h - ph - kerf }); }
-            return rects.filter(r => r.w > 0 && r.h > 0); 
-        }
-
-        for (let i = 0; i < flatPieces.length; i++) {
-            let p = flatPieces[i]; let placed = false;
-            for (let s = 0; s < sheets.length; s++) {
-                let sheet = sheets[s];
-                for (let f = 0; f < sheet.freeRects.length; f++) {
-                    let fr = sheet.freeRects[f]; let fit = fitPieceInNode(fr, p.w, p.h);
-                    if (fit) { let finalW = fit.rot ? p.h : p.w; let finalH = fit.rot ? p.w : p.h; sheet.placed.push({ idx_ref: p.idx_ref, x: fr.x, y: fr.y, w: finalW, h: finalH, rot: fit.rot, origW: p.w, origH: p.h, fitaEdges: p.fitaEdges }); let newRects = splitGuillotine(fr, finalW, finalH, kerf); sheet.freeRects.splice(f, 1, ...newRects); placed = true; break; }
+                    gruposMaterial[chave] = {
+                        titulo: `${nomeMat} - ${espMat}`,
+                        nomeMat: nomeMat,
+                        espessuraMat: espMat,
+                        chapa_comp: chComp,
+                        chapa_larg: chLarg,
+                        pecas_flat: [],
+                        areaLiquida: 0
+                    };
                 }
-                if (placed) break;
+                
+                for(let q=0; q<p.qtd; q++) { 
+                    gruposMaterial[chave].pecas_flat.push({ 
+                        idx_ref: i + 1, 
+                        desc: p.desc, 
+                        w: parseFloat(p.comp), 
+                        h: parseFloat(p.larg), 
+                        fitaResumo: p.fitaResumo, 
+                        fitaEdges: p.fitaEdges, 
+                        cor_fita: p.cor_fita 
+                    }); 
+                    gruposMaterial[chave].areaLiquida += (parseFloat(p.comp) * parseFloat(p.larg)) / 1000000; 
+                }
             }
-            if (!placed) {
-                let newSheet = { id: sheets.length + 1, placed: [], freeRects: [{ x: 0, y: 0, w: sheetW, h: sheetH }] };
-                let fr = newSheet.freeRects[0]; let fit = fitPieceInNode(fr, p.w, p.h);
-                if(fit) { let finalW = fit.rot ? p.h : p.w; let finalH = fit.rot ? p.w : p.h; newSheet.placed.push({ idx_ref: p.idx_ref, x: fr.x, y: fr.y, w: finalW, h: finalH, rot: fit.rot, origW: p.w, origH: p.h, fitaEdges: p.fitaEdges }); let newRects = splitGuillotine(fr, finalW, finalH, kerf); newSheet.freeRects.splice(0, 1, ...newRects); }
-                sheets.push(newSheet);
+
+            gruposChapasCalculadas = []; 
+            let totalChapasGeral = 0;
+            let totalAreaGeral = 0;
+
+            // Função para verificar se a peça cabe (Normal ou Rotacionada)
+            function fitPieceInNode(node, pw, ph) { 
+                if(pw <= node.w && ph <= node.h) return { rot: false }; 
+                if(permitirRotacao && ph <= node.w && pw <= node.h) return { rot: true }; 
+                return null; 
             }
+            
+            // Divisão Guilhotina Otimizada
+            function splitGuillotine(freeRect, pw, ph, kerf) {
+                let rects = [];
+                // Estratégia BSSF (Best Short Side Fit) - Mantém a maior área livre contínua possível
+                let sobraW = freeRect.w - pw;
+                let sobraH = freeRect.h - ph;
+
+                if (sobraW > sobraH) { 
+                    // Corta verticalmente primeiro
+                    rects.push({ x: freeRect.x, y: freeRect.y + ph + kerf, w: pw, h: freeRect.h - ph - kerf }); 
+                    rects.push({ x: freeRect.x + pw + kerf, y: freeRect.y, w: freeRect.w - pw - kerf, h: freeRect.h }); 
+                } else { 
+                    // Corta horizontalmente primeiro
+                    rects.push({ x: freeRect.x + pw + kerf, y: freeRect.y, w: freeRect.w - pw - kerf, h: ph }); 
+                    rects.push({ x: freeRect.x, y: freeRect.y + ph + kerf, w: freeRect.w, h: freeRect.h - ph - kerf }); 
+                }
+                // Descarta retalhos menores que 1cm (Inúteis para marcenaria e atrapalham o cálculo)
+                return rects.filter(r => r.w >= 10 && r.h >= 10); 
+            }
+
+            // Heurísticas: Tenta arranjar as peças de 3 formas diferentes para achar a melhor
+            const heuristicasOrdenacao = [
+                (a, b) => (b.w * b.h) - (a.w * a.h), // 1. Por Maior Área
+                (a, b) => Math.max(b.w, b.h) - Math.max(a.w, a.h), // 2. Por Lado Mais Longo
+                (a, b) => (Math.max(b.w, b.h) + Math.min(b.w, b.h)) - (Math.max(a.w, a.h) + Math.min(a.w, a.h)) // 3. Por Perímetro
+            ];
+
+            let chaves = Object.keys(gruposMaterial);
+
+            for(let c=0; c<chaves.length; c++) {
+                let grupo = gruposMaterial[chaves[c]];
+                
+                // Trava de Erro: Impede travamento se a peça for maior que a chapa
+                for (let i = 0; i < grupo.pecas_flat.length; i++) {
+                    let p = grupo.pecas_flat[i];
+                    let fitsNormal = (p.w <= grupo.chapa_comp && p.h <= grupo.chapa_larg);
+                    let fitsRotated = permitirRotacao && (p.h <= grupo.chapa_comp && p.w <= grupo.chapa_larg);
+                    if (!fitsNormal && !fitsRotated) {
+                        alert(`❌ ERRO: A peça "${p.desc}" (${p.w}mm x ${p.h}mm) é maior que a chapa de ${grupo.chapa_comp}x${grupo.chapa_larg}mm!\n\nVerifique se a Rotação está desligada ou altere o tamanho da chapa/peça.`);
+                        return;
+                    }
+                }
+
+                let melhorResultadoSheets = null;
+                let minChapas = Infinity;
+                let maxSobraUltimaChapa = -1;
+
+                // Teste de Força Bruta Inteligente (Testa as 3 formas de ordenação)
+                for(let h=0; h<heuristicasOrdenacao.length; h++) {
+                    let pecasTemp = JSON.parse(JSON.stringify(grupo.pecas_flat));
+                    pecasTemp.sort(heuristicasOrdenacao[h]);
+                    
+                    let sheets = [];
+                    
+                    for (let i = 0; i < pecasTemp.length; i++) {
+                        let p = pecasTemp[i]; 
+                        let placed = false;
+
+                        // ALGORITMO BEST FIT (Procura o buraco que deixa a menor sobra)
+                        let bestSheetIdx = -1;
+                        let bestRectIdx = -1;
+                        let bestFitObj = null;
+                        let minLeftover = Infinity;
+
+                        for (let s = 0; s < sheets.length; s++) {
+                            for (let f = 0; f < sheets[s].freeRects.length; f++) {
+                                let fr = sheets[s].freeRects[f]; 
+                                let fit = fitPieceInNode(fr, p.w, p.h);
+                                if (fit) { 
+                                    let finalW = fit.rot ? p.h : p.w; 
+                                    let finalH = fit.rot ? p.w : p.h; 
+                                    let areaSobra = (fr.w * fr.h) - (finalW * finalH);
+
+                                    if(areaSobra < minLeftover) {
+                                        minLeftover = areaSobra;
+                                        bestSheetIdx = s;
+                                        bestRectIdx = f;
+                                        bestFitObj = fit;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Se encontrou um lugar perfeito, posiciona
+                        if(bestSheetIdx !== -1) {
+                            let sheet = sheets[bestSheetIdx];
+                            let fr = sheet.freeRects[bestRectIdx];
+                            let finalW = bestFitObj.rot ? p.h : p.w; 
+                            let finalH = bestFitObj.rot ? p.w : p.h; 
+                            
+                            sheet.placed.push({ idx_ref: p.idx_ref, x: fr.x, y: fr.y, w: finalW, h: finalH, rot: bestFitObj.rot, origW: p.w, origH: p.h, fitaEdges: p.fitaEdges }); 
+                            let newRects = splitGuillotine(fr, finalW, finalH, kerf); 
+                            sheet.freeRects.splice(bestRectIdx, 1, ...newRects); 
+                            placed = true; 
+                        }
+
+                        // Se não coube em nenhuma chapa aberta, cria uma chapa nova
+                        if (!placed) {
+                            let newSheet = { id: sheets.length + 1, placed: [], freeRects: [{ x: 0, y: 0, w: grupo.chapa_comp, h: grupo.chapa_larg }] };
+                            let fr = newSheet.freeRects[0]; 
+                            let fit = fitPieceInNode(fr, p.w, p.h);
+                            if(fit) { 
+                                let finalW = fit.rot ? p.h : p.w; 
+                                let finalH = fit.rot ? p.w : p.h; 
+                                newSheet.placed.push({ idx_ref: p.idx_ref, x: fr.x, y: fr.y, w: finalW, h: finalH, rot: fit.rot, origW: p.w, origH: p.h, fitaEdges: p.fitaEdges }); 
+                                let newRects = splitGuillotine(fr, finalW, finalH, kerf); 
+                                newSheet.freeRects.splice(0, 1, ...newRects); 
+                            }
+                            sheets.push(newSheet);
+                        }
+                    }
+
+                    // Verifica qual heurística salvou mais chapa
+                    let sobraUltima = 0;
+                    if(sheets.length > 0) {
+                        sobraUltima = sheets[sheets.length-1].freeRects.reduce((acc, fr) => acc + (fr.w * fr.h), 0);
+                    }
+
+                    if(sheets.length < minChapas || (sheets.length === minChapas && sobraUltima > maxSobraUltimaChapa)) {
+                        minChapas = sheets.length;
+                        maxSobraUltimaChapa = sobraUltima;
+                        melhorResultadoSheets = sheets;
+                    }
+                }
+                
+                totalChapasGeral += melhorResultadoSheets.length;
+                totalAreaGeral += grupo.areaLiquida;
+
+                gruposChapasCalculadas.push({
+                    titulo: grupo.titulo,
+                    nomeMat: grupo.nomeMat,
+                    espessuraMat: grupo.espessuraMat,
+                    chapa_comp: grupo.chapa_comp,
+                    chapa_larg: grupo.chapa_larg,
+                    areaLiquida: grupo.areaLiquida,
+                    sheets: melhorResultadoSheets
+                });
+            }
+
+            document.getElementById('resultado_chapas').innerText = `${totalChapasGeral} Chapa(s) no Total`;
+            document.getElementById('resultado_area').innerText = `Área Líquida: ${totalAreaGeral.toFixed(2)} m²`;
+            
+            desenharMapasVisuais(); 
+            showToast("Otimização concluída com precisão máxima!", "success");
+
+        } catch (erro) {
+            console.error(erro);
+            alert("Algo deu errado no cálculo: " + erro.message);
         }
-        chapasDesenhadas = sheets; 
-        document.getElementById('resultado_chapas').innerText = `${sheets.length} Chapa(s) Necessária(s)`;
-        document.getElementById('resultado_area').innerText = `Área Líquida: ${areaLiquida.toFixed(2)} m²`;
-        desenharMapasVisuais(sheetW, sheetH); showToast("Otimização concluída!");
     }
 
-    function desenharMapasVisuais(sheetW, sheetH) {
+    function desenharMapasVisuais() {
         const container = document.getElementById('container_mapas_visuais'); container.innerHTML = ''; 
-        if(chapasDesenhadas.length === 0) return;
-        const scale = 800 / sheetW; const canvasW = (sheetW * scale); const canvasH = (sheetH * scale);
-        container.innerHTML = `<div class="legenda-box" style="margin-bottom:10px;"><div class="legenda-item"><div class="linha-pontilhada-demo"></div> <span>Fita de Borda (40mm interna)</span></div><div class="legenda-item"><span style="font-size:16px; font-weight:normal;">#5</span> <span>Nº da Peça</span></div></div>`;
+        if(gruposChapasCalculadas.length === 0) return;
+        
+        container.innerHTML = `<div class="legenda-box" style="margin-bottom:10px;"><div class="legenda-item"><div class="linha-pontilhada-demo"></div> <span>Fita de Borda (20mm interna)</span></div><div class="legenda-item"><span style="font-size:16px; font-weight:normal;">#5</span> <span>Nº da Peça</span></div></div>`;
 
-        chapasDesenhadas.forEach((sheet, index) => {
-            let divWrapper = document.createElement('div'); divWrapper.className = 'mapa-chapa-container';
-            divWrapper.innerHTML = `<h5 style="text-align:center; color:#333; margin:5px 0;">Chapa ${index + 1}</h5>`;
-            let canvas = document.createElement('canvas'); canvas.className = 'mapa-chapa';
-            canvas.width = canvasW; canvas.height = canvasH; canvas.id = `canvas_sheet_${index}`;
-            divWrapper.appendChild(canvas); container.appendChild(divWrapper);
-            let ctx = canvas.getContext('2d');
-            
-            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvasW, canvasH);
-            ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeRect(0, 0, canvasW, canvasH);
+        gruposChapasCalculadas.forEach((grupo, indexGrupo) => {
+            let divMaterial = document.createElement('div');
+            divMaterial.innerHTML = `<h3 style="color:var(--cyan); margin-top:20px; border-bottom:1px solid #444; padding-bottom:5px; font-size:14px; text-transform:uppercase;">${grupo.titulo}</h3>`;
+            container.appendChild(divMaterial);
 
-            sheet.placed.forEach(p => {
-                let cx = p.x * scale; let cy = p.y * scale; let cw = p.w * scale; let ch = p.h * scale;
-                ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.strokeRect(cx, cy, cw, ch);
+            const scale = 800 / grupo.chapa_comp; 
+            const canvasW = (grupo.chapa_comp * scale); 
+            const canvasH = (grupo.chapa_larg * scale);
+
+            grupo.sheets.forEach((sheet, indexChapa) => {
+                let divWrapper = document.createElement('div'); divWrapper.className = 'mapa-chapa-container';
+                divWrapper.innerHTML = `<h5 style="text-align:center; color:#333; margin:5px 0;">Chapa ${indexChapa + 1} (${grupo.titulo})</h5>`;
+                let canvas = document.createElement('canvas'); canvas.className = 'mapa-chapa';
+                canvas.width = canvasW; canvas.height = canvasH; canvas.id = `canvas_g${indexGrupo}_s${indexChapa}`;
+                divWrapper.appendChild(canvas); container.appendChild(divWrapper);
+                let ctx = canvas.getContext('2d');
                 
-                if(p.fitaEdges) {
-                    ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
-                    let offset = 40 * scale;
-                    let tEdge = p.rot ? p.fitaEdges.l1 : p.fitaEdges.c1; let bEdge = p.rot ? p.fitaEdges.l2 : p.fitaEdges.c2;
-                    let lEdge = p.rot ? p.fitaEdges.c2 : p.fitaEdges.l1; let rEdge = p.rot ? p.fitaEdges.c1 : p.fitaEdges.l2;
-                    ctx.beginPath();
-                    if (tEdge) { ctx.moveTo(cx, cy + offset); ctx.lineTo(cx + cw, cy + offset); }
-                    if (bEdge) { ctx.moveTo(cx, cy + ch - offset); ctx.lineTo(cx + cw, cy + ch - offset); }
-                    if (lEdge) { ctx.moveTo(cx + offset, cy); ctx.lineTo(cx + offset, cy + ch); }
-                    if (rEdge) { ctx.moveTo(cx + cw - offset, cy); ctx.lineTo(cx + cw - offset, cy + ch); }
-                    ctx.stroke(); ctx.setLineDash([]);
-                }
-                ctx.fillStyle = '#000'; 
-                if (cw > 20 && ch > 20) { ctx.font = '11px Arial'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(p.idx_ref, cx + 4, cy + 4); }
-                if (cw > 40 && ch > 30) { ctx.font = '12px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(p.origW, cx + cw/2, cy + ch - 4); ctx.save(); ctx.translate(cx + 12, cy + ch/2); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.origH, 0, 0); ctx.restore(); }
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvasW, canvasH);
+                ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeRect(0, 0, canvasW, canvasH);
+
+                sheet.placed.forEach(p => {
+                    let cx = p.x * scale; let cy = p.y * scale; let cw = p.w * scale; let ch = p.h * scale;
+                    ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.strokeRect(cx, cy, cw, ch);
+                    
+                    if(p.fitaEdges) {
+                        ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+                        let offset = 20 * scale; // Aproximou para 20 (era 40)
+                        let tEdge = p.rot ? p.fitaEdges.l1 : p.fitaEdges.c1; let bEdge = p.rot ? p.fitaEdges.l2 : p.fitaEdges.c2;
+                        let lEdge = p.rot ? p.fitaEdges.c2 : p.fitaEdges.l1; let rEdge = p.rot ? p.fitaEdges.c1 : p.fitaEdges.l2;
+                        ctx.beginPath();
+                        if (tEdge) { ctx.moveTo(cx, cy + offset); ctx.lineTo(cx + cw, cy + offset); }
+                        if (bEdge) { ctx.moveTo(cx, cy + ch - offset); ctx.lineTo(cx + cw, cy + ch - offset); }
+                        if (lEdge) { ctx.moveTo(cx + offset, cy); ctx.lineTo(cx + offset, cy + ch); }
+                        if (rEdge) { ctx.moveTo(cx + cw - offset, cy); ctx.lineTo(cx + cw - offset, cy + ch); }
+                        ctx.stroke(); ctx.setLineDash([]);
+                    }
+                    ctx.fillStyle = '#000'; 
+                    if (cw > 20 && ch > 20) { ctx.font = '11px Arial'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(p.idx_ref, cx + 4, cy + 4); }
+                    if (cw > 40 && ch > 30) { ctx.font = '12px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(p.origW, cx + cw/2, cy + ch - 4); ctx.save(); ctx.translate(cx + 12, cy + ch/2); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.origH, 0, 0); ctx.restore(); }
+                });
             });
         });
     }
 
     function imprimirPlanoCorte() {
-        if(pecasCorte.length === 0 || chapasDesenhadas.length === 0) return showToast("Calcule o mapa de corte primeiro!", "error");
-        const chapaComp = document.getElementById('corte_chapa_comp').value; const chapaLarg = document.getElementById('corte_chapa_larg').value; const material = document.getElementById('corte_material').value; const espessura = document.getElementById('corte_espessura').value; const rotCheck = document.getElementById('corte_rotacao').checked ? "Ligada (Ignora Veio)" : "Desligada (Com Veio)"; const totalChapas = chapasDesenhadas.length; const c = DB.config || {}; const tituloPlano = planoAtualNome ? `Projeto: ${planoAtualNome}` : `Plano de Corte Otimizado`;
+        if(pecasCorte.length === 0 || gruposChapasCalculadas.length === 0) return showToast("Calcule o mapa de corte primeiro!", "error");
         
-        let linhasTabela = pecasCorte.map((p, idx) => {
-            let fitaDetalhe = p.fitaResumo + (p.cor_fita ? `<br><small style="color:#666">Cor: ${p.cor_fita}</small>` : '');
-            return `<tr><td><strong>${idx + 1}</strong></td><td class="desc-left">${p.desc}</td><td>${p.qtd}</td><td>${p.comp} mm</td><td>${p.larg} mm</td><td>${fitaDetalhe}</td></tr>`;
-        }).join('');
+        const rotCheck = document.getElementById('corte_rotacao').checked ? "Ligada (Ignora Veio)" : "Desligada (Com Veio)"; 
+        const c = DB.config || {}; 
+        const tituloPlano = planoAtualNome ? `Projeto: ${planoAtualNome}` : `Plano de Corte Otimizado`;
         
-        // CALCULO DO TOTAL DE FITA PARA IMPRESSÃO
         let totalFitaMmPrint = 0;
         pecasCorte.forEach(p => {
             let fitaPeca = 0;
-            if(p.fitaEdges.c1) fitaPeca += p.comp;
-            if(p.fitaEdges.c2) fitaPeca += p.comp;
-            if(p.fitaEdges.l1) fitaPeca += p.larg;
-            if(p.fitaEdges.l2) fitaPeca += p.larg;
-            totalFitaMmPrint += (fitaPeca * p.qtd);
+            if(p.fitaEdges) {
+                if(p.fitaEdges.c1) fitaPeca += p.comp;
+                if(p.fitaEdges.c2) fitaPeca += p.comp;
+                if(p.fitaEdges.l1) fitaPeca += p.larg;
+                if(p.fitaEdges.l2) fitaPeca += p.larg;
+            }
+            totalFitaMmPrint += ((fitaPeca || 0) * (p.qtd || 1));
         });
         let totalFitaMetrosPrint = (totalFitaMmPrint / 1000).toFixed(2);
-        
-        let htmlMapasImg = '';
-        chapasDesenhadas.forEach((sheet, idx) => { let canvasOriginal = document.getElementById(`canvas_sheet_${idx}`); if(canvasOriginal) { let imgURL = canvasOriginal.toDataURL("image/png"); htmlMapasImg += `<div class="print-mapa-box"><h3>CHAPA ${idx + 1}</h3><img src="${imgURL}" class="print-mapa-img"></div>`; } });
+
+        let htmlMapasEMateriais = "";
+
+        gruposChapasCalculadas.forEach((grupo, indexGrupo) => {
+            
+            let pecasDesteGrupo = pecasCorte.filter(p => (p.material || "Padrão") === grupo.nomeMat && (p.espessura || "15mm") === grupo.espessuraMat);
+            
+            let linhasTabela = pecasDesteGrupo.map(p => {
+                let idxOriginal = pecasCorte.indexOf(p) + 1; 
+                let fitaDetalhe = p.fitaResumo + (p.cor_fita ? `<br><small style="color:#666">Cor: ${p.cor_fita}</small>` : '');
+                return `<tr><td><strong>${idxOriginal}</strong></td><td class="desc-left">${p.desc}</td><td>${p.qtd}</td><td>${p.comp} mm</td><td>${p.larg} mm</td><td>${fitaDetalhe}</td></tr>`;
+            }).join('');
+
+            let htmlMapasImg = '';
+            grupo.sheets.forEach((sheet, indexChapa) => { 
+                let canvasOriginal = document.getElementById(`canvas_g${indexGrupo}_s${indexChapa}`); 
+                if(canvasOriginal) { 
+                    let imgURL = canvasOriginal.toDataURL("image/png"); 
+                    htmlMapasImg += `<div class="print-mapa-box"><h3>CHAPA ${indexChapa + 1}</h3><img src="${imgURL}" class="print-mapa-img"></div>`; 
+                } 
+            });
+
+            htmlMapasEMateriais += `
+                <div style="background:#f0f0f0; padding:10px; border:1px solid #ccc; margin-top:30px; display:flex; justify-content:space-between;">
+                    <div>
+                        <h3 style="margin:0;">${grupo.titulo}</h3>
+                        <strong>Chapa Base:</strong> ${grupo.chapa_comp}mm x ${grupo.chapa_larg}mm<br>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-size:18px; font-weight:bold;">${grupo.sheets.length} Chapa(s)</span>
+                    </div>
+                </div>
+                <table class="corte-table" style="margin-bottom:10px;">
+                    <thead><tr><th width="5%">Nº</th><th width="40%" class="desc-left">Peça</th><th width="10%">Qtd</th><th width="15%">Comp.</th><th width="15%">Larg.</th><th width="15%">Fita de Borda</th></tr></thead>
+                    <tbody>${linhasTabela}</tbody>
+                </table>
+                <h2 style="text-align:center; border-bottom:1px solid #000; padding-bottom:5px; margin-top:20px; font-size:16px;">MAPAS DE CORTE - ${grupo.titulo}</h2>
+                ${htmlMapasImg}
+            `;
+        });
+
         const areaImpressao = document.getElementById('area-impressao');
-        
         areaImpressao.innerHTML = `
             <div class="print-corte-container">
                 <div class="print-corte-header"><h1>${tituloPlano}</h1><p>${c.nome || "Minha Empresa"}</p></div>
-                <div class="print-corte-info">
+                <div class="print-corte-info" style="border:none; padding:0; background:none;">
                     <div>
-                        <strong>Material:</strong> ${material} - ${espessura}<br>
-                        <strong>Chapa Base:</strong> ${chapaComp}mm x ${chapaLarg}mm<br>
                         <strong>Rotação das Peças:</strong> ${rotCheck}<br>
                         <strong>Desconto da Serra:</strong> ${document.getElementById('corte_serra').value}mm<br>
                         <strong>Data:</strong> ${formatarDataBR(new Date().toISOString().split('T')[0])}
                     </div>
                     <div style="text-align:right;">
-                        <span style="font-size:18px; font-weight:bold;">${totalChapas} Chapa(s)</span><br>
-                        <span style="font-size:14px; color:#444; font-weight:bold;">Total Fita: ${totalFitaMetrosPrint} Metros</span>
+                        <span style="font-size:16px; color:#444; font-weight:bold;">Fita Total Necessária (Projeto Todo): ${totalFitaMetrosPrint} Metros</span>
                     </div>
                 </div>
-                <table class="corte-table"><thead><tr><th width="5%">Nº</th><th width="40%" class="desc-left">Peça</th><th width="10%">Qtd</th><th width="15%">Comp.</th><th width="15%">Larg.</th><th width="15%">Fita de Borda</th></tr></thead><tbody>${linhasTabela}</tbody></table>
-                <div style="page-break-after: always;"></div>
-                <h2 style="text-align:center; border-bottom:1px solid #000; padding-bottom:10px; margin-top:20px;">MAPAS DE CORTE - DESENHO TÉCNICO</h2>
-                <div style="display:flex; justify-content:center; gap:20px; font-size:14px; margin-bottom:20px; font-weight:bold; color:#444; align-items:center;"><div style="display:flex; align-items:center; gap:5px;"><div class="linha-pontilhada-demo"></div><span>Linha Pontilhada = Fita de Borda (40mm interna)</span></div></div>
-                ${htmlMapasImg}
+                
+                <div style="display:flex; justify-content:center; gap:20px; font-size:14px; margin-bottom:10px; margin-top:10px; font-weight:bold; color:#444; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:5px;"><div class="linha-pontilhada-demo"></div><span>Linha Pontilhada = Fita de Borda (20mm interna)</span></div>
+                </div>
+
+                ${htmlMapasEMateriais}
             </div>
         `;
         setTimeout(() => { window.print(); }, 300);
