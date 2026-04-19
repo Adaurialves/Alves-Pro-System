@@ -223,7 +223,6 @@
             <button onclick="salvarPlanoCorte()" style="flex:1; padding:12px; background:var(--card); border:1px solid #444; border-radius:8px; color:#ddd; font-weight:bold; cursor:pointer;"><i class="fas fa-save" style="color:var(--green);"></i> SALVAR PLANO</button>
         </div>
 
-        <!-- DICA NOVA PARA O USUÁRIO -->
         <div style="background: rgba(10,132,255,0.1); border-left: 4px solid var(--blue); padding: 10px; border-radius: 8px; font-size: 11px; color: #ddd; margin-bottom: 12px;">
             <i class="fas fa-info-circle" style="color:var(--blue)"></i> <b>Dica:</b> Para peças de espessuras diferentes, basta alterar o Material/Espessura acima e continuar adicionando as peças. O sistema separará tudo sozinho!
         </div>
@@ -270,6 +269,7 @@
             <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; text-align:center; margin-bottom:15px; border:1px solid #444;">
                 <span style="font-size:12px; color:#aaa; font-weight:bold;">RESULTADO DA OTIMIZAÇÃO:</span><br>
                 <strong id="resultado_chapas" style="color:var(--gold); font-size:20px;">-</strong>
+                <p id="resultado_area" style="margin:5px 0 0 0; font-size:12px; color:#888;">Área total: -</p>
                 <p id="resultado_fita" style="margin:5px 0 0 0; font-size:13px; color:var(--cyan); font-weight:bold;">Total de Fita: -</p>
             </div>
             
@@ -551,11 +551,8 @@
         if(divC) divC.innerHTML = "";
         if(divComp) divComp.innerHTML = "";
         
-        // Pedidos, Orçamentos e Agenda
         dadosPedidos.forEach(p => { 
             let valorDevendo = p.total - p.pago;
-            
-            // Tratamento de exibição para Endereço Clicável para GPS
             let infoSecundaria = '';
             let enderecoFull = [p.endereco, p.numero, p.complemento, p.cidade].filter(Boolean).join(', ');
             
@@ -583,17 +580,12 @@
                 </div>`;
                 
             if((p.cliente || '').toLowerCase().includes(termo)) { 
-                if(p.tipo === 'compromisso') {
-                    if(divA) divA.innerHTML += htmlCard;
-                } else if(p.tipo === 'orcamento') {
-                    if(divO) divO.innerHTML += htmlCard;
-                } else {
-                    if(divP) divP.innerHTML += htmlCard;
-                }
+                if(p.tipo === 'compromisso') { if(divA) divA.innerHTML += htmlCard; } 
+                else if(p.tipo === 'orcamento') { if(divO) divO.innerHTML += htmlCard; } 
+                else { if(divP) divP.innerHTML += htmlCard; }
             } 
         });
 
-        // Lista de Compras
         dadosCompras.forEach(c => {
             if((c.cliente || '').toLowerCase().includes(termo)) {
                 let resumoItens = c.itens.length > 0 ? c.itens.map(i => `${i.qtd}x ${i.item}`).join(', ') : 'Nenhum item';
@@ -613,7 +605,6 @@
             }
         });
         
-        // Estoque
         dadosEstoque.forEach(e => { 
             if(e.item.toLowerCase().includes(termo)) { 
                 let locHtml = e.localizacao ? `<span style="font-size:10px; color:#888; display:block;"><i class="fas fa-map-pin"></i> Loc: ${e.localizacao}</span>` : '';
@@ -621,14 +612,12 @@
             } 
         });
 
-        // Gastos
         dadosGastos.forEach(g => {
             if((g.descricao || '').toLowerCase().includes(termo)) {
                 if(divG) divG.innerHTML += `<div class="item-card" style="border-left-color:var(--red)"><div class="card-header"><h4 onclick="editarGasto(${g.id})">${g.descricao}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('gastos', ${g.id})"></i></div><div class="info-linha"><span>Data: <b>${formatarDataBR(g.data)}</b></span> | <span>Valor: <b style="color:var(--red)">R$ ${formatMoeda(g.valor)}</b></span></div></div>`;
             }
         });
 
-        // Catálogo de Serviços
         dadosCatalogo.forEach(c => {
             if((c.nome || '').toLowerCase().includes(termo)) {
                 if(divC) divC.innerHTML += `<div class="item-card" style="border-left-color:var(--cyan)"><div class="card-header"><h4 onclick="editarServicoCatalogo(${c.id})">${c.nome}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('catalogo_servicos', ${c.id})"></i></div><div class="info-linha"><span>Preço Base Mão de Obra: <b style="color:var(--cyan)">R$ ${formatMoeda(c.preco)}</b></span></div></div>`;
@@ -691,36 +680,26 @@
         const content = document.querySelector('#modalPedido .modal-content');
         const selectStatus = document.getElementById('f_status');
 
-        selectStatus.innerHTML = ''; // Limpa as opções de status
+        selectStatus.innerHTML = ''; 
 
         if(tipo === 'compromisso') {
             content.classList.add('modo-agenda');
             content.classList.remove('modo-pedido');
             document.getElementById('label_servico').innerText = "Descrição do Compromisso";
             
-            selectStatus.innerHTML = `
-                <option value="pendente">Pendente</option>
-                <option value="concluido">Concluído (Mover para Pedido)</option>
-            `;
+            selectStatus.innerHTML = `<option value="pendente">Pendente</option><option value="concluido">Concluído (Mover para Pedido)</option>`;
         } else if(tipo === 'orcamento') {
             content.classList.add('modo-pedido');
             content.classList.remove('modo-agenda');
             document.getElementById('label_servico').innerText = "Serviço Principal";
             
-            selectStatus.innerHTML = `
-                <option value="aguardando">Aguardando</option>
-                <option value="aprovado">Aprovado (Mover para Pedido)</option>
-            `;
+            selectStatus.innerHTML = `<option value="aguardando">Aguardando</option><option value="aprovado">Aprovado (Mover para Pedido)</option>`;
         } else {
             content.classList.add('modo-pedido');
             content.classList.remove('modo-agenda');
             document.getElementById('label_servico').innerText = "Serviço Principal";
             
-            selectStatus.innerHTML = `
-                <option value="pendente">Pendente</option>
-                <option value="andamento">Em Andamento</option>
-                <option value="concluido">Concluído</option>
-            `;
+            selectStatus.innerHTML = `<option value="pendente">Pendente</option><option value="andamento">Em Andamento</option><option value="concluido">Concluído</option>`;
         }
     }
 
@@ -778,24 +757,14 @@
         }
     }
 
-    // --- FUNÇÕES CRUD (CRIAR, SALVAR, EXCLUIR) ---
-
     function excluirRegistro(tab, id) { if(confirm("Deseja excluir?")) { const i = DB[tab].findIndex(x => x.id == id); if(i > -1) DB[tab].splice(i, 1); saveDB(); } }
     
-    // PEDIDOS / AGENDA / ORÇAMENTO
     function salvarPedido() { 
         let tipoAtual = document.getElementById('f_tipo').value;
         let statusAtual = document.getElementById('f_status').value;
 
-        if (tipoAtual === 'orcamento' && statusAtual === 'aprovado') {
-            tipoAtual = 'servico';
-            statusAtual = 'pendente';
-            showToast("Orçamento Aprovado! Movido para Pedidos.", "success");
-        } else if (tipoAtual === 'compromisso' && statusAtual === 'concluido') {
-            tipoAtual = 'servico';
-            statusAtual = 'pendente';
-            showToast("Compromisso Concluído! Movido para Pedidos.", "success");
-        }
+        if (tipoAtual === 'orcamento' && statusAtual === 'aprovado') { tipoAtual = 'servico'; statusAtual = 'pendente'; showToast("Orçamento Aprovado! Movido para Pedidos.", "success"); } 
+        else if (tipoAtual === 'compromisso' && statusAtual === 'concluido') { tipoAtual = 'servico'; statusAtual = 'pendente'; showToast("Compromisso Concluído! Movido para Pedidos.", "success"); }
 
         const obj = { 
             id: document.getElementById('f_id').value || generateID(), 
@@ -814,8 +783,7 @@
             lembrete: document.getElementById('f_lembrete').value
         }; 
         
-        if(document.getElementById('f_id').value) { const i = DB.servicos.findIndex(x => x.id == obj.id); DB.servicos[i] = obj; } 
-        else { DB.servicos.push(obj); } 
+        if(document.getElementById('f_id').value) { const i = DB.servicos.findIndex(x => x.id == obj.id); DB.servicos[i] = obj; } else { DB.servicos.push(obj); } 
         saveDB(); fecharModais(); 
     }
 
@@ -843,56 +811,32 @@
         document.getElementById('modalPedido').style.display = 'flex'; 
     }
 
-    // LISTA DE COMPRAS
     function adicionarItemCompraUI() {
         const item = document.getElementById('c_item_nome').value;
         const qtd = parseInt(document.getElementById('c_item_qtd').value) || 1;
         const valor = parseFloat(document.getElementById('c_item_valor').value) || 0;
         if(!item) return showToast("Digite o nome do item", "error");
-        
         itensCompraAtual.push({ item, qtd, valor });
-        
-        document.getElementById('c_item_nome').value = "";
-        document.getElementById('c_item_qtd').value = "1";
-        document.getElementById('c_item_valor').value = "";
-        
+        document.getElementById('c_item_nome').value = ""; document.getElementById('c_item_qtd').value = "1"; document.getElementById('c_item_valor').value = "";
         renderizarItensCompra();
     }
 
     function editarItemCompraLista(idx) {
         const i = itensCompraAtual[idx];
-        document.getElementById('c_item_nome').value = i.item;
-        document.getElementById('c_item_qtd').value = i.qtd;
-        document.getElementById('c_item_valor').value = i.valor;
-        
-        // Remove da lista para que a pessoa re-adicione atualizado
-        itensCompraAtual.splice(idx, 1);
-        renderizarItensCompra();
+        document.getElementById('c_item_nome').value = i.item; document.getElementById('c_item_qtd').value = i.qtd; document.getElementById('c_item_valor').value = i.valor;
+        itensCompraAtual.splice(idx, 1); renderizarItensCompra();
     }
 
-    function removerItemCompra(idx) {
-        itensCompraAtual.splice(idx, 1);
-        renderizarItensCompra();
-    }
+    function removerItemCompra(idx) { itensCompraAtual.splice(idx, 1); renderizarItensCompra(); }
 
     function renderizarItensCompra() {
         const container = document.getElementById('container_itens_compra');
         let total = 0;
-        
-        if(itensCompraAtual.length === 0) {
-            container.innerHTML = '<div style="text-align:center; font-size:12px; color:#888;">Nenhum item na lista.</div>';
-        } else {
+        if(itensCompraAtual.length === 0) { container.innerHTML = '<div style="text-align:center; font-size:12px; color:#888;">Nenhum item na lista.</div>'; } 
+        else {
             container.innerHTML = itensCompraAtual.map((i, idx) => {
-                let sub = i.qtd * i.valor;
-                total += sub;
-                return `
-                <div class="item-selecionado">
-                    <span style="flex:1;">${i.qtd}x ${i.item} <br><b style="color:var(--pink)">R$ ${formatMoeda(sub)}</b> <small style="color:#888; font-size:10px;">(R$ ${formatMoeda(i.valor)} un)</small></span>
-                    <div style="display:flex; gap:15px; align-items:center;">
-                        <i class="fas fa-edit" style="color:var(--blue); cursor:pointer; font-size:16px;" onclick="editarItemCompraLista(${idx})"></i>
-                        <i class="fas fa-trash" style="color:var(--red); cursor:pointer; font-size:16px;" onclick="removerItemCompra(${idx})"></i>
-                    </div>
-                </div>`;
+                let sub = i.qtd * i.valor; total += sub;
+                return `<div class="item-selecionado"><span style="flex:1;">${i.qtd}x ${i.item} <br><b style="color:var(--pink)">R$ ${formatMoeda(sub)}</b> <small style="color:#888; font-size:10px;">(R$ ${formatMoeda(i.valor)} un)</small></span><div style="display:flex; gap:15px; align-items:center;"><i class="fas fa-edit" style="color:var(--blue); cursor:pointer; font-size:16px;" onclick="editarItemCompraLista(${idx})"></i><i class="fas fa-trash" style="color:var(--red); cursor:pointer; font-size:16px;" onclick="removerItemCompra(${idx})"></i></div></div>`;
             }).join('');
         }
         document.getElementById('c_total').value = total.toFixed(2);
@@ -900,168 +844,53 @@
 
     function salvarCompra() {
         let statusAtual = document.getElementById('c_status').value;
-        const obj = {
-            id: document.getElementById('c_id').value || generateID(),
-            cliente: document.getElementById('c_cliente').value,
-            itens: itensCompraAtual,
-            total: parseFloat(document.getElementById('c_total').value) || 0,
-            data: document.getElementById('c_data').value,
-            status: statusAtual
-        };
+        const obj = { id: document.getElementById('c_id').value || generateID(), cliente: document.getElementById('c_cliente').value, itens: itensCompraAtual, total: parseFloat(document.getElementById('c_total').value) || 0, data: document.getElementById('c_data').value, status: statusAtual };
 
         if (statusAtual === 'concluido') {
-            // Converte para Gasto e não salva mais em Compras
             let descGasto = "Compra: " + (obj.cliente || 'Diversos') + " (" + obj.itens.length + " itens)";
-            let novoGasto = {
-                id: generateID(),
-                descricao: descGasto,
-                valor: obj.total,
-                data: obj.data
-            };
+            let novoGasto = { id: generateID(), descricao: descGasto, valor: obj.total, data: obj.data };
             DB.gastos.push(novoGasto);
-
-            // Remove das compras se existia
-            if(document.getElementById('c_id').value) {
-                DB.compras = DB.compras.filter(c => c.id != obj.id);
-            }
+            if(document.getElementById('c_id').value) { DB.compras = DB.compras.filter(c => c.id != obj.id); }
             showToast("Compra Concluída! Movida para Gastos.", "success");
-
         } else {
-            // Salva apenas como Compras Pendentes
-            if(document.getElementById('c_id').value) {
-                const i = DB.compras.findIndex(x => x.id == obj.id);
-                DB.compras[i] = obj;
-            } else {
-                DB.compras.push(obj);
-            }
+            if(document.getElementById('c_id').value) { const i = DB.compras.findIndex(x => x.id == obj.id); DB.compras[i] = obj; } else { DB.compras.push(obj); }
             showToast("Lista de Compras salva!", "success");
         }
-        saveDB();
-        fecharModais();
+        saveDB(); fecharModais();
     }
 
-    function editarCompra(id) {
-        const c = DB.compras.find(x => x.id == id);
-        document.getElementById('c_id').value = c.id;
-        document.getElementById('c_cliente').value = c.cliente;
-        document.getElementById('c_status').value = c.status || 'em_compra';
-        document.getElementById('c_data').value = c.data;
-        itensCompraAtual = c.itens || [];
-        renderizarItensCompra();
-        document.getElementById('modalCompras').style.display = 'flex';
-    }
+    function editarCompra(id) { const c = DB.compras.find(x => x.id == id); document.getElementById('c_id').value = c.id; document.getElementById('c_cliente').value = c.cliente; document.getElementById('c_status').value = c.status || 'em_compra'; document.getElementById('c_data').value = c.data; itensCompraAtual = c.itens || []; renderizarItensCompra(); document.getElementById('modalCompras').style.display = 'flex'; }
 
     function imprimirCompra() {
         if (itensCompraAtual.length === 0) return showToast("A lista está vazia!", "error");
+        const cliente = document.getElementById('c_cliente').value || 'Não informado'; const data = formatarDataBR(document.getElementById('c_data').value); const total = formatMoeda(document.getElementById('c_total').value); const empresa = DB.config.nome || "Minha Empresa";
         
-        const cliente = document.getElementById('c_cliente').value || 'Não informado';
-        const data = formatarDataBR(document.getElementById('c_data').value);
-        const total = formatMoeda(document.getElementById('c_total').value);
-        const empresa = DB.config.nome || "Minha Empresa";
-        
-        let linhas = itensCompraAtual.map((i, idx) => `
-            <tr>
-                <td>${idx + 1}</td>
-                <td class="desc-left">${i.item}</td>
-                <td>${i.qtd}</td>
-                <td>R$ ${formatMoeda(i.valor)}</td>
-                <td>R$ ${formatMoeda(i.qtd * i.valor)}</td>
-            </tr>
-        `).join('');
-
+        let linhas = itensCompraAtual.map((i, idx) => `<tr><td>${idx + 1}</td><td class="desc-left">${i.item}</td><td>${i.qtd}</td><td>R$ ${formatMoeda(i.valor)}</td><td>R$ ${formatMoeda(i.qtd * i.valor)}</td></tr>`).join('');
         const areaImpressao = document.getElementById('area-impressao');
-        areaImpressao.innerHTML = `
-            <div class="print-corte-container">
-                <div class="print-corte-header">
-                    <h1>LISTA DE COMPRAS</h1>
-                    <p>${empresa}</p>
-                </div>
-                <div class="print-corte-info">
-                    <div>
-                        <strong>Cliente / Referência:</strong> ${cliente}<br>
-                        <strong>Data:</strong> ${data}
-                    </div>
-                    <div style="text-align:right;">
-                        <span style="font-size:18px; font-weight:bold;">Total: R$ ${total}</span>
-                    </div>
-                </div>
-                <table class="corte-table">
-                    <thead>
-                        <tr>
-                            <th width="5%">Nº</th>
-                            <th width="50%" class="desc-left">Item Descrição</th>
-                            <th width="10%">Qtd</th>
-                            <th width="15%">Valor Unit.</th>
-                            <th width="20%">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>${linhas}</tbody>
-                </table>
-            </div>
-        `;
+        areaImpressao.innerHTML = `<div class="print-corte-container"><div class="print-corte-header"><h1>LISTA DE COMPRAS</h1><p>${empresa}</p></div><div class="print-corte-info"><div><strong>Cliente / Referência:</strong> ${cliente}<br><strong>Data:</strong> ${data}</div><div style="text-align:right;"><span style="font-size:18px; font-weight:bold;">Total: R$ ${total}</span></div></div><table class="corte-table"><thead><tr><th width="5%">Nº</th><th width="50%" class="desc-left">Item Descrição</th><th width="10%">Qtd</th><th width="15%">Valor Unit.</th><th width="20%">Subtotal</th></tr></thead><tbody>${linhas}</tbody></table></div>`;
         setTimeout(() => { window.print(); }, 300);
     }
     
-    // ESTOQUE
     function salvarEstoque() { const obj = { id: document.getElementById('e_id').value || generateID(), item: document.getElementById('e_item').value, localizacao: document.getElementById('e_localizacao').value, quantidade: parseInt(document.getElementById('e_qtd').value) || 0, valor_venda: parseFloat(document.getElementById('e_venda').value) || 0 }; if(document.getElementById('e_id').value) { const i = DB.estoque.findIndex(x => x.id == obj.id); DB.estoque[i] = obj; } else DB.estoque.push(obj); saveDB(); fecharModais(); }
     function editarEstoque(id) { const e = DB.estoque.find(x => x.id == id); document.getElementById('e_id').value = e.id; document.getElementById('e_item').value = e.item; document.getElementById('e_localizacao').value = e.localizacao || ''; document.getElementById('e_qtd').value = e.quantidade; document.getElementById('e_venda').value = e.valor_venda; document.getElementById('modalEstoque').style.display = 'flex'; }
-    
-    // GASTOS
     function salvarGasto() { const obj = { id: document.getElementById('g_id').value || generateID(), descricao: document.getElementById('g_descricao').value, valor: parseFloat(document.getElementById('g_valor').value) || 0, data: document.getElementById('g_data').value }; if(document.getElementById('g_id').value) { const i = DB.gastos.findIndex(x => x.id == obj.id); DB.gastos[i] = obj; } else DB.gastos.push(obj); saveDB(); fecharModais(); }
     function editarGasto(id) { const g = DB.gastos.find(x => x.id == id); document.getElementById('g_id').value = g.id; document.getElementById('g_descricao').value = g.descricao; document.getElementById('g_valor').value = g.valor; document.getElementById('g_data').value = g.data; document.getElementById('modalGastos').style.display = 'flex'; }
-    
-    // CATÁLOGO DE SERVIÇOS FIXOS
     function salvarServicoCatalogo() { const obj = { id: document.getElementById('sc_id').value || generateID(), nome: document.getElementById('sc_nome').value, preco: parseFloat(document.getElementById('sc_preco').value) || 0 }; if(document.getElementById('sc_id').value) { const i = DB.catalogo_servicos.findIndex(x => x.id == obj.id); DB.catalogo_servicos[i] = obj; } else DB.catalogo_servicos.push(obj); saveDB(); fecharModais(); }
     function editarServicoCatalogo(id) { const c = DB.catalogo_servicos.find(x => x.id == id); document.getElementById('sc_id').value = c.id; document.getElementById('sc_nome').value = c.nome; document.getElementById('sc_preco').value = c.preco; document.getElementById('modalServicosCatalogo').style.display = 'flex'; }
 
-    // FUNÇÕES DE CÁLCULO E INCLUSÃO DE ITENS (ORÇAMENTO/PEDIDO)
-    function recalcularTotal() { 
-        const mao = parseFloat(document.getElementById('f_mao_obra').value) || 0; 
-        const somaItens = itensNoPedido.reduce((a, i) => a + (i.qtd * i.valor), 0); 
-        document.getElementById('f_total').value = (mao + somaItens).toFixed(2); 
-    }
-    
-    function renderizarItensPedido() { 
-        document.getElementById('container_itens_venda').innerHTML = itensNoPedido.map((i, idx) => {
-            let iconeTipo = i.tipo_item === 'servico' ? '<i class="fas fa-tools" style="color:var(--cyan); margin-right:5px;"></i>' : (i.tipo_item === 'compra' ? '<i class="fas fa-shopping-cart" style="color:var(--pink); margin-right:5px;"></i>' : '<i class="fas fa-box" style="color:var(--orange); margin-right:5px;"></i>');
-            return `<div class="item-selecionado">
-                <span style="display:flex; align-items:center;">
-                    ${iconeTipo} 
-                    <div>${i.qtd}x ${i.item} <br><b style="color:var(--green)">R$ ${formatMoeda(i.qtd * i.valor)}</b></div>
-                </span>
-                <i class="fas fa-trash" style="color:var(--red); cursor:pointer;" onclick="removerItem(${idx})"></i>
-            </div>`;
-        }).join(''); 
-    }
-    
+    function recalcularTotal() { const mao = parseFloat(document.getElementById('f_mao_obra').value) || 0; const somaItens = itensNoPedido.reduce((a, i) => a + (i.qtd * i.valor), 0); document.getElementById('f_total').value = (mao + somaItens).toFixed(2); }
+    function renderizarItensPedido() { document.getElementById('container_itens_venda').innerHTML = itensNoPedido.map((i, idx) => { let iconeTipo = i.tipo_item === 'servico' ? '<i class="fas fa-tools" style="color:var(--cyan); margin-right:5px;"></i>' : (i.tipo_item === 'compra' ? '<i class="fas fa-shopping-cart" style="color:var(--pink); margin-right:5px;"></i>' : '<i class="fas fa-box" style="color:var(--orange); margin-right:5px;"></i>'); return `<div class="item-selecionado"><span style="display:flex; align-items:center;">${iconeTipo} <div>${i.qtd}x ${i.item} <br><b style="color:var(--green)">R$ ${formatMoeda(i.qtd * i.valor)}</b></div></span><i class="fas fa-trash" style="color:var(--red); cursor:pointer;" onclick="removerItem(${idx})"></i></div>`; }).join(''); }
     function removerItem(idx) { itensNoPedido.splice(idx, 1); renderizarItensPedido(); recalcularTotal(); }
-    
-    // Adicionar do Estoque
     function abrirSeletorEstoque() { const sel = document.getElementById('sel_produto_estoque'); sel.innerHTML = dadosEstoque.map(e => `<option value="${e.id}">${e.item} (Disp: ${e.quantidade}) - R$ ${formatMoeda(e.valor_venda)}</option>`).join(''); document.getElementById('modalSeletorEstoque').style.display = 'flex'; }
     function confirmarAdicaoItem() { const id = document.getElementById('sel_produto_estoque').value; const prod = dadosEstoque.find(e => e.id == id); if(prod) { itensNoPedido.push({ id_referencia: prod.id, item: prod.item, qtd: parseInt(document.getElementById('sel_qtd_estoque').value), valor: prod.valor_venda, tipo_item: 'estoque' }); renderizarItensPedido(); recalcularTotal(); document.getElementById('modalSeletorEstoque').style.display = 'none'; } }
-
-    // Adicionar do Catálogo de Serviços
-    function abrirSeletorServico() {
-        const sel = document.getElementById('sel_servico_catalogo');
-        sel.innerHTML = dadosCatalogo.map(c => `<option value="${c.id}">${c.nome} - R$ ${formatMoeda(c.preco)}</option>`).join('');
-        document.getElementById('modalSeletorServico').style.display = 'flex';
-    }
-    function confirmarAdicaoServico() {
-        const id = document.getElementById('sel_servico_catalogo').value;
-        const serv = dadosCatalogo.find(c => c.id == id);
-        if(serv) {
-            itensNoPedido.push({ id_referencia: serv.id, item: serv.nome, qtd: parseInt(document.getElementById('sel_qtd_servico').value), valor: serv.preco, tipo_item: 'servico' });
-            renderizarItensPedido();
-            recalcularTotal();
-            document.getElementById('modalSeletorServico').style.display = 'none';
-        }
-    }
+    function abrirSeletorServico() { const sel = document.getElementById('sel_servico_catalogo'); sel.innerHTML = dadosCatalogo.map(c => `<option value="${c.id}">${c.nome} - R$ ${formatMoeda(c.preco)}</option>`).join(''); document.getElementById('modalSeletorServico').style.display = 'flex'; }
+    function confirmarAdicaoServico() { const id = document.getElementById('sel_servico_catalogo').value; const serv = dadosCatalogo.find(c => c.id == id); if(serv) { itensNoPedido.push({ id_referencia: serv.id, item: serv.nome, qtd: parseInt(document.getElementById('sel_qtd_servico').value), valor: serv.preco, tipo_item: 'servico' }); renderizarItensPedido(); recalcularTotal(); document.getElementById('modalSeletorServico').style.display = 'none'; } }
 
     // ==========================================
-    // MÓDULO PLANO DE CORTE - COM MULTI-MATERIAIS E ESPESSURAS
+    // MÓDULO PLANO DE CORTE À PROVA DE FALHAS
     // ==========================================
     let pecasCorte = []; 
-    let gruposChapasCalculadas = []; // Substitui o antigo chapasDesenhadas para comportar vários materiais
+    let gruposChapasCalculadas = []; 
     let planoAtualId = null; 
     let planoAtualNome = "";
 
@@ -1071,19 +900,18 @@
         const larg = parseFloat(document.getElementById('corte_larg_peca').value);
         const qtd = parseInt(document.getElementById('corte_qtd_peca').value);
 
-        // Pega as configurações atuais da chapa (para associar à peça)
-        const material = document.getElementById('corte_material').value;
-        const espessura = document.getElementById('corte_espessura').value;
-        const chapa_comp = parseFloat(document.getElementById('corte_chapa_comp').value);
-        const chapa_larg = parseFloat(document.getElementById('corte_chapa_larg').value);
+        const material = document.getElementById('corte_material').value || "Padrão";
+        const espessura = document.getElementById('corte_espessura').value || "15mm";
+        const chapa_comp = parseFloat(document.getElementById('corte_chapa_comp').value) || 2750;
+        const chapa_larg = parseFloat(document.getElementById('corte_chapa_larg').value) || 1850;
 
         const cor_fita = document.getElementById('corte_cor_fita_peca').value || "";
 
         const f_c1 = document.getElementById('corte_fita_c1').checked; const f_c2 = document.getElementById('corte_fita_c2').checked;
         const f_l1 = document.getElementById('corte_fita_l1').checked; const f_l2 = document.getElementById('corte_fita_l2').checked;
 
-        if(!desc || !comp || !larg || qtd <= 0 || isNaN(comp) || isNaN(larg) || !material || !espessura) {
-            return showToast("Preencha todos os campos da peça e as configurações da chapa!", "error");
+        if(!desc || !comp || !larg || qtd <= 0 || isNaN(comp) || isNaN(larg)) {
+            return showToast("Preencha todos os campos da peça!", "error");
         }
 
         let fitaText = [];
@@ -1092,7 +920,6 @@
         let fitaResumo = fitaText.length > 0 ? fitaText.join('/') : "-";
         let fitaEdges = { c1: f_c1, c2: f_c2, l1: f_l1, l2: f_l2 };
 
-        // Adiciona a peça com as informações do material herdadas
         pecasCorte.push({ 
             id_peca: Date.now(), desc, comp, larg, qtd, fitaResumo, fitaEdges, cor_fita,
             material, espessura, chapa_comp, chapa_larg
@@ -1104,23 +931,24 @@
         document.getElementById('corte_fita_c1').checked = false; document.getElementById('corte_fita_c2').checked = false;
         document.getElementById('corte_fita_l1').checked = false; document.getElementById('corte_fita_l2').checked = false;
         
-        renderizarPecasCorte(); showToast(`Peça adicionada como ${material} (${espessura})`);
+        renderizarPecasCorte(); showToast(`Peça adicionada!`);
     }
 
     function removerPecaCorte(idx) { pecasCorte.splice(idx, 1); renderizarPecasCorte(); }
 
     function renderizarPecasCorte() {
         const div = document.getElementById('lista_pecas_corte');
-        
-        // CALCULO DO TOTAL DE FITA GERAL
         let totalFitaMm = 0;
+        
         pecasCorte.forEach(p => {
             let fitaPeca = 0;
-            if(p.fitaEdges.c1) fitaPeca += p.comp;
-            if(p.fitaEdges.c2) fitaPeca += p.comp;
-            if(p.fitaEdges.l1) fitaPeca += p.larg;
-            if(p.fitaEdges.l2) fitaPeca += p.larg;
-            totalFitaMm += (fitaPeca * p.qtd);
+            if(p.fitaEdges) {
+                if(p.fitaEdges.c1) fitaPeca += p.comp;
+                if(p.fitaEdges.c2) fitaPeca += p.comp;
+                if(p.fitaEdges.l1) fitaPeca += p.larg;
+                if(p.fitaEdges.l2) fitaPeca += p.larg;
+            }
+            totalFitaMm += ((fitaPeca || 0) * (p.qtd || 1));
         });
         
         document.getElementById('resultado_fita').innerText = `Total de Fita: ${(totalFitaMm / 1000).toFixed(2)} Metros`;
@@ -1131,11 +959,10 @@
             return; 
         }
         
-        // Agrupa visualmente no celular
         div.innerHTML = pecasCorte.map((p, idx) => `
             <div class="item-selecionado">
                 <div style="line-height:1.3;">
-                    <span style="font-size:10px; font-weight:bold; color:var(--teal); text-transform:uppercase;">[${p.material} - ${p.espessura}]</span><br>
+                    <span style="font-size:10px; font-weight:bold; color:var(--teal); text-transform:uppercase;">[${p.material || 'Padrão'} - ${p.espessura || '15mm'}]</span><br>
                     <span style="font-size:13px; font-weight:bold; color:white;">${p.desc}</span><br>
                     <span style="font-size:11px; color:#aaa;">Qtd: ${p.qtd} un | ${p.comp}mm x ${p.larg}mm</span><br>
                     <span style="font-size:10px; color:#aaa;"><i class="fas fa-tape"></i> Fita: ${p.fitaResumo} ${p.cor_fita ? `(Cor: ${p.cor_fita})` : ''}</span>
@@ -1185,7 +1012,6 @@
         
         pecasCorte = JSON.parse(JSON.stringify(p.pecas)); 
         
-        // Coloca no formulário a conf do primeiro material só para não ficar vazio
         if(pecasCorte.length > 0) {
             document.getElementById('corte_material').value = pecasCorte[0].material || "MDF Branco";
             document.getElementById('corte_espessura').value = pecasCorte[0].espessura || "15mm";
@@ -1200,95 +1026,214 @@
 
     function excluirPlano(id) { if(confirm("Deseja excluir este plano salvo?")) { DB.planos_corte = DB.planos_corte.filter(x => x.id !== id); saveDB(); if(planoAtualId === id) { planoAtualId = null; planoAtualNome = ""; } abrirPlanosSalvos(); } }
 
-    // ALGORITMO MODIFICADO PARA MULTI-MATERIAIS
     function calcularAlgoritmoDeCorte() {
-        if(pecasCorte.length === 0) return showToast("Adicione peças primeiro!", "error");
-        const kerf = parseFloat(document.getElementById('corte_serra').value);
-        const permitirRotacao = document.getElementById('corte_rotacao').checked;
+        try {
+            if(pecasCorte.length === 0) return showToast("Adicione peças primeiro!", "error");
+            
+            let serraVal = parseFloat(document.getElementById('corte_serra').value);
+            const kerf = isNaN(serraVal) ? 3 : serraVal; // Espessura da serra
+            const permitirRotacao = document.getElementById('corte_rotacao').checked;
 
-        // 1. Separar as peças por grupo (Material + Espessura)
-        let gruposMaterial = {};
-        pecasCorte.forEach((p, originalIndex) => {
-            let chave = `${p.material} | ${p.espessura}`;
-            if(!gruposMaterial[chave]) {
-                gruposMaterial[chave] = {
-                    nomeMat: p.material,
-                    espessuraMat: p.espessura,
-                    chapa_comp: p.chapa_comp,
-                    chapa_larg: p.chapa_larg,
-                    pecas_flat: [],
-                    areaLiquida: 0
-                };
+            let gruposMaterial = {};
+            
+            // 1. Agrupamento seguro por Material e Espessura
+            for(let i=0; i<pecasCorte.length; i++) {
+                let p = pecasCorte[i];
+                let nomeMat = p.material || "Padrão";
+                let espMat = p.espessura || "15mm";
+                let chave = nomeMat + "|||" + espMat;
+                
+                if(!gruposMaterial[chave]) {
+                    let chComp = parseFloat(p.chapa_comp);
+                    let chLarg = parseFloat(p.chapa_larg);
+                    if(isNaN(chComp) || chComp <= 0) chComp = parseFloat(document.getElementById('corte_chapa_comp').value) || 2750;
+                    if(isNaN(chLarg) || chLarg <= 0) chLarg = parseFloat(document.getElementById('corte_chapa_larg').value) || 1850;
+
+                    gruposMaterial[chave] = {
+                        titulo: `${nomeMat} - ${espMat}`,
+                        nomeMat: nomeMat,
+                        espessuraMat: espMat,
+                        chapa_comp: chComp,
+                        chapa_larg: chLarg,
+                        pecas_flat: [],
+                        areaLiquida: 0
+                    };
+                }
+                
+                for(let q=0; q<p.qtd; q++) { 
+                    gruposMaterial[chave].pecas_flat.push({ 
+                        idx_ref: i + 1, 
+                        desc: p.desc, 
+                        w: parseFloat(p.comp), 
+                        h: parseFloat(p.larg), 
+                        fitaResumo: p.fitaResumo, 
+                        fitaEdges: p.fitaEdges, 
+                        cor_fita: p.cor_fita 
+                    }); 
+                    gruposMaterial[chave].areaLiquida += (parseFloat(p.comp) * parseFloat(p.larg)) / 1000000; 
+                }
+            }
+
+            gruposChapasCalculadas = []; 
+            let totalChapasGeral = 0;
+            let totalAreaGeral = 0;
+
+            // Função para verificar se a peça cabe (Normal ou Rotacionada)
+            function fitPieceInNode(node, pw, ph) { 
+                if(pw <= node.w && ph <= node.h) return { rot: false }; 
+                if(permitirRotacao && ph <= node.w && pw <= node.h) return { rot: true }; 
+                return null; 
             }
             
-            for(let i=0; i<p.qtd; i++) { 
-                gruposMaterial[chave].pecas_flat.push({ 
-                    idx_ref: originalIndex + 1, 
-                    desc: p.desc, 
-                    w: p.comp, 
-                    h: p.larg, 
-                    fitaResumo: p.fitaResumo, 
-                    fitaEdges: p.fitaEdges, 
-                    cor_fita: p.cor_fita 
-                }); 
-                gruposMaterial[chave].areaLiquida += (p.comp * p.larg) / 1000000; 
+            // Divisão Guilhotina Otimizada
+            function splitGuillotine(freeRect, pw, ph, kerf) {
+                let rects = [];
+                // Estratégia BSSF (Best Short Side Fit) - Mantém a maior área livre contínua possível
+                let sobraW = freeRect.w - pw;
+                let sobraH = freeRect.h - ph;
+
+                if (sobraW > sobraH) { 
+                    // Corta verticalmente primeiro
+                    rects.push({ x: freeRect.x, y: freeRect.y + ph + kerf, w: pw, h: freeRect.h - ph - kerf }); 
+                    rects.push({ x: freeRect.x + pw + kerf, y: freeRect.y, w: freeRect.w - pw - kerf, h: freeRect.h }); 
+                } else { 
+                    // Corta horizontalmente primeiro
+                    rects.push({ x: freeRect.x + pw + kerf, y: freeRect.y, w: freeRect.w - pw - kerf, h: ph }); 
+                    rects.push({ x: freeRect.x, y: freeRect.y + ph + kerf, w: freeRect.w, h: freeRect.h - ph - kerf }); 
+                }
+                // Descarta retalhos menores que 1cm (Inúteis para marcenaria e atrapalham o cálculo)
+                return rects.filter(r => r.w >= 10 && r.h >= 10); 
             }
-        });
 
-        gruposChapasCalculadas = []; // Zera a lista de mapas
-        let totalChapasGeral = 0;
-        let totalAreaGeral = 0;
+            // Heurísticas: Tenta arranjar as peças de 3 formas diferentes para achar a melhor
+            const heuristicasOrdenacao = [
+                (a, b) => (b.w * b.h) - (a.w * a.h), // 1. Por Maior Área
+                (a, b) => Math.max(b.w, b.h) - Math.max(a.w, a.h), // 2. Por Lado Mais Longo
+                (a, b) => (Math.max(b.w, b.h) + Math.min(b.w, b.h)) - (Math.max(a.w, a.h) + Math.min(a.w, a.h)) // 3. Por Perímetro
+            ];
 
-        function fitPieceInNode(node, pw, ph) { if(pw <= node.w && ph <= node.h) return { rot: false }; if(permitirRotacao && ph <= node.w && pw <= node.h) return { rot: true }; return null; }
-        function splitGuillotine(freeRect, pw, ph, kerf) {
-            let rects = [];
-            if (freeRect.w - pw > freeRect.h - ph) { rects.push({ x: freeRect.x, y: freeRect.y + ph + kerf, w: pw, h: freeRect.h - ph - kerf }); rects.push({ x: freeRect.x + pw + kerf, y: freeRect.y, w: freeRect.w - pw - kerf, h: freeRect.h }); } else { rects.push({ x: freeRect.x + pw + kerf, y: freeRect.y, w: freeRect.w - pw - kerf, h: ph }); rects.push({ x: freeRect.x, y: freeRect.y + ph + kerf, w: freeRect.w, h: freeRect.h - ph - kerf }); }
-            return rects.filter(r => r.w > 0 && r.h > 0); 
-        }
+            let chaves = Object.keys(gruposMaterial);
 
-        // 2. Rodar o algoritmo separadamente para cada material
-        Object.keys(gruposMaterial).forEach(chave => {
-            let grupo = gruposMaterial[chave];
-            grupo.pecas_flat.sort((a,b) => Math.max(b.w, b.h) - Math.max(a.w, a.h)); // Ordena do maior pro menor
-            
-            let sheets = [];
-            
-            for (let i = 0; i < grupo.pecas_flat.length; i++) {
-                let p = grupo.pecas_flat[i]; let placed = false;
-                for (let s = 0; s < sheets.length; s++) {
-                    let sheet = sheets[s];
-                    for (let f = 0; f < sheet.freeRects.length; f++) {
-                        let fr = sheet.freeRects[f]; let fit = fitPieceInNode(fr, p.w, p.h);
-                        if (fit) { let finalW = fit.rot ? p.h : p.w; let finalH = fit.rot ? p.w : p.h; sheet.placed.push({ idx_ref: p.idx_ref, x: fr.x, y: fr.y, w: finalW, h: finalH, rot: fit.rot, origW: p.w, origH: p.h, fitaEdges: p.fitaEdges }); let newRects = splitGuillotine(fr, finalW, finalH, kerf); sheet.freeRects.splice(f, 1, ...newRects); placed = true; break; }
+            for(let c=0; c<chaves.length; c++) {
+                let grupo = gruposMaterial[chaves[c]];
+                
+                // Trava de Erro: Impede travamento se a peça for maior que a chapa
+                for (let i = 0; i < grupo.pecas_flat.length; i++) {
+                    let p = grupo.pecas_flat[i];
+                    let fitsNormal = (p.w <= grupo.chapa_comp && p.h <= grupo.chapa_larg);
+                    let fitsRotated = permitirRotacao && (p.h <= grupo.chapa_comp && p.w <= grupo.chapa_larg);
+                    if (!fitsNormal && !fitsRotated) {
+                        alert(`❌ ERRO: A peça "${p.desc}" (${p.w}mm x ${p.h}mm) é maior que a chapa de ${grupo.chapa_comp}x${grupo.chapa_larg}mm!\n\nVerifique se a Rotação está desligada ou altere o tamanho da chapa/peça.`);
+                        return;
                     }
-                    if (placed) break;
                 }
-                if (!placed) {
-                    let newSheet = { id: sheets.length + 1, placed: [], freeRects: [{ x: 0, y: 0, w: grupo.chapa_comp, h: grupo.chapa_larg }] };
-                    let fr = newSheet.freeRects[0]; let fit = fitPieceInNode(fr, p.w, p.h);
-                    if(fit) { let finalW = fit.rot ? p.h : p.w; let finalH = fit.rot ? p.w : p.h; newSheet.placed.push({ idx_ref: p.idx_ref, x: fr.x, y: fr.y, w: finalW, h: finalH, rot: fit.rot, origW: p.w, origH: p.h, fitaEdges: p.fitaEdges }); let newRects = splitGuillotine(fr, finalW, finalH, kerf); newSheet.freeRects.splice(0, 1, ...newRects); }
-                    sheets.push(newSheet);
+
+                let melhorResultadoSheets = null;
+                let minChapas = Infinity;
+                let maxSobraUltimaChapa = -1;
+
+                // Teste de Força Bruta Inteligente (Testa as 3 formas de ordenação)
+                for(let h=0; h<heuristicasOrdenacao.length; h++) {
+                    let pecasTemp = JSON.parse(JSON.stringify(grupo.pecas_flat));
+                    pecasTemp.sort(heuristicasOrdenacao[h]);
+                    
+                    let sheets = [];
+                    
+                    for (let i = 0; i < pecasTemp.length; i++) {
+                        let p = pecasTemp[i]; 
+                        let placed = false;
+
+                        // ALGORITMO BEST FIT (Procura o buraco que deixa a menor sobra)
+                        let bestSheetIdx = -1;
+                        let bestRectIdx = -1;
+                        let bestFitObj = null;
+                        let minLeftover = Infinity;
+
+                        for (let s = 0; s < sheets.length; s++) {
+                            for (let f = 0; f < sheets[s].freeRects.length; f++) {
+                                let fr = sheets[s].freeRects[f]; 
+                                let fit = fitPieceInNode(fr, p.w, p.h);
+                                if (fit) { 
+                                    let finalW = fit.rot ? p.h : p.w; 
+                                    let finalH = fit.rot ? p.w : p.h; 
+                                    let areaSobra = (fr.w * fr.h) - (finalW * finalH);
+
+                                    if(areaSobra < minLeftover) {
+                                        minLeftover = areaSobra;
+                                        bestSheetIdx = s;
+                                        bestRectIdx = f;
+                                        bestFitObj = fit;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Se encontrou um lugar perfeito, posiciona
+                        if(bestSheetIdx !== -1) {
+                            let sheet = sheets[bestSheetIdx];
+                            let fr = sheet.freeRects[bestRectIdx];
+                            let finalW = bestFitObj.rot ? p.h : p.w; 
+                            let finalH = bestFitObj.rot ? p.w : p.h; 
+                            
+                            sheet.placed.push({ idx_ref: p.idx_ref, x: fr.x, y: fr.y, w: finalW, h: finalH, rot: bestFitObj.rot, origW: p.w, origH: p.h, fitaEdges: p.fitaEdges }); 
+                            let newRects = splitGuillotine(fr, finalW, finalH, kerf); 
+                            sheet.freeRects.splice(bestRectIdx, 1, ...newRects); 
+                            placed = true; 
+                        }
+
+                        // Se não coube em nenhuma chapa aberta, cria uma chapa nova
+                        if (!placed) {
+                            let newSheet = { id: sheets.length + 1, placed: [], freeRects: [{ x: 0, y: 0, w: grupo.chapa_comp, h: grupo.chapa_larg }] };
+                            let fr = newSheet.freeRects[0]; 
+                            let fit = fitPieceInNode(fr, p.w, p.h);
+                            if(fit) { 
+                                let finalW = fit.rot ? p.h : p.w; 
+                                let finalH = fit.rot ? p.w : p.h; 
+                                newSheet.placed.push({ idx_ref: p.idx_ref, x: fr.x, y: fr.y, w: finalW, h: finalH, rot: fit.rot, origW: p.w, origH: p.h, fitaEdges: p.fitaEdges }); 
+                                let newRects = splitGuillotine(fr, finalW, finalH, kerf); 
+                                newSheet.freeRects.splice(0, 1, ...newRects); 
+                            }
+                            sheets.push(newSheet);
+                        }
+                    }
+
+                    // Verifica qual heurística salvou mais chapa
+                    let sobraUltima = 0;
+                    if(sheets.length > 0) {
+                        sobraUltima = sheets[sheets.length-1].freeRects.reduce((acc, fr) => acc + (fr.w * fr.h), 0);
+                    }
+
+                    if(sheets.length < minChapas || (sheets.length === minChapas && sobraUltima > maxSobraUltimaChapa)) {
+                        minChapas = sheets.length;
+                        maxSobraUltimaChapa = sobraUltima;
+                        melhorResultadoSheets = sheets;
+                    }
                 }
+                
+                totalChapasGeral += melhorResultadoSheets.length;
+                totalAreaGeral += grupo.areaLiquida;
+
+                gruposChapasCalculadas.push({
+                    titulo: grupo.titulo,
+                    nomeMat: grupo.nomeMat,
+                    espessuraMat: grupo.espessuraMat,
+                    chapa_comp: grupo.chapa_comp,
+                    chapa_larg: grupo.chapa_larg,
+                    areaLiquida: grupo.areaLiquida,
+                    sheets: melhorResultadoSheets
+                });
             }
+
+            document.getElementById('resultado_chapas').innerText = `${totalChapasGeral} Chapa(s) no Total`;
+            document.getElementById('resultado_area').innerText = `Área Líquida: ${totalAreaGeral.toFixed(2)} m²`;
             
-            totalChapasGeral += sheets.length;
-            totalAreaGeral += grupo.areaLiquida;
+            desenharMapasVisuais(); 
+            showToast("Otimização concluída com precisão máxima!", "success");
 
-            // Salva o grupo calculado
-            gruposChapasCalculadas.push({
-                titulo: `${grupo.nomeMat} - ${grupo.espessuraMat}`,
-                chapa_comp: grupo.chapa_comp,
-                chapa_larg: grupo.chapa_larg,
-                areaLiquida: grupo.areaLiquida,
-                sheets: sheets
-            });
-        });
-
-        document.getElementById('resultado_chapas').innerText = `${totalChapasGeral} Chapa(s) no Total`;
-        document.getElementById('resultado_area').innerText = `Área Líquida: ${totalAreaGeral.toFixed(2)} m²`;
-        
-        desenharMapasVisuais(); 
-        showToast("Otimização concluída!");
+        } catch (erro) {
+            console.error(erro);
+            alert("Algo deu errado no cálculo: " + erro.message);
+        }
     }
 
     function desenharMapasVisuais() {
@@ -1298,9 +1243,8 @@
         container.innerHTML = `<div class="legenda-box" style="margin-bottom:10px;"><div class="legenda-item"><div class="linha-pontilhada-demo"></div> <span>Fita de Borda (40mm interna)</span></div><div class="legenda-item"><span style="font-size:16px; font-weight:normal;">#5</span> <span>Nº da Peça</span></div></div>`;
 
         gruposChapasCalculadas.forEach((grupo, indexGrupo) => {
-            // Cria um título para separar os materiais na tela do celular
             let divMaterial = document.createElement('div');
-            divMaterial.innerHTML = `<h3 style="color:var(--cyan); margin-top:20px; border-bottom:1px solid #444; padding-bottom:5px;">${grupo.titulo}</h3>`;
+            divMaterial.innerHTML = `<h3 style="color:var(--cyan); margin-top:20px; border-bottom:1px solid #444; padding-bottom:5px; font-size:14px; text-transform:uppercase;">${grupo.titulo}</h3>`;
             container.appendChild(divMaterial);
 
             const scale = 800 / grupo.chapa_comp; 
@@ -1349,28 +1293,27 @@
         const c = DB.config || {}; 
         const tituloPlano = planoAtualNome ? `Projeto: ${planoAtualNome}` : `Plano de Corte Otimizado`;
         
-        // CALCULO DO TOTAL DE FITA PARA IMPRESSÃO GERAL
         let totalFitaMmPrint = 0;
         pecasCorte.forEach(p => {
             let fitaPeca = 0;
-            if(p.fitaEdges.c1) fitaPeca += p.comp;
-            if(p.fitaEdges.c2) fitaPeca += p.comp;
-            if(p.fitaEdges.l1) fitaPeca += p.larg;
-            if(p.fitaEdges.l2) fitaPeca += p.larg;
-            totalFitaMmPrint += (fitaPeca * p.qtd);
+            if(p.fitaEdges) {
+                if(p.fitaEdges.c1) fitaPeca += p.comp;
+                if(p.fitaEdges.c2) fitaPeca += p.comp;
+                if(p.fitaEdges.l1) fitaPeca += p.larg;
+                if(p.fitaEdges.l2) fitaPeca += p.larg;
+            }
+            totalFitaMmPrint += ((fitaPeca || 0) * (p.qtd || 1));
         });
         let totalFitaMetrosPrint = (totalFitaMmPrint / 1000).toFixed(2);
 
         let htmlMapasEMateriais = "";
 
-        // Para cada material gerado, cria uma tabela e seus respectivos mapas
         gruposChapasCalculadas.forEach((grupo, indexGrupo) => {
             
-            // Filtra peças que são apenas deste material/espessura
-            let pecasDesteGrupo = pecasCorte.filter(p => p.material === grupo.titulo.split(' - ')[0] && p.espessura === grupo.titulo.split(' - ')[1]);
+            let pecasDesteGrupo = pecasCorte.filter(p => (p.material || "Padrão") === grupo.nomeMat && (p.espessura || "15mm") === grupo.espessuraMat);
             
             let linhasTabela = pecasDesteGrupo.map(p => {
-                let idxOriginal = pecasCorte.indexOf(p) + 1; // Pega o id real para não confundir o mapa
+                let idxOriginal = pecasCorte.indexOf(p) + 1; 
                 let fitaDetalhe = p.fitaResumo + (p.cor_fita ? `<br><small style="color:#666">Cor: ${p.cor_fita}</small>` : '');
                 return `<tr><td><strong>${idxOriginal}</strong></td><td class="desc-left">${p.desc}</td><td>${p.qtd}</td><td>${p.comp} mm</td><td>${p.larg} mm</td><td>${fitaDetalhe}</td></tr>`;
             }).join('');
