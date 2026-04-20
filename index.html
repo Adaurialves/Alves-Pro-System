@@ -894,7 +894,7 @@
     function confirmarAdicaoServico() { const id = document.getElementById('sel_servico_catalogo').value; const serv = dadosCatalogo.find(c => c.id == id); if(serv) { itensNoPedido.push({ id_referencia: serv.id, item: serv.nome, qtd: parseInt(document.getElementById('sel_qtd_servico').value), valor: serv.preco, tipo_item: 'servico' }); renderizarItensPedido(); recalcularTotal(); document.getElementById('modalSeletorServico').style.display = 'none'; } }
 
     // ==========================================
-    // MÓDULO PLANO DE CORTE À PROVA DE FALHAS
+    // MÓDULO PLANO DE CORTE (STRIP PACKING MAXAS)
     // ==========================================
     let pecasCorte = []; 
     let gruposChapasCalculadas = []; 
@@ -1038,12 +1038,12 @@
             if(pecasCorte.length === 0) return showToast("Adicione peças primeiro!", "error");
             
             let serraVal = parseFloat(document.getElementById('corte_serra').value);
-            const kerf = isNaN(serraVal) ? 4 : serraVal; // Espessura da serra (padrão 4mm)
+            const kerf = isNaN(serraVal) ? 4 : serraVal; // Espessura da serra
             const permitirRotacao = document.getElementById('corte_rotacao').checked;
 
             let gruposMaterial = {};
             
-            // 1. Agrupamento seguro por Material e Espessura
+            // 1. Agrupamento das peças
             for(let i=0; i<pecasCorte.length; i++) {
                 let p = pecasCorte[i];
                 let nomeMat = p.material || "Padrão";
@@ -1051,10 +1051,8 @@
                 let chave = nomeMat + "|||" + espMat;
                 
                 if(!gruposMaterial[chave]) {
-                    let chComp = parseFloat(p.chapa_comp);
-                    let chLarg = parseFloat(p.chapa_larg);
-                    if(isNaN(chComp) || chComp <= 0) chComp = parseFloat(document.getElementById('corte_chapa_comp').value) || 2750;
-                    if(isNaN(chLarg) || chLarg <= 0) chLarg = parseFloat(document.getElementById('corte_chapa_larg').value) || 1850;
+                    let chComp = parseFloat(p.chapa_comp) || parseFloat(document.getElementById('corte_chapa_comp').value) || 2750;
+                    let chLarg = parseFloat(p.chapa_larg) || parseFloat(document.getElementById('corte_chapa_larg').value) || 1850;
 
                     gruposMaterial[chave] = {
                         titulo: `${nomeMat} - ${espMat}`,
@@ -1069,13 +1067,9 @@
                 
                 for(let q=0; q<p.qtd; q++) { 
                     gruposMaterial[chave].pecas_flat.push({ 
-                        idx_ref: i + 1, 
-                        desc: p.desc, 
-                        w: parseFloat(p.comp), 
-                        h: parseFloat(p.larg), 
-                        fitaResumo: p.fitaResumo, 
-                        fitaEdges: p.fitaEdges, 
-                        cor_fita: p.cor_fita 
+                        idx_ref: i + 1, desc: p.desc, 
+                        w: parseFloat(p.comp), h: parseFloat(p.larg), 
+                        fitaResumo: p.fitaResumo, fitaEdges: p.fitaEdges, cor_fita: p.cor_fita 
                     }); 
                     gruposMaterial[chave].areaLiquida += (parseFloat(p.comp) * parseFloat(p.larg)) / 1000000; 
                 }
@@ -1085,38 +1079,36 @@
             let totalChapasGeral = 0;
             let totalAreaGeral = 0;
 
-            // Função para verificar se a peça cabe (Normal ou Rotacionada)
             function fitPieceInNode(node, pw, ph) { 
                 if(pw <= node.w && ph <= node.h) return { rot: false }; 
                 if(permitirRotacao && ph <= node.w && pw <= node.h) return { rot: true }; 
                 return null; 
             }
             
-            // Divisão Guilhotina Otimizada
+            // LÓGICA ATUALIZADA: Prioridade Absoluta para Cortes no Comprimento (Tiras/Faixas)
             function splitGuillotine(freeRect, pw, ph, kerf) {
                 let rects = [];
-                // Estratégia BSSF (Best Short Side Fit) - Mantém a maior área livre contínua possível
-                let sobraW = freeRect.w - pw;
-                let sobraH = freeRect.h - ph;
+                let wLeft = freeRect.w - pw - kerf;
+                let hLeft = freeRect.h - ph - kerf;
+                if (wLeft < 0) wLeft = 0;
+                if (hLeft < 0) hLeft = 0;
 
-                if (sobraW > sobraH) { 
-                    // Corta verticalmente primeiro
-                    rects.push({ x: freeRect.x, y: freeRect.y + ph + kerf, w: pw, h: freeRect.h - ph - kerf }); 
-                    rects.push({ x: freeRect.x + pw + kerf, y: freeRect.y, w: freeRect.w - pw - kerf, h: freeRect.h }); 
-                } else { 
-                    // Corta horizontalmente primeiro
-                    rects.push({ x: freeRect.x + pw + kerf, y: freeRect.y, w: freeRect.w - pw - kerf, h: ph }); 
-                    rects.push({ x: freeRect.x, y: freeRect.y + ph + kerf, w: freeRect.w, h: freeRect.h - ph - kerf }); 
-                }
-                // Descarta retalhos menores que 1cm (Inúteis para marcenaria e atrapalham o cálculo)
+                // Sempre corta gerando uma faixa contínua horizontal (ao longo do eixo W / Comprimento)
+                if (wLeft > 0) rects.push({ x: freeRect.x + pw + kerf, y: freeRect.y, w: wLeft, h: ph });
+                if (hLeft > 0) rects.push({ x: freeRect.x, y: freeRect.y + ph + kerf, w: freeRect.w, h: hLeft });
+                
+                // Ignora retalhos muito pequenos que só atrapalham a matemática
                 return rects.filter(r => r.w >= 10 && r.h >= 10); 
             }
 
-            // Heurísticas: Tenta arranjar as peças de 3 formas diferentes para achar a melhor
+            // HEURÍSTICAS: Organizadas para otimizar Tiras (Strip Packing)
             const heuristicasOrdenacao = [
-                (a, b) => (b.w * b.h) - (a.w * a.h), // 1. Por Maior Área
-                (a, b) => Math.max(b.w, b.h) - Math.max(a.w, a.h), // 2. Por Lado Mais Longo
-                (a, b) => (Math.max(b.w, b.h) + Math.min(b.w, b.h)) - (Math.max(a.w, a.h) + Math.min(a.w, a.h)) // 3. Por Perímetro
+                // 1. Agrupa por ALTURA igual primeiro, forçando a criação de linhas perfeitas.
+                (a, b) => b.h - a.h || b.w - a.w,
+                // 2. Agrupa por Lado Maior (Fallback)
+                (a, b) => Math.max(b.w, b.h) - Math.max(a.w, a.h),
+                // 3. Agrupa por Área
+                (a, b) => (b.w * b.h) - (a.w * a.h)
             ];
 
             let chaves = Object.keys(gruposMaterial);
@@ -1124,13 +1116,12 @@
             for(let c=0; c<chaves.length; c++) {
                 let grupo = gruposMaterial[chaves[c]];
                 
-                // Trava de Erro: Impede travamento se a peça for maior que a chapa
                 for (let i = 0; i < grupo.pecas_flat.length; i++) {
                     let p = grupo.pecas_flat[i];
                     let fitsNormal = (p.w <= grupo.chapa_comp && p.h <= grupo.chapa_larg);
                     let fitsRotated = permitirRotacao && (p.h <= grupo.chapa_comp && p.w <= grupo.chapa_larg);
                     if (!fitsNormal && !fitsRotated) {
-                        alert(`❌ ERRO: A peça "${p.desc}" (${p.w}mm x ${p.h}mm) é maior que a chapa de ${grupo.chapa_comp}x${grupo.chapa_larg}mm!\n\nVerifique se a Rotação está desligada ou altere o tamanho da chapa/peça.`);
+                        alert(`❌ ERRO: A peça "${p.desc}" (${p.w}mm x ${p.h}mm) é maior que a chapa de ${grupo.chapa_comp}x${grupo.chapa_larg}mm!`);
                         return;
                     }
                 }
@@ -1139,7 +1130,6 @@
                 let minChapas = Infinity;
                 let maxSobraUltimaChapa = -1;
 
-                // Teste de Força Bruta Inteligente (Testa as 3 formas de ordenação)
                 for(let h=0; h<heuristicasOrdenacao.length; h++) {
                     let pecasTemp = JSON.parse(JSON.stringify(grupo.pecas_flat));
                     pecasTemp.sort(heuristicasOrdenacao[h]);
@@ -1150,11 +1140,10 @@
                         let p = pecasTemp[i]; 
                         let placed = false;
 
-                        // ALGORITMO BEST FIT (Procura o buraco que deixa a menor sobra)
                         let bestSheetIdx = -1;
                         let bestRectIdx = -1;
                         let bestFitObj = null;
-                        let minLeftover = Infinity;
+                        let minScore = Infinity; 
 
                         for (let s = 0; s < sheets.length; s++) {
                             for (let f = 0; f < sheets[s].freeRects.length; f++) {
@@ -1163,10 +1152,16 @@
                                 if (fit) { 
                                     let finalW = fit.rot ? p.h : p.w; 
                                     let finalH = fit.rot ? p.w : p.h; 
-                                    let areaSobra = (fr.w * fr.h) - (finalW * finalH);
+                                    
+                                    let sobraW = fr.w - finalW;
+                                    let sobraH = fr.h - finalH;
+                                    
+                                    // SCORE ATUALIZADO: Penaliza buracos onde a altura não bate.
+                                    // Isso OBRIGA as peças a completarem a mesma "Linha/Faixa" sempre que possível.
+                                    let score = sobraW + (sobraH * 1000);
 
-                                    if(areaSobra < minLeftover) {
-                                        minLeftover = areaSobra;
+                                    if(score < minScore) {
+                                        minScore = score;
                                         bestSheetIdx = s;
                                         bestRectIdx = f;
                                         bestFitObj = fit;
@@ -1175,7 +1170,6 @@
                             }
                         }
 
-                        // Se encontrou um lugar perfeito, posiciona
                         if(bestSheetIdx !== -1) {
                             let sheet = sheets[bestSheetIdx];
                             let fr = sheet.freeRects[bestRectIdx];
@@ -1188,7 +1182,6 @@
                             placed = true; 
                         }
 
-                        // Se não coube em nenhuma chapa aberta, cria uma chapa nova
                         if (!placed) {
                             let newSheet = { id: sheets.length + 1, placed: [], freeRects: [{ x: 0, y: 0, w: grupo.chapa_comp, h: grupo.chapa_larg }] };
                             let fr = newSheet.freeRects[0]; 
@@ -1204,7 +1197,6 @@
                         }
                     }
 
-                    // Verifica qual heurística salvou mais chapa
                     let sobraUltima = 0;
                     if(sheets.length > 0) {
                         sobraUltima = sheets[sheets.length-1].freeRects.reduce((acc, fr) => acc + (fr.w * fr.h), 0);
@@ -1221,13 +1213,9 @@
                 totalAreaGeral += grupo.areaLiquida;
 
                 gruposChapasCalculadas.push({
-                    titulo: grupo.titulo,
-                    nomeMat: grupo.nomeMat,
-                    espessuraMat: grupo.espessuraMat,
-                    chapa_comp: grupo.chapa_comp,
-                    chapa_larg: grupo.chapa_larg,
-                    areaLiquida: grupo.areaLiquida,
-                    sheets: melhorResultadoSheets
+                    titulo: grupo.titulo, nomeMat: grupo.nomeMat, espessuraMat: grupo.espessuraMat,
+                    chapa_comp: grupo.chapa_comp, chapa_larg: grupo.chapa_larg,
+                    areaLiquida: grupo.areaLiquida, sheets: melhorResultadoSheets
                 });
             }
 
@@ -1235,7 +1223,7 @@
             document.getElementById('resultado_area').innerText = `Área Líquida: ${totalAreaGeral.toFixed(2)} m²`;
             
             desenharMapasVisuais(); 
-            showToast("Otimização concluída com precisão máxima!", "success");
+            showToast("Otimização concluída com Máximo Aproveitamento em Linha!", "success");
 
         } catch (erro) {
             console.error(erro);
@@ -1275,7 +1263,7 @@
                     
                     if(p.fitaEdges) {
                         ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
-                        let offset = 20 * scale; // Aproximou para 20 (era 40)
+                        let offset = 20 * scale; // Aproximou para 20
                         let tEdge = p.rot ? p.fitaEdges.l1 : p.fitaEdges.c1; let bEdge = p.rot ? p.fitaEdges.l2 : p.fitaEdges.c2;
                         let lEdge = p.rot ? p.fitaEdges.c2 : p.fitaEdges.l1; let rEdge = p.rot ? p.fitaEdges.c1 : p.fitaEdges.l2;
                         ctx.beginPath();
