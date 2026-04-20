@@ -292,9 +292,8 @@
     <div id="tela_config" class="tela">
         <div class="item-card" style="border-left-color: var(--green); margin-bottom:20px;">
             <h4 style="color:var(--green); margin-top:0; text-align:center;"><i class="fas fa-shield-alt"></i> Segurança e Backup</h4>
-            <!-- Os botões de exportar e importar foram deixados caso queira manter o backup manual também -->
-            <button class="btn-outline" style="color:var(--green); border-color:var(--green);" onclick="exportarBackup()"><i class="fas fa-download"></i> FAZER BACKUP MANUAL (BAIXAR)</button>
-            <button class="btn-outline" style="color:var(--blue); border-color:var(--blue);" onclick="document.getElementById('import_file').click()"><i class="fas fa-upload"></i> RESTAURAR BACKUP MANUAL</button>
+            <button class="btn-outline" style="color:var(--green); border-color:var(--green);" onclick="exportarBackup()"><i class="fas fa-download"></i> FAZER BACKUP (BAIXAR)</button>
+            <button class="btn-outline" style="color:var(--blue); border-color:var(--blue);" onclick="document.getElementById('import_file').click()"><i class="fas fa-upload"></i> RESTAURAR BACKUP</button>
             <input type="file" id="import_file" style="display:none" accept=".json" onchange="importarBackup(event)">
         </div>
         <div class="item-card" style="border-left-color: #aaa;">
@@ -314,7 +313,7 @@
             <label>Mensagem Rodapé</label><input type="text" id="cfg_msg">
             
             <button onclick="salvarConfig()" style="width:100%; padding:15px; background:var(--blue); border:none; border-radius:8px; color:white; font-weight:bold; margin-top:20px; cursor:pointer;">SALVAR AJUSTES</button>
-            <button onclick="limparBancoDados()" style="width:100%; padding:15px; background:transparent; border:1px solid var(--red); border-radius:8px; color:var(--red); font-weight:bold; margin-top:10px; cursor:pointer;"><i class="fas fa-trash"></i> APAGAR TUDO (LOCAL E NUVEM)</button>
+            <button onclick="limparBancoDados()" style="width:100%; padding:15px; background:transparent; border:1px solid var(--red); border-radius:8px; color:var(--red); font-weight:bold; margin-top:10px; cursor:pointer;"><i class="fas fa-trash"></i> APAGAR TUDO</button>
         </div>
     </div>
 
@@ -501,70 +500,7 @@
     <div id="area-impressao"></div>
 </div>
 
-<!-- ========================================== -->
-<!-- INTEGRAÇÃO FIREBASE (Versão CDN Modular com FIRESTORE) -->
-<!-- ========================================== -->
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    
-    // Suas credenciais do Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyB1c4Mir1IEc5DyIHUncWUzoNk7ocYXAcg",
-      authDomain: "alves-pro-system.firebaseapp.com",
-      projectId: "alves-pro-system",
-      storageBucket: "alves-pro-system.firebasestorage.app",
-      messagingSenderId: "312807188302",
-      appId: "1:312807188302:web:4a47f97db1c946259da01f"
-    };
-  
-    // Inicializa o Firebase e o Banco de Dados (Firestore)
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    
-    // Exporta funções para serem usadas no script de baixo
-    window.salvarNoFirebase = async function(dadosGlobais) {
-        try {
-            // Salva todo o objeto DB em um único "documento" chamado "banco" na coleção "empresa_alves"
-            await setDoc(doc(db, "empresa_alves", "banco"), dadosGlobais);
-            console.log("🔥 Dados salvos na nuvem com sucesso!");
-        } catch (error) {
-            console.error("Erro ao salvar no Firebase:", error);
-            showToast("Erro ao conectar com a nuvem, salvando apenas local.", "error");
-        }
-    };
-
-    window.carregarDoFirebase = async function() {
-        try {
-            const docRef = doc(db, "empresa_alves", "banco");
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                console.log("🔥 Dados baixados da nuvem!");
-                return docSnap.data();
-            } else {
-                console.log("Nenhum dado encontrado na nuvem (banco vazio).");
-                return null;
-            }
-        } catch (error) {
-            console.error("Erro ao puxar do Firebase:", error);
-            return null;
-        }
-    };
-
-    window.apagarFirebase = async function() {
-        try {
-            await deleteDoc(doc(db, "empresa_alves", "banco"));
-            console.log("🔥 Banco da nuvem apagado!");
-        } catch (error) {
-            console.error(error);
-        }
-    }
-</script>
-
 <script>
-    // ==========================================
-    // SEU SCRIPT DE LÓGICA DO APLICATIVO
-    // ==========================================
     function verificarTrava() { 
         const bloqueio = document.getElementById('tela_bloqueio'); 
         const app = document.getElementById('app_principal'); 
@@ -593,89 +529,10 @@
     function showToast(msg, type = 'success') { const container = document.getElementById('toast_container'); const toast = document.createElement('div'); toast.className = `toast ${type}`; let icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'); let color = type === 'success' ? 'var(--green)' : (type === 'error' ? 'var(--red)' : 'var(--blue)'); toast.innerHTML = `<i class="fas ${icon}" style="color:${color}; font-size:18px;"></i> <span>${msg}</span>`; container.appendChild(toast); setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000); }
 
     let DB = { servicos: [], estoque: [], catalogo_servicos: [], gastos: [], orcamentos: [], compras: [], planos_corte: [], config: {} };
-    
-    // --- FUNÇÕES ALTERADAS PARA USAR O FIREBASE ---
-    async function initDB() { 
-        showToast("Sincronizando com a nuvem...", "info");
-        
-        let dadosNuvem = null;
-        if(window.carregarDoFirebase) {
-            dadosNuvem = await window.carregarDoFirebase();
-        }
-
-        if (dadosNuvem) {
-            // Se achou dados na nuvem, usa eles
-            DB = Object.assign(DB, dadosNuvem);
-            localStorage.setItem('alvesProDB', JSON.stringify(DB)); // Atualiza o backup local
-            showToast("Dados carregados da nuvem!", "success");
-        } else {
-            // Se não tem na nuvem (primeiro acesso ou erro), tenta puxar do local
-            const localData = localStorage.getItem('alvesProDB'); 
-            if (localData) { 
-                DB = Object.assign(DB, JSON.parse(localData)); 
-                if(window.salvarNoFirebase) window.salvarNoFirebase(DB); // Sobe o local pra nuvem
-            }
-        }
-
-        if(!DB.planos_corte) DB.planos_corte = []; 
-        if(!DB.catalogo_servicos) DB.catalogo_servicos = []; 
-        if(!DB.gastos) DB.gastos = []; 
-        if(!DB.compras) DB.compras = []; 
-        
-        carregarConfiguracoes(); 
-        carregarDados(); 
-    }
-
-    async function saveDB() { 
-        // 1. Salva localmente (Backup)
-        localStorage.setItem('alvesProDB', JSON.stringify(DB)); 
-        
-        // 2. Salva na Nuvem (Firebase)
-        if(window.salvarNoFirebase) {
-            await window.salvarNoFirebase(DB);
-        }
-
-        carregarDados(); 
-    }
-
-    async function limparBancoDados() { 
-        if(confirm("APAGAR TODOS OS DADOS DO SISTEMA E DA NUVEM?")) { 
-            localStorage.removeItem('alvesProDB'); 
-            localStorage.removeItem('alves_licenca_ativa'); 
-            if(window.apagarFirebase) await window.apagarFirebase();
-            location.reload(); 
-        } 
-    }
-    // ---------------------------------------------
-
+    function initDB() { const localData = localStorage.getItem('alvesProDB'); if (localData) { DB = Object.assign(DB, JSON.parse(localData)); if(!DB.planos_corte) DB.planos_corte = []; if(!DB.catalogo_servicos) DB.catalogo_servicos = []; if(!DB.gastos) DB.gastos = []; if(!DB.compras) DB.compras = []; } carregarConfiguracoes(); carregarDados(); }
+    function saveDB() { localStorage.setItem('alvesProDB', JSON.stringify(DB)); carregarDados(); }
     function generateID() { return new Date().getTime(); }
-    
-    // (As funções de exportar backup manual foram mantidas, caso precise baixar pro pendrive)
-    function exportarBackup() {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(DB));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "alves_backup_" + new Date().getTime() + ".json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-    }
-    function importarBackup(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const importedData = JSON.parse(e.target.result);
-                DB = Object.assign(DB, importedData);
-                saveDB();
-                showToast("Backup Restaurado!", "success");
-            } catch(err) {
-                showToast("Arquivo inválido", "error");
-            }
-        };
-        reader.readAsText(file);
-    }
+    function limparBancoDados() { if(confirm("APAGAR TODOS OS DADOS?")) { localStorage.removeItem('alvesProDB'); localStorage.removeItem('alves_licenca_ativa'); location.reload(); } }
 
     let dadosPedidos = [], dadosEstoque = [], dadosGastos = [], dadosOrcamentos = [], dadosCatalogo = [], dadosCompras = [], meuGrafico = null, telaAtiva = 'tela_home';
     let itensNoPedido = [], itensCompraAtual = [];
@@ -800,14 +657,17 @@
     }
 
     function renderizarGrafico() { 
+        // 1. Verificação de segurança caso o CDN demore para carregar
         if (typeof Chart === 'undefined') {
             setTimeout(renderizarGrafico, 300);
             return;
         }
 
+        // 2. Proteção contra altura ZERO por estar em display:none
         let telaHome = document.getElementById('tela_home');
         if (telaHome.style.display === 'none' && !telaHome.classList.contains('ativa')) return;
 
+        // 3. TimeOut para garantir que o CSS já organizou as Divs perfeitamente
         setTimeout(() => {
             const ctx = document.getElementById('graficoFinanceiro').getContext('2d'); 
             const mesAtual = document.getElementById('filtro_mes').value; 
@@ -872,6 +732,7 @@
             id !== 'tela_home' && id !== 'tela_corte' && id !== 'tela_config'
         ); 
 
+        // GARANTIR QUE O GRÁFICO É REDESENHADO AO VOLTAR PARA O PAINEL
         if (id === 'tela_home') {
             renderizarGrafico();
         }
@@ -1129,7 +990,7 @@
     function confirmarAdicaoServico() { const id = document.getElementById('sel_servico_catalogo').value; const serv = dadosCatalogo.find(c => c.id == id); if(serv) { itensNoPedido.push({ id_referencia: serv.id, item: serv.nome, qtd: parseInt(document.getElementById('sel_qtd_servico').value), valor: serv.preco, tipo_item: 'servico' }); renderizarItensPedido(); recalcularTotal(); document.getElementById('modalSeletorServico').style.display = 'none'; } }
 
     // ==========================================
-    // MÓDULO PLANO DE CORTE
+    // MÓDULO PLANO DE CORTE (STRIP PACKING MAXAS)
     // ==========================================
     let pecasCorte = []; 
     let gruposChapasCalculadas = []; 
