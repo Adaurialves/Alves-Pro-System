@@ -112,7 +112,7 @@
         .linha-pontilhada-demo { width:25px; height:0px; border-bottom: 2px dashed #000; }
 
         /* Container do gráfico com altura fixa garantida para mobile */
-        .grafico-wrapper { background:var(--card); padding:10px; border-radius:15px; border: 1px solid #333; height: 300px; position: relative; width: 100%; box-sizing: border-box; }
+        .grafico-wrapper { background:var(--card); padding:10px; border-radius:15px; border: 1px solid #333; height: 350px; position: relative; width: 100%; box-sizing: border-box; }
         #graficoFinanceiro { width: 100% !important; height: 100% !important; }
 
         #area-impressao { display: none; }
@@ -680,7 +680,7 @@
     }
 
     // ==========================================
-    // GRÁFICO OTIMIZADO PARA CELULAR (CORRIGIDO)
+    // GRÁFICO OTIMIZADO - TODOS OS DETALHES REAIS
     // ==========================================
     function renderizarGrafico() { 
         if (typeof Chart === 'undefined') {
@@ -691,103 +691,127 @@
         let telaHome = document.getElementById('tela_home');
         if (!telaHome.classList.contains('ativa')) return;
 
-        // Aumentado para 450ms para garantir que a animação CSS (fadeIn 0.4s) termine primeiro
-        setTimeout(() => {
-            const canvas = document.getElementById('graficoFinanceiro');
-            if (!canvas) return;
+        // O requestAnimationFrame garante que o HTML já existe antes de desenhar
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                const canvas = document.getElementById('graficoFinanceiro');
+                if (!canvas || canvas.offsetParent === null) return;
 
-            const ctx = canvas.getContext('2d'); 
-            const mesAtual = document.getElementById('filtro_mes').value; 
-            
-            const pMes = dadosPedidos.filter(p => p.data && p.data.split('-')[1] === mesAtual && p.tipo === 'servico'); 
-            const oMes = dadosPedidos.filter(p => p.data && p.data.split('-')[1] === mesAtual && p.tipo === 'orcamento'); 
-            const gMes = dadosGastos.filter(g => g.data && g.data.split('-')[1] === mesAtual);
+                const ctx = canvas.getContext('2d'); 
+                const mesAtual = document.getElementById('filtro_mes').value; 
+                
+                // Puxa os dados filtrando de forma segura
+                const pMes = dadosPedidos.filter(p => p.data && p.data.split('-')[1] === mesAtual && p.tipo === 'servico'); 
+                const gMes = dadosGastos.filter(g => g.data && g.data.split('-')[1] === mesAtual);
 
-            // ===============================================
-            // NOVA LÓGICA DE CÁLCULO FINANCEIRO
-            // ===============================================
-            const totalVendido = pMes.reduce((a, b) => a + (b.total || 0), 0);  // Soma de todos os pedidos feitos (Bruto)
-            const totalPago = pMes.reduce((a, b) => a + (b.pago || 0), 0);      // O que realmente o cliente pagou em R$
-            const totalAReceber = totalVendido - totalPago;                     // O que os clientes estão devendo
+                // Cálculos do Topo (Mantidos idênticos)
+                const totalVendido = pMes.reduce((a, b) => a + (b.total || 0), 0);  
+                const totalPago = pMes.reduce((a, b) => a + (b.pago || 0), 0);      
+                const totalAReceber = totalVendido - totalPago;                     
+                const totalGastos = gMes.reduce((a, b) => a + (b.valor || 0), 0);   
+                const saldoCaixaReal = totalPago - totalGastos;                     
 
-            const totalGastos = gMes.reduce((a, b) => a + (b.valor || 0), 0);   // Soma das saídas (despesas)
-            
-            const saldoCaixaReal = totalPago - totalGastos;                     // Saldo Real = Dinheiro que entrou - Dinheiro que saiu
+                document.getElementById('h_recebido').innerText = "R$ " + formatMoeda(totalPago); 
+                document.getElementById('h_areceber').innerText = "R$ " + formatMoeda(totalAReceber); 
+                document.getElementById('h_gastos').innerText = "R$ " + formatMoeda(totalGastos); 
+                document.getElementById('h_lucro').innerText = "R$ " + formatMoeda(saldoCaixaReal); 
+                document.getElementById('h_bruto').innerText = "R$ " + formatMoeda(totalVendido); 
+                document.getElementById('h_lucro').style.color = saldoCaixaReal < 0 ? 'var(--red)' : 'var(--blue)';
 
-            // Inserindo os valores no HTML
-            document.getElementById('h_recebido').innerText = "R$ " + formatMoeda(totalPago); 
-            document.getElementById('h_areceber').innerText = "R$ " + formatMoeda(totalAReceber); 
-            document.getElementById('h_gastos').innerText = "R$ " + formatMoeda(totalGastos); 
-            document.getElementById('h_lucro').innerText = "R$ " + formatMoeda(saldoCaixaReal); 
-            document.getElementById('h_bruto').innerText = "R$ " + formatMoeda(totalVendido); 
-            
-            // Fica vermelho se as despesas forem maiores que o que já foi recebido
-            document.getElementById('h_lucro').style.color = saldoCaixaReal < 0 ? 'var(--red)' : 'var(--blue)';
+                if(meuGrafico) meuGrafico.destroy(); 
+                
+                // Mapeamento seguro de dias para o eixo X
+                let todosDias = [...pMes, ...gMes]
+                    .map(x => x.data.split('-')[2])
+                    .filter(d => d !== undefined);
+                    
+                let dias = [...new Set(todosDias)].sort(); 
+                
+                // Criação da linha guia caso o mês esteja vazio ou tenha só 1 dia
+                if (dias.length === 0) { 
+                    let diaAtual = new Date().toISOString().split('T')[0].split('-')[2];
+                    dias = ['01', diaAtual]; 
+                } else if (dias.length === 1) {
+                    if (dias[0] !== '01') dias.unshift('01'); 
+                    else dias.push('30');
+                }
 
-            if(meuGrafico) meuGrafico.destroy(); 
-            
-            let todosDias = [...pMes, ...oMes, ...gMes].map(x => x.data.split('-')[2]);
-            let dias = [...new Set(todosDias)].sort(); 
-            
-            // CORREÇÃO: Garante que haja pelo menos 2 pontos no eixo X para formar uma linha visível
-            let diaAtual = new Date().toISOString().split('T')[0].split('-')[2];
-            if (dias.length === 0) { 
-                dias = ['01', diaAtual]; // Se não tem dados, linha reta do dia 01 ao dia atual
-            } else if (dias.length === 1) {
-                if (dias[0] !== '01') dias.unshift('01'); // Adiciona dia 01 pra criar a reta
-                else dias.push('28');
-            }
-            
-            meuGrafico = new Chart(ctx, { 
-                type: 'line', 
-                data: { 
-                    labels: dias.map(d => d + '/' + mesAtual), 
-                    datasets: [ 
-                        { 
-                            label: 'Pedidos', 
-                            data: dias.map(d => pMes.filter(p => p.data.split('-')[2] === d).reduce((a, b) => a + (b.total || 0), 0)), 
-                            borderColor: '#30d158', backgroundColor: 'rgba(48,209,88,0.1)', fill: true, tension: 0.4,
-                            pointRadius: 4, pointHitRadius: 20 // Aumentado para facilitar o clique com o dedo
-                        },
-                        { 
-                            label: 'Gastos', 
-                            data: dias.map(d => gMes.filter(g => g.data.split('-')[2] === d).reduce((a, b) => a + (b.valor || 0), 0)), 
-                            borderColor: '#ff453a', backgroundColor: 'transparent', fill: false, tension: 0.4,
-                            pointRadius: 4, pointHitRadius: 20
-                        },
-                        { 
-                            label: 'Orçamentos', 
-                            data: dias.map(d => oMes.filter(o => o.data.split('-')[2] === d).reduce((a, b) => a + (o.total || 0), 0)), 
-                            borderColor: '#5ac8fa', backgroundColor: 'transparent', fill: false, tension: 0.4, borderDash: [5, 5],
-                            pointRadius: 4, pointHitRadius: 20
-                        }
-                    ]
-                }, 
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    devicePixelRatio: window.devicePixelRatio || 1,
-                    interaction: {
-                        mode: 'nearest', // Deixa a interação por toque muito melhor
-                        intersect: false 
-                    },
-                    plugins: { 
-                        legend: { 
-                            display: true, 
-                            position: 'top',
-                            labels: { color: '#ccc', font: { size: 11 }, boxWidth: 12, padding: 15 } 
-                        } 
+                // Separando os dados para as 3 linhas do gráfico
+                const dadosRecebido = dias.map(d => pMes.filter(p => p.data.split('-')[2] === d).reduce((a, b) => a + (b.pago || 0), 0));
+                const dadosAReceber = dias.map(d => pMes.filter(p => p.data.split('-')[2] === d).reduce((a, b) => a + ((b.total || 0) - (b.pago || 0)), 0));
+                const dadosGastosArr = dias.map(d => gMes.filter(g => g.data.split('-')[2] === d).reduce((a, b) => a + (b.valor || 0), 0));
+                
+                meuGrafico = new Chart(ctx, { 
+                    type: 'line', 
+                    data: { 
+                        labels: dias.map(d => d + '/' + mesAtual), 
+                        datasets: [ 
+                            { 
+                                label: 'Já Recebido (Entrou)', 
+                                data: dadosRecebido, 
+                                borderColor: '#30d158', backgroundColor: 'rgba(48,209,88,0.1)', fill: true, tension: 0.3,
+                                pointRadius: 4, pointHitRadius: 20 
+                            },
+                            { 
+                                label: 'A Receber (Falta)', 
+                                data: dadosAReceber, 
+                                borderColor: '#ff9f0a', backgroundColor: 'transparent', fill: false, tension: 0.3, borderDash: [5, 5],
+                                pointRadius: 4, pointHitRadius: 20 
+                            },
+                            { 
+                                label: 'Saídas (Gastos)', 
+                                data: dadosGastosArr, 
+                                borderColor: '#ff453a', backgroundColor: 'transparent', fill: false, tension: 0.3,
+                                pointRadius: 4, pointHitRadius: 20
+                            }
+                        ]
                     }, 
-                    scales: { 
-                        y: { display: false, beginAtZero: true }, 
-                        x: { 
-                            grid: { color: 'rgba(255,255,255,0.05)' }, 
-                            ticks: { color: '#888', maxRotation: 45, minRotation: 45, font: {size: 10} } 
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        devicePixelRatio: window.devicePixelRatio || 1,
+                        interaction: {
+                            mode: 'index', // Ao passar o mouse, mostra os 3 valores do dia de uma vez
+                            intersect: false 
+                        },
+                        plugins: { 
+                            legend: { 
+                                display: true, 
+                                position: 'top',
+                                labels: { color: '#ccc', font: { size: 10 }, boxWidth: 12, padding: 10 } 
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) { label += ': '; }
+                                        if (context.parsed.y !== null) {
+                                            label += 'R$ ' + parseFloat(context.parsed.y).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }, 
+                        scales: { 
+                            y: { 
+                                display: true, 
+                                beginAtZero: true,
+                                grid: { color: 'rgba(255,255,255,0.05)' },
+                                ticks: { 
+                                    color: '#888', font: {size: 9},
+                                    callback: function(value) { return 'R$ ' + value; }
+                                }
+                            }, 
+                            x: { 
+                                grid: { color: 'rgba(255,255,255,0.05)' }, 
+                                ticks: { color: '#888', maxRotation: 45, minRotation: 45, font: {size: 10} } 
+                            } 
                         } 
                     } 
-                } 
-            }); 
-        }, 450); 
+                }); 
+            }, 300);
+        });
     }
 
     function mudarTela(id) { 
@@ -801,7 +825,7 @@
 
         // GARANTIR QUE O GRÁFICO É REDESENHADO APÓS A TELA ESTAR VISÍVEL NO MOBILE
         if (id === 'tela_home') {
-            setTimeout(renderizarGrafico, 450); // Alterado de 150 para 450
+            setTimeout(renderizarGrafico, 450); 
         }
     }
     
