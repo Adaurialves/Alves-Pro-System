@@ -266,7 +266,7 @@
             <h4 style="color:var(--blue); margin-top:0;"><i class="fas fa-plus"></i> Adicionar Peças</h4>
             
             <div style="display:flex; gap:10px;">
-                <div style="flex:1"><label>Qtd</label><input type="number" id="corte_qtd_peca" value="1"></div>
+                <div style="flex:1"><label>Qtd</label><input type="number" id="corte_qtd_peca"></div> <!-- REMOVIDO VALUE=1 AQUI -->
                 <div style="flex:1"><label>Comp. (mm)</label><input type="number" id="corte_comp_peca"></div>
                 <div style="flex:1"><label>Larg. (mm)</label><input type="number" id="corte_larg_peca"></div>
             </div>
@@ -1197,7 +1197,7 @@
         const f_c1 = document.getElementById('corte_fita_c1').checked; const f_c2 = document.getElementById('corte_fita_c2').checked;
         const f_l1 = document.getElementById('corte_fita_l1').checked; const f_l2 = document.getElementById('corte_fita_l2').checked;
 
-        if(!desc || !comp || !larg || qtd <= 0 || isNaN(comp) || isNaN(larg)) {
+        if(!desc || !comp || !larg || isNaN(qtd) || qtd <= 0 || isNaN(comp) || isNaN(larg)) {
             return showToast("Preencha todos os campos da peça!", "error");
         }
 
@@ -1213,7 +1213,7 @@
         });
         
         document.getElementById('corte_desc_peca').value = ''; document.getElementById('corte_comp_peca').value = '';
-        document.getElementById('corte_larg_peca').value = ''; document.getElementById('corte_qtd_peca').value = '1';
+        document.getElementById('corte_larg_peca').value = ''; document.getElementById('corte_qtd_peca').value = '';
         document.getElementById('corte_cor_fita_peca').value = '';
         document.getElementById('corte_fita_c1').checked = false; document.getElementById('corte_fita_c2').checked = false;
         document.getElementById('corte_fita_l1').checked = false; document.getElementById('corte_fita_l2').checked = false;
