@@ -67,7 +67,7 @@
         .status-pendente { background: var(--red); color: white; }
         .status-andamento, .status-em_compra { background: var(--blue); color: white; }
         .status-concluido, .status-aprovado { background: var(--green); color: white; }
-        .status-aguardando { background: var(--orange); color: white; }
+        .status-aguardando, .status-orcamento { background: var(--orange); color: white; }
         
         .info-linha { border-top: 1px solid rgba(255,255,255,0.05); margin-top: 8px; padding-top: 8px; }
         .label-mini { font-size: 10px; color: #888; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 2px; }
@@ -110,6 +110,9 @@
         .legenda-item { display: flex; align-items: center; gap: 5px; }
         
         .linha-pontilhada-demo { width:25px; height:0px; border-bottom: 2px dashed #000; }
+
+        /* Container do gráfico otimizado para celular */
+        .grafico-wrapper { background:var(--card); padding:10px; border-radius:15px; border: 1px solid #333; height: 300px; position: relative; width: 100%; box-sizing: border-box; overflow: hidden; }
 
         #area-impressao { display: none; }
         @media print {
@@ -204,8 +207,8 @@
             </div>
         </div>
         
-        <!-- DIV DO GRÁFICO (Relative obrigatório para Chart.js) -->
-        <div style="background:var(--card); padding:10px; border-radius:15px; border: 1px solid #333; height: 260px; position: relative; width: 100%; box-sizing: border-box;">
+        <!-- DIV DO GRÁFICO (Otimizada para Mobile) -->
+        <div class="grafico-wrapper">
             <canvas id="graficoFinanceiro"></canvas>
         </div>
     </div>
@@ -388,6 +391,7 @@
             <select id="c_status">
                 <option value="em_compra">Em Compra (Pendente)</option>
                 <option value="concluido">Concluído (Mover para Gastos)</option>
+                <option value="orcamento">Enviar para Orçamento (Criar Orçamento)</option>
             </select>
             
             <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; border:1px solid #444; margin-bottom:10px;">
@@ -656,18 +660,18 @@
         renderizarGrafico();
     }
 
+    // ==========================================
+    // GRÁFICO OTIMIZADO PARA CELULAR
+    // ==========================================
     function renderizarGrafico() { 
-        // 1. Verificação de segurança caso o CDN demore para carregar
         if (typeof Chart === 'undefined') {
             setTimeout(renderizarGrafico, 300);
             return;
         }
 
-        // 2. Proteção contra altura ZERO por estar em display:none
         let telaHome = document.getElementById('tela_home');
         if (telaHome.style.display === 'none' && !telaHome.classList.contains('ativa')) return;
 
-        // 3. TimeOut para garantir que o CSS já organizou as Divs perfeitamente
         setTimeout(() => {
             const ctx = document.getElementById('graficoFinanceiro').getContext('2d'); 
             const mesAtual = document.getElementById('filtro_mes').value; 
@@ -692,32 +696,54 @@
             let dias = [...new Set(todosDias)].sort(); 
             if (dias.length === 0) dias = [new Date().toISOString().split('T')[0].split('-')[2]]; 
             
+            // Configuração do gráfico totalmente otimizada para celular
             meuGrafico = new Chart(ctx, { 
                 type: 'line', 
                 data: { 
                     labels: dias.map(d => d + '/' + mesAtual), 
                     datasets: [ 
                         { 
-                            label: 'Pedidos (R$)', 
+                            label: 'Pedidos', 
                             data: dias.map(d => pMes.filter(p => p.data.split('-')[2] === d).reduce((a, b) => a + (b.total || 0), 0)), 
-                            borderColor: '#30d158', backgroundColor: 'rgba(48,209,88,0.1)', fill: true, tension: 0.4 
+                            borderColor: '#30d158', backgroundColor: 'rgba(48,209,88,0.1)', fill: true, tension: 0.4,
+                            pointRadius: 4, pointHitRadius: 15 // Aumentado para facilitar o toque no celular
                         },
                         { 
-                            label: 'Gastos (R$)', 
+                            label: 'Gastos', 
                             data: dias.map(d => gMes.filter(g => g.data.split('-')[2] === d).reduce((a, b) => a + (b.valor || 0), 0)), 
-                            borderColor: '#ff453a', backgroundColor: 'transparent', fill: false, tension: 0.4 
+                            borderColor: '#ff453a', backgroundColor: 'transparent', fill: false, tension: 0.4,
+                            pointRadius: 4, pointHitRadius: 15
                         },
                         { 
-                            label: 'Orçamentos (R$)', 
+                            label: 'Orçamentos', 
                             data: dias.map(d => oMes.filter(o => o.data.split('-')[2] === d).reduce((a, b) => a + (o.total || 0), 0)), 
-                            borderColor: '#5ac8fa', backgroundColor: 'transparent', fill: false, tension: 0.4, borderDash: [5, 5]
+                            borderColor: '#5ac8fa', backgroundColor: 'transparent', fill: false, tension: 0.4, borderDash: [5, 5],
+                            pointRadius: 4, pointHitRadius: 15
                         }
                     ]
                 }, 
                 options: { 
+                    responsive: true, 
                     maintainAspectRatio: false, 
-                    plugins: { legend: { display: true, labels: { color: '#ccc', font: { size: 10 }, boxWidth: 12 } } }, 
-                    scales: { y: { display: false }, x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#888' } } } 
+                    devicePixelRatio: window.devicePixelRatio || 1,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false // O balão com os dados aparece só de passar o dedo perto da linha
+                    },
+                    plugins: { 
+                        legend: { 
+                            display: true, 
+                            position: 'top',
+                            labels: { color: '#ccc', font: { size: 11 }, boxWidth: 12, padding: 15 } 
+                        } 
+                    }, 
+                    scales: { 
+                        y: { display: false, beginAtZero: true }, 
+                        x: { 
+                            grid: { color: 'rgba(255,255,255,0.05)' }, 
+                            ticks: { color: '#888', maxRotation: 45, minRotation: 45, font: {size: 10} } 
+                        } 
+                    } 
                 } 
             }); 
         }, 50); 
@@ -931,17 +957,56 @@
         document.getElementById('c_total').value = total.toFixed(2);
     }
 
+    // ==========================================
+    // ENVIO DA COMPRA PARA ORÇAMENTO OU GASTO
+    // ==========================================
     function salvarCompra() {
         let statusAtual = document.getElementById('c_status').value;
-        const obj = { id: document.getElementById('c_id').value || generateID(), cliente: document.getElementById('c_cliente').value, itens: itensCompraAtual, total: parseFloat(document.getElementById('c_total').value) || 0, data: document.getElementById('c_data').value, status: statusAtual };
+        const obj = { 
+            id: document.getElementById('c_id').value || generateID(), 
+            cliente: document.getElementById('c_cliente').value, 
+            itens: itensCompraAtual, 
+            total: parseFloat(document.getElementById('c_total').value) || 0, 
+            data: document.getElementById('c_data').value, 
+            status: statusAtual 
+        };
 
         if (statusAtual === 'concluido') {
+            // Mover para gastos
             let descGasto = "Compra: " + (obj.cliente || 'Diversos') + " (" + obj.itens.length + " itens)";
             let novoGasto = { id: generateID(), descricao: descGasto, valor: obj.total, data: obj.data };
             DB.gastos.push(novoGasto);
             if(document.getElementById('c_id').value) { DB.compras = DB.compras.filter(c => c.id != obj.id); }
             showToast("Compra Concluída! Movida para Gastos.", "success");
+        
+        } else if (statusAtual === 'orcamento') {
+            // Mover para orçamentos (NOVA FUNCIONALIDADE)
+            let itensConvertidos = obj.itens.map(i => ({
+                id_referencia: generateID(),
+                item: i.item,
+                qtd: i.qtd,
+                valor: i.valor,
+                tipo_item: 'compra'
+            }));
+            
+            let novoOrcamento = {
+                id: generateID(),
+                cliente: obj.cliente || "Cliente da Lista de Compras",
+                servico: "Lista de Materiais: " + (obj.cliente || "Diversos"),
+                itens_usados: itensConvertidos,
+                total: obj.total,
+                pago: 0,
+                data: obj.data,
+                tipo: 'orcamento',
+                status: 'aguardando'
+            };
+            
+            DB.servicos.push(novoOrcamento);
+            if(document.getElementById('c_id').value) { DB.compras = DB.compras.filter(c => c.id != obj.id); }
+            showToast("Lista convertida em Orçamento! Veja a aba Orçamentos.", "success");
+
         } else {
+            // Salvar normal na lista de compras
             if(document.getElementById('c_id').value) { const i = DB.compras.findIndex(x => x.id == obj.id); DB.compras[i] = obj; } else { DB.compras.push(obj); }
             showToast("Lista de Compras salva!", "success");
         }
