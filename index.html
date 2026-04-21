@@ -111,8 +111,9 @@
         
         .linha-pontilhada-demo { width:25px; height:0px; border-bottom: 2px dashed #000; }
 
-        /* Container do gráfico otimizado para celular */
-        .grafico-wrapper { background:var(--card); padding:10px; border-radius:15px; border: 1px solid #333; height: 300px; position: relative; width: 100%; box-sizing: border-box; overflow: hidden; }
+        /* Container do gráfico com altura fixa garantida para mobile */
+        .grafico-wrapper { background:var(--card); padding:10px; border-radius:15px; border: 1px solid #333; height: 300px; position: relative; width: 100%; box-sizing: border-box; }
+        #graficoFinanceiro { width: 100% !important; height: 100% !important; }
 
         #area-impressao { display: none; }
         @media print {
@@ -185,29 +186,43 @@
     <!-- TELA PAINEL -->
     <div id="tela_home" class="tela ativa">
         <div style="background:var(--card); padding:20px; border-radius:15px; border: 1px solid var(--gold); margin-bottom: 15px;">
+            
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 15px;">
                 <span style="color:var(--gold); font-size: 13px; font-weight: bold; text-transform: uppercase;"><i class="fas fa-chart-pie"></i> Balanço Mensal</span>
                 <select id="filtro_mes" onchange="renderizarGrafico()" style="padding: 6px 10px; background: #2b2d3a; border: 1px solid #444; border-radius: 8px; color: white; font-size: 12px; outline: none; width: auto; margin:0;">
                     <option value="01">Jan</option><option value="02">Fev</option><option value="03">Mar</option><option value="04">Abr</option><option value="05">Mai</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Ago</option><option value="09">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option>
                 </select>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                 <div style="background: rgba(48,209,88,0.05); border: 1px solid rgba(48,209,88,0.2); padding: 12px; border-radius: 12px; text-align: center;">
-                    <span style="color:#aaa; font-size: 10px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 5px;">Entradas (Pedidos)</span>
-                    <strong id="h_recebido" style="font-size: 18px; color: var(--green);">R$ 0,00</strong>
+                    <span style="color:#aaa; font-size: 10px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 5px;"><i class="fas fa-hand-holding-usd"></i> Já Recebido</span>
+                    <strong id="h_recebido" style="font-size: 17px; color: var(--green);">R$ 0,00</strong>
                 </div>
+                <div style="background: rgba(255,159,10,0.05); border: 1px solid rgba(255,159,10,0.2); padding: 12px; border-radius: 12px; text-align: center;">
+                    <span style="color:#aaa; font-size: 10px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 5px;"><i class="fas fa-clock"></i> A Receber</span>
+                    <strong id="h_areceber" style="font-size: 17px; color: var(--orange);">R$ 0,00</strong>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                 <div style="background: rgba(255,69,58,0.05); border: 1px solid rgba(255,69,58,0.2); padding: 12px; border-radius: 12px; text-align: center;">
-                    <span style="color:#aaa; font-size: 10px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 5px;">Saídas (Gastos)</span>
-                    <strong id="h_gastos" style="font-size: 18px; color: var(--red);">R$ 0,00</strong>
+                    <span style="color:#aaa; font-size: 10px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 5px;"><i class="fas fa-arrow-down"></i> Saídas (Gastos)</span>
+                    <strong id="h_gastos" style="font-size: 17px; color: var(--red);">R$ 0,00</strong>
+                </div>
+                <div style="background: rgba(10,132,255,0.05); border: 1px solid rgba(10,132,255,0.2); padding: 12px; border-radius: 12px; text-align: center;">
+                    <span style="color:#aaa; font-size: 10px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 5px;"><i class="fas fa-wallet"></i> Em Caixa (Real)</span>
+                    <strong id="h_lucro" style="font-size: 17px; color: var(--blue);">R$ 0,00</strong>
                 </div>
             </div>
-            <div style="text-align: center; background: rgba(10,132,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(10,132,255,0.2);">
-                <span style="color:var(--text); font-size: 11px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 5px;">Saldo Líquido</span>
-                <h1 id="h_lucro" style="font-size: 32px; margin: 0; color: var(--blue);">R$ 0,00</h1>
+
+            <div style="text-align: center;">
+                <span style="font-size: 11px; color: #888;">Total Vendido no Mês (Bruto): <b id="h_bruto" style="color: #ddd;">R$ 0,00</b></span>
             </div>
+
         </div>
         
-        <!-- DIV DO GRÁFICO (Otimizada para Mobile) -->
+        <!-- DIV DO GRÁFICO -->
         <div class="grafico-wrapper">
             <canvas id="graficoFinanceiro"></canvas>
         </div>
@@ -395,13 +410,17 @@
             </select>
             
             <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; border:1px solid #444; margin-bottom:10px;">
-                <label style="color:#ddd">Novo Item Comprado</label>
+                <label style="color:#ddd">Novo Item Comprado / Materiais</label>
                 <input type="text" id="c_item_nome" placeholder="Ex: Dobradiça">
                 <div style="display:flex; gap:10px;">
                     <div style="flex:1"><label>Qtd</label><input type="number" id="c_item_qtd" value="1"></div>
                     <div style="flex:1"><label>Valor Unit. R$</label><input type="number" id="c_item_valor" step="0.01"></div>
                 </div>
-                <button class="btn-outline" style="color:var(--pink); border-color:var(--pink);" onclick="adicionarItemCompraUI()">+ ADICIONAR ITEM NA LISTA</button>
+                <!-- BOTÕES DE AÇÃO DO ITEM DE COMPRA -->
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="btn-outline" style="color:var(--pink); border-color:var(--pink); flex:1; font-size:10px;" onclick="adicionarItemCompraUI()">+ ADD NA LISTA</button>
+                    <button class="btn-outline" style="color:var(--orange); border-color:var(--orange); flex:1; font-size:10px;" onclick="adicionarItemCompraAoEstoque()">+ ADD AO ESTOQUE</button>
+                </div>
             </div>
 
             <div id="container_itens_compra" style="margin-bottom:15px;"></div>
@@ -661,7 +680,7 @@
     }
 
     // ==========================================
-    // GRÁFICO OTIMIZADO PARA CELULAR
+    // GRÁFICO OTIMIZADO PARA CELULAR (CORRIGIDO)
     // ==========================================
     function renderizarGrafico() { 
         if (typeof Chart === 'undefined') {
@@ -670,33 +689,55 @@
         }
 
         let telaHome = document.getElementById('tela_home');
-        if (telaHome.style.display === 'none' && !telaHome.classList.contains('ativa')) return;
+        if (!telaHome.classList.contains('ativa')) return;
 
+        // Aumentado para 450ms para garantir que a animação CSS (fadeIn 0.4s) termine primeiro
         setTimeout(() => {
-            const ctx = document.getElementById('graficoFinanceiro').getContext('2d'); 
+            const canvas = document.getElementById('graficoFinanceiro');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d'); 
             const mesAtual = document.getElementById('filtro_mes').value; 
             
             const pMes = dadosPedidos.filter(p => p.data && p.data.split('-')[1] === mesAtual && p.tipo === 'servico'); 
             const oMes = dadosPedidos.filter(p => p.data && p.data.split('-')[1] === mesAtual && p.tipo === 'orcamento'); 
             const gMes = dadosGastos.filter(g => g.data && g.data.split('-')[1] === mesAtual);
 
-            const totalRecebido = pMes.reduce((a, b) => a + (b.total || 0), 0); 
-            const totalGastos = gMes.reduce((a, b) => a + (b.valor || 0), 0);
-            const lucroLiquido = totalRecebido - totalGastos;
+            // ===============================================
+            // NOVA LÓGICA DE CÁLCULO FINANCEIRO
+            // ===============================================
+            const totalVendido = pMes.reduce((a, b) => a + (b.total || 0), 0);  // Soma de todos os pedidos feitos (Bruto)
+            const totalPago = pMes.reduce((a, b) => a + (b.pago || 0), 0);      // O que realmente o cliente pagou em R$
+            const totalAReceber = totalVendido - totalPago;                     // O que os clientes estão devendo
 
-            document.getElementById('h_recebido').innerText = "R$ " + formatMoeda(totalRecebido); 
-            document.getElementById('h_gastos').innerText = "R$ " + formatMoeda(totalGastos); 
-            document.getElementById('h_lucro').innerText = "R$ " + formatMoeda(lucroLiquido); 
+            const totalGastos = gMes.reduce((a, b) => a + (b.valor || 0), 0);   // Soma das saídas (despesas)
             
-            document.getElementById('h_lucro').style.color = lucroLiquido < 0 ? 'var(--red)' : 'var(--blue)';
+            const saldoCaixaReal = totalPago - totalGastos;                     // Saldo Real = Dinheiro que entrou - Dinheiro que saiu
+
+            // Inserindo os valores no HTML
+            document.getElementById('h_recebido').innerText = "R$ " + formatMoeda(totalPago); 
+            document.getElementById('h_areceber').innerText = "R$ " + formatMoeda(totalAReceber); 
+            document.getElementById('h_gastos').innerText = "R$ " + formatMoeda(totalGastos); 
+            document.getElementById('h_lucro').innerText = "R$ " + formatMoeda(saldoCaixaReal); 
+            document.getElementById('h_bruto').innerText = "R$ " + formatMoeda(totalVendido); 
+            
+            // Fica vermelho se as despesas forem maiores que o que já foi recebido
+            document.getElementById('h_lucro').style.color = saldoCaixaReal < 0 ? 'var(--red)' : 'var(--blue)';
 
             if(meuGrafico) meuGrafico.destroy(); 
             
             let todosDias = [...pMes, ...oMes, ...gMes].map(x => x.data.split('-')[2]);
             let dias = [...new Set(todosDias)].sort(); 
-            if (dias.length === 0) dias = [new Date().toISOString().split('T')[0].split('-')[2]]; 
             
-            // Configuração do gráfico totalmente otimizada para celular
+            // CORREÇÃO: Garante que haja pelo menos 2 pontos no eixo X para formar uma linha visível
+            let diaAtual = new Date().toISOString().split('T')[0].split('-')[2];
+            if (dias.length === 0) { 
+                dias = ['01', diaAtual]; // Se não tem dados, linha reta do dia 01 ao dia atual
+            } else if (dias.length === 1) {
+                if (dias[0] !== '01') dias.unshift('01'); // Adiciona dia 01 pra criar a reta
+                else dias.push('28');
+            }
+            
             meuGrafico = new Chart(ctx, { 
                 type: 'line', 
                 data: { 
@@ -706,19 +747,19 @@
                             label: 'Pedidos', 
                             data: dias.map(d => pMes.filter(p => p.data.split('-')[2] === d).reduce((a, b) => a + (b.total || 0), 0)), 
                             borderColor: '#30d158', backgroundColor: 'rgba(48,209,88,0.1)', fill: true, tension: 0.4,
-                            pointRadius: 4, pointHitRadius: 15 // Aumentado para facilitar o toque no celular
+                            pointRadius: 4, pointHitRadius: 20 // Aumentado para facilitar o clique com o dedo
                         },
                         { 
                             label: 'Gastos', 
                             data: dias.map(d => gMes.filter(g => g.data.split('-')[2] === d).reduce((a, b) => a + (b.valor || 0), 0)), 
                             borderColor: '#ff453a', backgroundColor: 'transparent', fill: false, tension: 0.4,
-                            pointRadius: 4, pointHitRadius: 15
+                            pointRadius: 4, pointHitRadius: 20
                         },
                         { 
                             label: 'Orçamentos', 
                             data: dias.map(d => oMes.filter(o => o.data.split('-')[2] === d).reduce((a, b) => a + (o.total || 0), 0)), 
                             borderColor: '#5ac8fa', backgroundColor: 'transparent', fill: false, tension: 0.4, borderDash: [5, 5],
-                            pointRadius: 4, pointHitRadius: 15
+                            pointRadius: 4, pointHitRadius: 20
                         }
                     ]
                 }, 
@@ -727,8 +768,8 @@
                     maintainAspectRatio: false, 
                     devicePixelRatio: window.devicePixelRatio || 1,
                     interaction: {
-                        mode: 'index',
-                        intersect: false // O balão com os dados aparece só de passar o dedo perto da linha
+                        mode: 'nearest', // Deixa a interação por toque muito melhor
+                        intersect: false 
                     },
                     plugins: { 
                         legend: { 
@@ -746,7 +787,7 @@
                     } 
                 } 
             }); 
-        }, 50); 
+        }, 450); 
     }
 
     function mudarTela(id) { 
@@ -758,9 +799,9 @@
             id !== 'tela_home' && id !== 'tela_corte' && id !== 'tela_config'
         ); 
 
-        // GARANTIR QUE O GRÁFICO É REDESENHADO AO VOLTAR PARA O PAINEL
+        // GARANTIR QUE O GRÁFICO É REDESENHADO APÓS A TELA ESTAR VISÍVEL NO MOBILE
         if (id === 'tela_home') {
-            renderizarGrafico();
+            setTimeout(renderizarGrafico, 450); // Alterado de 150 para 450
         }
     }
     
@@ -926,6 +967,9 @@
         document.getElementById('modalPedido').style.display = 'flex'; 
     }
 
+    // ==========================================
+    // FUNÇÕES DE BOTÕES: LISTA VS ESTOQUE
+    // ==========================================
     function adicionarItemCompraUI() {
         const item = document.getElementById('c_item_nome').value;
         const qtd = parseInt(document.getElementById('c_item_qtd').value) || 1;
@@ -934,6 +978,38 @@
         itensCompraAtual.push({ item, qtd, valor });
         document.getElementById('c_item_nome').value = ""; document.getElementById('c_item_qtd').value = "1"; document.getElementById('c_item_valor').value = "";
         renderizarItensCompra();
+    }
+
+    function adicionarItemCompraAoEstoque() {
+        const item = document.getElementById('c_item_nome').value;
+        const qtd = parseInt(document.getElementById('c_item_qtd').value) || 1;
+        const valor = parseFloat(document.getElementById('c_item_valor').value) || 0;
+
+        if(!item) return showToast("Digite o nome do item primeiro!", "error");
+
+        // Verifica se o item já existe no estoque para somar a quantidade
+        let existe = DB.estoque.find(e => e.item.toLowerCase() === item.toLowerCase());
+        
+        if (existe) {
+            existe.quantidade += qtd;
+            existe.valor_venda = valor; // Opcional: Atualiza o preço base
+        } else {
+            DB.estoque.push({
+                id: generateID(),
+                item: item,
+                localizacao: "",
+                quantidade: qtd,
+                valor_venda: valor
+            });
+        }
+
+        saveDB(); // Salva e atualiza visualmente em segundo plano
+        showToast(`"${item}" enviado para o Estoque!`, "success");
+
+        // Limpa os campos após enviar
+        document.getElementById('c_item_nome').value = ""; 
+        document.getElementById('c_item_qtd').value = "1"; 
+        document.getElementById('c_item_valor').value = "";
     }
 
     function editarItemCompraLista(idx) {
@@ -980,7 +1056,7 @@
             showToast("Compra Concluída! Movida para Gastos.", "success");
         
         } else if (statusAtual === 'orcamento') {
-            // Mover para orçamentos (NOVA FUNCIONALIDADE)
+            // Mover para orçamentos
             let itensConvertidos = obj.itens.map(i => ({
                 id_referencia: generateID(),
                 item: i.item,
