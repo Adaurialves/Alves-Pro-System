@@ -679,9 +679,6 @@
         renderizarGrafico();
     }
 
-    // ==========================================
-    // GRÁFICO OTIMIZADO - TODOS OS DETALHES REAIS
-    // ==========================================
     function renderizarGrafico() { 
         if (typeof Chart === 'undefined') {
             setTimeout(renderizarGrafico, 300);
@@ -691,7 +688,6 @@
         let telaHome = document.getElementById('tela_home');
         if (!telaHome.classList.contains('ativa')) return;
 
-        // O requestAnimationFrame garante que o HTML já existe antes de desenhar
         requestAnimationFrame(() => {
             setTimeout(() => {
                 const canvas = document.getElementById('graficoFinanceiro');
@@ -700,11 +696,9 @@
                 const ctx = canvas.getContext('2d'); 
                 const mesAtual = document.getElementById('filtro_mes').value; 
                 
-                // Puxa os dados filtrando de forma segura
                 const pMes = dadosPedidos.filter(p => p.data && p.data.split('-')[1] === mesAtual && p.tipo === 'servico'); 
                 const gMes = dadosGastos.filter(g => g.data && g.data.split('-')[1] === mesAtual);
 
-                // Cálculos do Topo (Mantidos idênticos)
                 const totalVendido = pMes.reduce((a, b) => a + (b.total || 0), 0);  
                 const totalPago = pMes.reduce((a, b) => a + (b.pago || 0), 0);      
                 const totalAReceber = totalVendido - totalPago;                     
@@ -720,14 +714,9 @@
 
                 if(meuGrafico) meuGrafico.destroy(); 
                 
-                // Mapeamento seguro de dias para o eixo X
-                let todosDias = [...pMes, ...gMes]
-                    .map(x => x.data.split('-')[2])
-                    .filter(d => d !== undefined);
-                    
+                let todosDias = [...pMes, ...gMes].map(x => x.data.split('-')[2]).filter(d => d !== undefined);
                 let dias = [...new Set(todosDias)].sort(); 
                 
-                // Criação da linha guia caso o mês esteja vazio ou tenha só 1 dia
                 if (dias.length === 0) { 
                     let diaAtual = new Date().toISOString().split('T')[0].split('-')[2];
                     dias = ['01', diaAtual]; 
@@ -736,7 +725,6 @@
                     else dias.push('30');
                 }
 
-                // Separando os dados para as 3 linhas do gráfico
                 const dadosRecebido = dias.map(d => pMes.filter(p => p.data.split('-')[2] === d).reduce((a, b) => a + (b.pago || 0), 0));
                 const dadosAReceber = dias.map(d => pMes.filter(p => p.data.split('-')[2] === d).reduce((a, b) => a + ((b.total || 0) - (b.pago || 0)), 0));
                 const dadosGastosArr = dias.map(d => gMes.filter(g => g.data.split('-')[2] === d).reduce((a, b) => a + (b.valor || 0), 0));
@@ -771,7 +759,7 @@
                         maintainAspectRatio: false, 
                         devicePixelRatio: window.devicePixelRatio || 1,
                         interaction: {
-                            mode: 'index', // Ao passar o mouse, mostra os 3 valores do dia de uma vez
+                            mode: 'index',
                             intersect: false 
                         },
                         plugins: { 
@@ -823,7 +811,6 @@
             id !== 'tela_home' && id !== 'tela_corte' && id !== 'tela_config'
         ); 
 
-        // GARANTIR QUE O GRÁFICO É REDESENHADO APÓS A TELA ESTAR VISÍVEL NO MOBILE
         if (id === 'tela_home') {
             setTimeout(renderizarGrafico, 450); 
         }
@@ -991,9 +978,6 @@
         document.getElementById('modalPedido').style.display = 'flex'; 
     }
 
-    // ==========================================
-    // FUNÇÕES DE BOTÕES: LISTA VS ESTOQUE
-    // ==========================================
     function adicionarItemCompraUI() {
         const item = document.getElementById('c_item_nome').value;
         const qtd = parseInt(document.getElementById('c_item_qtd').value) || 1;
@@ -1011,12 +995,11 @@
 
         if(!item) return showToast("Digite o nome do item primeiro!", "error");
 
-        // Verifica se o item já existe no estoque para somar a quantidade
         let existe = DB.estoque.find(e => e.item.toLowerCase() === item.toLowerCase());
         
         if (existe) {
             existe.quantidade += qtd;
-            existe.valor_venda = valor; // Opcional: Atualiza o preço base
+            existe.valor_venda = valor;
         } else {
             DB.estoque.push({
                 id: generateID(),
@@ -1027,10 +1010,9 @@
             });
         }
 
-        saveDB(); // Salva e atualiza visualmente em segundo plano
+        saveDB(); 
         showToast(`"${item}" enviado para o Estoque!`, "success");
 
-        // Limpa os campos após enviar
         document.getElementById('c_item_nome').value = ""; 
         document.getElementById('c_item_qtd').value = "1"; 
         document.getElementById('c_item_valor').value = "";
@@ -1057,9 +1039,6 @@
         document.getElementById('c_total').value = total.toFixed(2);
     }
 
-    // ==========================================
-    // ENVIO DA COMPRA PARA ORÇAMENTO OU GASTO
-    // ==========================================
     function salvarCompra() {
         let statusAtual = document.getElementById('c_status').value;
         const obj = { 
@@ -1072,7 +1051,6 @@
         };
 
         if (statusAtual === 'concluido') {
-            // Mover para gastos
             let descGasto = "Compra: " + (obj.cliente || 'Diversos') + " (" + obj.itens.length + " itens)";
             let novoGasto = { id: generateID(), descricao: descGasto, valor: obj.total, data: obj.data };
             DB.gastos.push(novoGasto);
@@ -1080,7 +1058,6 @@
             showToast("Compra Concluída! Movida para Gastos.", "success");
         
         } else if (statusAtual === 'orcamento') {
-            // Mover para orçamentos
             let itensConvertidos = obj.itens.map(i => ({
                 id_referencia: generateID(),
                 item: i.item,
@@ -1106,7 +1083,6 @@
             showToast("Lista convertida em Orçamento! Veja a aba Orçamentos.", "success");
 
         } else {
-            // Salvar normal na lista de compras
             if(document.getElementById('c_id').value) { const i = DB.compras.findIndex(x => x.id == obj.id); DB.compras[i] = obj; } else { DB.compras.push(obj); }
             showToast("Lista de Compras salva!", "success");
         }
@@ -1154,9 +1130,6 @@
     function abrirSeletorServico() { const sel = document.getElementById('sel_servico_catalogo'); sel.innerHTML = dadosCatalogo.map(c => `<option value="${c.id}">${c.nome} - R$ ${formatMoeda(c.preco)}</option>`).join(''); document.getElementById('modalSeletorServico').style.display = 'flex'; }
     function confirmarAdicaoServico() { const id = document.getElementById('sel_servico_catalogo').value; const serv = dadosCatalogo.find(c => c.id == id); if(serv) { itensNoPedido.push({ id_referencia: serv.id, item: serv.nome, qtd: parseInt(document.getElementById('sel_qtd_servico').value), valor: serv.preco, tipo_item: 'servico' }); renderizarItensPedido(); recalcularTotal(); document.getElementById('modalSeletorServico').style.display = 'none'; } }
 
-    // ==========================================
-    // MÓDULO PLANO DE CORTE (STRIP PACKING MAXAS)
-    // ==========================================
     let pecasCorte = []; 
     let gruposChapasCalculadas = []; 
     let planoAtualId = null; 
@@ -1350,7 +1323,7 @@
             if(pecasCorte.length === 0) return showToast("Adicione peças primeiro!", "error");
             
             let serraVal = parseFloat(document.getElementById('corte_serra').value);
-            const kerf = isNaN(serraVal) ? 4 : serraVal; // Espessura da serra
+            const kerf = isNaN(serraVal) ? 4 : serraVal; 
             const permitirRotacao = document.getElementById('corte_rotacao').checked;
 
             let gruposMaterial = {};
@@ -1724,6 +1697,64 @@
             </div>
         `;
         setTimeout(() => { window.print(); }, 300);
+    }
+
+    // ==========================================
+    // MÓDULO DE BACKUP (EXPORTAR E IMPORTAR)
+    // ==========================================
+
+    function exportarBackup() {
+        try {
+            const dadosStr = JSON.stringify(DB, null, 2);
+            const blob = new Blob([dadosStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            
+            const dataHj = new Date().toISOString().split('T')[0];
+            
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `backup_alvesPro_${dataHj}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast("Backup baixado com sucesso!", "success");
+        } catch (erro) {
+            console.error(erro);
+            showToast("Erro ao gerar backup.", "error");
+        }
+    }
+
+    function importarBackup(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const dadosImportados = JSON.parse(e.target.result);
+                
+                if (dadosImportados && typeof dadosImportados === 'object') {
+                    localStorage.setItem('alvesProDB', JSON.stringify(dadosImportados));
+                    
+                    DB = Object.assign(DB, dadosImportados);
+                    carregarConfiguracoes();
+                    carregarDados();
+                    
+                    showToast("Backup restaurado com sucesso!", "success");
+                } else {
+                    showToast("Arquivo inválido!", "error");
+                }
+            } catch (error) {
+                console.error("Erro ao ler backup:", error);
+                showToast("Erro: O arquivo não é um backup válido.", "error");
+            }
+            
+            event.target.value = '';
+        };
+        
+        reader.readAsText(file);
     }
 </script>
 </body>
