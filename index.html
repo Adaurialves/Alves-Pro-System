@@ -1755,13 +1755,16 @@
     }
 
     // ==========================================
-    // ETIQUETAS DO PLANO DE CORTE (CORRIGIDAS)
+    // ETIQUETAS DO PLANO DE CORTE (COM LOGO)
     // ==========================================
     function imprimirEtiquetasCorte() {
         if(pecasCorte.length === 0) return showToast("A lista de peças está vazia!", "error");
 
         const cliente = document.getElementById('corte_cliente_nome').value || "Projeto Diversos";
         
+        // RECUPERA A LOGO DA EMPRESA
+        const logoSrc = DB.config.logo || 'icone.png';
+
         let htmlEtiquetas = '';
 
         pecasCorte.forEach((p) => {
@@ -1774,6 +1777,7 @@
             for(let i = 0; i < p.qtd; i++) {
                 htmlEtiquetas += `
                     <div class="print-etiqueta">
+                        <img src="${logoSrc}" style="max-height: 25px; object-fit: contain; margin-bottom: 5px; display: block; margin-left: auto; margin-right: auto;">
                         <h4>${cliente}</h4>
                         <p style="color:#555; font-size:10px;">${mat}</p>
                         <p style="font-size:14px; margin-top:5px;"><strong>${desc}</strong></p>
