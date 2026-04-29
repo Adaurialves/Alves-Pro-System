@@ -128,6 +128,7 @@
             
             .btn-flutuante, .menu-grid, .busca-container, .empresa-header, .toast-container, #tela_bloqueio { display: none !important; }
             
+            /* ESTILOS IMPRESSÃO MAPA CORTE */
             .print-corte-container { width: 100%; max-width: 1000px; margin: 0 auto; color: black; font-family: Arial, sans-serif; }
             .print-corte-header { text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 20px; }
             .print-corte-header h1 { margin: 0; font-size: 22px; text-transform: uppercase; }
@@ -137,10 +138,35 @@
             .corte-table th, .corte-table td { border: 1px solid #000; padding: 8px; text-align: center; font-size: 12px; }
             .corte-table th { background-color: #ddd; text-transform: uppercase; }
             .corte-table td.desc-left { text-align: left; }
-
             .print-mapa-box { text-align: center; margin-top: 30px; page-break-inside: avoid; }
             .print-mapa-box h3 { margin-bottom: 10px; font-size: 16px; text-transform:uppercase; background:#333; color:white; padding:5px; }
             .print-mapa-img { max-width: 100%; }
+
+            /* ESTILOS IMPRESSÃO PEDIDO/ORÇAMENTO (NOVO MODELO LIMPO) */
+            .print-fatura { font-family: Arial, sans-serif; color: #000; width: 100%; max-width: 800px; margin: 0 auto; line-height: 1.5; }
+            .print-fatura-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+            .print-fatura-empresa h2 { margin: 0; font-size: 20px; text-transform: uppercase; }
+            .print-fatura-empresa p { margin: 2px 0; font-size: 12px; color: #333; }
+            .print-fatura-data { font-size: 12px; font-weight: bold; background: #f9f9f9; padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; }
+            .print-fatura-barra-titulo { background: #d0d0d0; padding: 8px 15px; font-weight: bold; font-size: 18px; margin-bottom: 15px; border-radius: 2px; }
+            .print-fatura-cliente { font-size: 13px; margin-bottom: 25px; }
+            .print-fatura-cliente strong { display: block; font-size: 14px; margin-bottom: 2px; }
+            .print-table-limpa { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 13px; }
+            .print-table-limpa th { border-bottom: 2px solid #ccc; padding: 8px; text-align: left; font-size: 14px; }
+            .print-table-limpa td { padding: 8px; border-bottom: 1px solid #eee; }
+            .print-table-limpa .total-row { background: #e0e0e0; font-weight: bold; }
+            .print-fatura-pagamento { font-size: 12px; margin-bottom: 40px; }
+            .print-fatura-pagamento h3 { font-size: 16px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; }
+            .print-fatura-assinatura { text-align: center; margin-top: 60px; font-size: 12px; }
+            .print-fatura-assinatura div { border-top: 1px solid #000; width: 60%; margin: 0 auto; padding-top: 5px; }
+            .print-fatura-rodape { text-align: center; font-size: 10px; color: #666; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 40px; }
+
+            /* ESTILOS IMPRESSÃO ETIQUETAS */
+            .print-etiquetas-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 100%; }
+            .print-etiqueta { border: 2px solid #000; padding: 12px; font-family: Arial, sans-serif; page-break-inside: avoid; border-radius: 8px; text-align: center; }
+            .print-etiqueta h4 { margin: 0 0 5px 0; font-size: 16px; text-transform: uppercase; font-weight: 900; }
+            .print-etiqueta p { margin: 3px 0; font-size: 12px; font-weight: bold; }
+            .print-etiqueta .dimensao { font-size: 18px; font-weight: bold; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 5px 0; margin: 8px 0; background: #f0f0f0; }
         }
     </style>
 </head>
@@ -303,7 +329,9 @@
             
             <button onclick="calcularAlgoritmoDeCorte()" style="width:100%; padding:15px; background:var(--gold); border:none; border-radius:8px; color:black; font-weight:bold; margin-bottom:10px; cursor:pointer;"><i class="fas fa-magic"></i> 1. GERAR MAPA DE CORTE</button>
             <button onclick="imprimirPlanoCorte()" style="width:100%; padding:15px; background:none; border:1px solid var(--blue); border-radius:8px; color:var(--blue); font-weight:bold; cursor:pointer; margin-bottom:10px;"><i class="fas fa-print"></i> 2. EXPORTAR LISTA E MAPAS (PDF)</button>
-            <button onclick="gerarListaCompraDoPlano()" style="width:100%; padding:15px; background:none; border:1px dashed var(--pink); border-radius:8px; color:var(--pink); font-weight:bold; cursor:pointer;"><i class="fas fa-shopping-cart"></i> 3. GERAR LISTA DE COMPRAS (MATERIAIS)</button>
+            <!-- NOVO BOTÃO DE ETIQUETAS -->
+            <button onclick="imprimirEtiquetasCorte()" style="width:100%; padding:15px; background:none; border:1px solid var(--orange); border-radius:8px; color:var(--orange); font-weight:bold; cursor:pointer; margin-bottom:10px;"><i class="fas fa-tags"></i> 3. IMPRIMIR ETIQUETAS</button>
+            <button onclick="gerarListaCompraDoPlano()" style="width:100%; padding:15px; background:none; border:1px dashed var(--pink); border-radius:8px; color:var(--pink); font-weight:bold; cursor:pointer;"><i class="fas fa-shopping-cart"></i> 4. GERAR LISTA DE COMPRAS</button>
             
             <div id="container_mapas_visuais" style="margin-top: 15px;"></div>
         </div>
@@ -333,7 +361,7 @@
 
             <label>Nome da Empresa</label><input type="text" id="cfg_nome">
             <label>Telefone / WhatsApp</label><input type="text" id="cfg_telefone">
-            <label>Endereço</label><input type="text" id="cfg_endereco">
+            <label>Endereço / CNPJ</label><input type="text" id="cfg_endereco">
             <label>Mensagem Rodapé</label><input type="text" id="cfg_msg">
             
             <button onclick="salvarConfig()" style="width:100%; padding:15px; background:var(--blue); border:none; border-radius:8px; color:white; font-weight:bold; margin-top:20px; cursor:pointer;">SALVAR AJUSTES</button>
@@ -368,7 +396,7 @@
             </div>
             <div style="display:flex; gap:10px;">
                 <div style="flex:1"><label>Complemento</label><input type="text" id="f_complemento"></div>
-                <div style="flex:1"><label>Cidade</label><input type="text" id="f_cidade"></div>
+                <div style="flex:1"><label>Cidade / Bairro</label><input type="text" id="f_cidade"></div>
             </div>
             
             <div class="ocultar-pedido">
@@ -395,6 +423,9 @@
             <label>Data</label>
             <input type="date" id="f_data">
             
+            <!-- NOVO BOTAO DE IMPRESSAO DA FATURA/ORCAMENTO -->
+            <button id="btn_imprimir_pedido" class="btn-outline" style="color:var(--teal); border-color:var(--teal); margin-top:10px; display:none;" onclick="imprimirPedidoOuOrcamento()"><i class="fas fa-file-pdf"></i> GERAR PDF (ORÇAMENTO / PEDIDO)</button>
+
             <button id="btn_duplicar_pedido" class="btn-outline" style="color:var(--gold); border-color:var(--gold); margin-top:10px; display:none;" onclick="duplicarRegistroAtual('pedido')"><i class="fas fa-copy"></i> DUPLICAR / USAR COMO MODELO</button>
             <button onclick="salvarPedido()" style="width:100%; padding:15px; background:var(--green); border:none; border-radius:8px; color:white; font-weight:bold; margin-top:10px; cursor:pointer;">SALVAR</button>
             <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#888; margin-top:10px; cursor:pointer;">Cancelar</button>
@@ -581,12 +612,10 @@
     let DB = { servicos: [], estoque: [], catalogo_servicos: [], gastos: [], orcamentos: [], compras: [], planos_corte: [], config: {} };
     
     function initDB() { 
-        // LÊ DADOS DA NUVEM EM TEMPO REAL
         database.ref('alvesProDB').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 DB = Object.assign(DB, data);
-                // Garante que arrays vazios não fiquem como nulos
                 if(!DB.planos_corte) DB.planos_corte = []; 
                 if(!DB.catalogo_servicos) DB.catalogo_servicos = []; 
                 if(!DB.gastos) DB.gastos = []; 
@@ -597,11 +626,10 @@
                 carregarConfiguracoes(); 
                 carregarDados();
             } else {
-                // Se a nuvem está vazia, mas o PC tem dados salvos do antigo sistema, a gente migra:
                 const localData = localStorage.getItem('alvesProDB'); 
                 if (localData) { 
                     DB = Object.assign(DB, JSON.parse(localData)); 
-                    saveDB(); // Manda pra nuvem
+                    saveDB(); 
                     showToast("Dados antigos sincronizados com a Nuvem!", "info");
                 } else {
                     carregarConfiguracoes(); 
@@ -612,7 +640,6 @@
     }
 
     function saveDB() { 
-        // SALVA NA NUVEM. O on('value') acima atualiza a tela automaticamente!
         database.ref('alvesProDB').set(DB).catch((err) => {
             console.error("Erro Firebase:", err);
             showToast("Erro ao salvar na nuvem.", "error");
@@ -924,6 +951,7 @@
             document.getElementById('f_id').value = '';
             document.getElementById('f_data').value = new Date().toISOString().split('T')[0];
             document.getElementById('btn_duplicar_pedido').style.display = 'none';
+            document.getElementById('btn_imprimir_pedido').style.display = 'none';
         } else if (tipo === 'compra') {
             document.getElementById('c_id').value = '';
             document.getElementById('c_data').value = new Date().toISOString().split('T')[0];
@@ -938,6 +966,7 @@
 
     function abrirModalPorTela() { 
         document.getElementById('btn_duplicar_pedido').style.display = 'none';
+        document.getElementById('btn_imprimir_pedido').style.display = 'none';
         document.getElementById('btn_duplicar_compra').style.display = 'none';
         document.getElementById('btn_duplicar_gasto').style.display = 'none';
 
@@ -1017,7 +1046,8 @@
             numero: document.getElementById('f_numero').value,
             complemento: document.getElementById('f_complemento').value,
             cidade: document.getElementById('f_cidade').value,
-            lembrete: document.getElementById('f_lembrete').value
+            lembrete: document.getElementById('f_lembrete').value,
+            mao_obra: parseFloat(document.getElementById('f_mao_obra').value) || 0
         }; 
         
         if(document.getElementById('f_id').value) { const i = DB.servicos.findIndex(x => x.id == obj.id); DB.servicos[i] = obj; } else { DB.servicos.push(obj); } 
@@ -1039,6 +1069,7 @@
         document.getElementById('f_complemento').value = p.complemento || '';
         document.getElementById('f_cidade').value = p.cidade || '';
         document.getElementById('f_lembrete').value = p.lembrete || '';
+        document.getElementById('f_mao_obra').value = p.mao_obra || '';
 
         ajustarCamposModal();
         if(p.status) { document.getElementById('f_status').value = p.status; }
@@ -1047,8 +1078,134 @@
         renderizarItensPedido(); 
 
         document.getElementById('btn_duplicar_pedido').style.display = 'block';
+        if(p.tipo !== 'compromisso') {
+            document.getElementById('btn_imprimir_pedido').style.display = 'block';
+        }
 
         document.getElementById('modalPedido').style.display = 'flex'; 
+    }
+
+    // ==========================================
+    // NOVA FUNÇÃO: GERAR PDF ORÇAMENTO / FATURA
+    // ==========================================
+    function imprimirPedidoOuOrcamento() {
+        const id_atual = document.getElementById('f_id').value;
+        if(!id_atual) return showToast("Salve o registro antes de imprimir!", "error");
+        
+        const p = DB.servicos.find(x => x.id == id_atual);
+        if(!p) return;
+
+        const c = DB.config || {};
+        const empresaNome = c.nome || "Minha Empresa";
+        const empresaDoc = c.endereco || ""; // Usando endereco para CNPJ/Endereço
+        const empresaTel = c.telefone || "";
+        
+        const dataHj = formatarDataBR(new Date().toISOString().split('T')[0]);
+        const tituloDoc = p.tipo === 'orcamento' ? `Orçamento ${String(p.id).slice(-4)}-${new Date().getFullYear()}` : `Fatura ${String(p.id).slice(-4)}-${new Date().getFullYear()}`;
+        
+        let enderecoClienteCompleto = [p.endereco, p.numero, p.complemento, p.cidade].filter(Boolean).join(', ');
+
+        // Cria as linhas da tabela combinando o Serviço Principal, Mão de obra e os Itens
+        let linhasTabela = "";
+        
+        if (p.servico) {
+            linhasTabela += `<tr><td style="font-weight:bold;">${p.servico}</td><td>-</td><td>-</td><td>1</td><td>-</td></tr>`;
+        }
+
+        if (p.mao_obra && p.mao_obra > 0) {
+            linhasTabela += `<tr><td>Mão de Obra Avulsa</td><td>Un</td><td>R$ ${formatMoeda(p.mao_obra)}</td><td>1</td><td>R$ ${formatMoeda(p.mao_obra)}</td></tr>`;
+        }
+
+        if (p.itens_usados && p.itens_usados.length > 0) {
+            p.itens_usados.forEach(i => {
+                linhasTabela += `<tr><td>${i.item}</td><td>Un</td><td>R$ ${formatMoeda(i.valor)}</td><td>${i.qtd}</td><td>R$ ${formatMoeda(i.valor * i.qtd)}</td></tr>`;
+            });
+        }
+
+        if(linhasTabela === "") {
+            linhasTabela = `<tr><td colspan="5" style="text-align:center;">Nenhum item adicionado</td></tr>`;
+        }
+
+        let infoPagamento = "";
+        if (p.tipo === 'orcamento') {
+            infoPagamento = `Orçamento válido por 15 dias.<br>Pagamento a combinar.`;
+        } else {
+            let valorDevendo = p.total - p.pago;
+            if(valorDevendo <= 0) {
+                infoPagamento = `<strong>TOTALMENTE PAGO</strong><br>Obrigado pela preferência!`;
+            } else {
+                infoPagamento = `Meios de pagamento: Dinheiro, cartão de débito ou pix.<br>
+                                 <strong>PIX:</strong> ${empresaTel}<br>
+                                 <strong>Resta Pagar:</strong> R$ ${formatMoeda(valorDevendo)}`;
+            }
+        }
+
+        const areaImpressao = document.getElementById('area-impressao');
+        areaImpressao.innerHTML = `
+            <div class="print-fatura">
+                <div class="print-fatura-header">
+                    <div class="print-fatura-empresa">
+                        <h2>${empresaNome}</h2>
+                        <p>${empresaDoc}</p>
+                        <p>📞 ${empresaTel}</p>
+                    </div>
+                    <div class="print-fatura-data">
+                        📅 ${dataHj}
+                    </div>
+                </div>
+
+                <div class="print-fatura-barra-titulo">
+                    ${tituloDoc}
+                </div>
+
+                <div class="print-fatura-cliente">
+                    <strong>Cliente: ${p.cliente || 'Consumidor'}</strong>
+                    ${enderecoClienteCompleto ? enderecoClienteCompleto : ''}
+                </div>
+
+                <h3 style="font-size:16px; margin-bottom:5px;">Serviços / Itens</h3>
+                <table class="print-table-limpa">
+                    <thead>
+                        <tr>
+                            <th width="40%">Descrição</th>
+                            <th width="10%">Unidade</th>
+                            <th width="20%">Preço unitário</th>
+                            <th width="10%">Qtd.</th>
+                            <th width="20%">Preço</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${linhasTabela}
+                        <tr class="total-row">
+                            <td colspan="4" style="text-align:right;">Total</td>
+                            <td>R$ ${formatMoeda(p.total)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="print-fatura-pagamento">
+                    <h3>Pagamento</h3>
+                    <div style="display:flex; justify-content:space-between;">
+                        <div>${infoPagamento}</div>
+                        <div style="text-align:right; font-weight:bold;">
+                            ${dataHj}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="print-fatura-assinatura">
+                    <div>
+                        <strong>${empresaNome}</strong><br>
+                        Assinatura / Visto
+                    </div>
+                </div>
+
+                <div class="print-fatura-rodape">
+                    ${c.mensagem || ''}
+                </div>
+            </div>
+        `;
+        setTimeout(() => { window.print(); }, 300);
     }
 
     function adicionarItemCompraUI() {
@@ -1579,6 +1736,51 @@
         }
     }
 
+    // ==========================================
+    // NOVA FUNÇÃO: GERAR ETIQUETAS DO PLANO DE CORTE
+    // ==========================================
+    function imprimirEtiquetasCorte() {
+        if(pecasCorte.length === 0) return showToast("A lista de peças está vazia!", "error");
+
+        const cliente = document.getElementById('corte_cliente_nome').value || "Projeto Diversos";
+        
+        let htmlEtiquetas = '';
+
+        // Cria uma etiqueta para CADA quantidade de CADA peça
+        pecasCorte.forEach((p) => {
+            let desc = p.desc || "Peça sem nome";
+            let dimensao = `${p.comp} x ${p.larg}`;
+            let mat = `${p.material || 'Padrão'} - ${p.espessura || '15mm'}`;
+            let fita = p.fitaResumo !== '-' ? `Fita: ${p.fitaResumo} ${p.cor_fita ? '('+p.cor_fita+')' : ''}` : "Sem Fita";
+
+            // Multiplica pela quantidade
+            for(let i = 0; i < p.qtd; i++) {
+                htmlEtiquetas += `
+                    <div class="print-etiqueta">
+                        <h4>${cliente}</h4>
+                        <p style="color:#555">${mat}</p>
+                        <p style="font-size:14px;"><strong>${desc}</strong></p>
+                        <div class="dimensao">${dimensao} mm</div>
+                        <p>${fita}</p>
+                    </div>
+                `;
+            }
+        });
+
+        const areaImpressao = document.getElementById('area-impressao');
+        areaImpressao.innerHTML = `
+            <div style="font-family: Arial, sans-serif; text-align: center; margin-bottom: 20px;">
+                <h2>ETIQUETAS PARA CORTE</h2>
+                <p>Imprima em papel adesivo (ou recorte).</p>
+            </div>
+            <div class="print-etiquetas-grid">
+                ${htmlEtiquetas}
+            </div>
+        `;
+
+        setTimeout(() => { window.print(); }, 300);
+    }
+
     function gerarListaCompraDoPlano() {
         if (gruposChapasCalculadas.length === 0) return showToast("Por favor, calcule o mapa de corte primeiro!", "error");
         
@@ -1802,7 +2004,7 @@
                 const dadosImportados = JSON.parse(e.target.result);
                 if (dadosImportados && typeof dadosImportados === 'object') {
                     DB = Object.assign(DB, dadosImportados);
-                    saveDB(); // Ao restaurar, ele já manda para a nuvem!
+                    saveDB(); 
                     showToast("Backup restaurado e enviado para a nuvem!", "success");
                 } else {
                     showToast("Arquivo inválido!", "error");
