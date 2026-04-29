@@ -163,12 +163,39 @@
             .print-fatura-assinatura div { border-top: 1px solid #000; width: 60%; margin: 0 auto; padding-top: 5px; }
             .print-fatura-rodape { text-align: center; font-size: 10px; color: #666; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 40px; }
 
-            /* ESTILOS IMPRESSÃO ETIQUETAS CORRIGIDO PARA EVITAR PÁGINA EM BRANCO */
+            /* ESTILOS IMPRESSÃO ETIQUETAS COM MARCA D'ÁGUA */
             .print-etiquetas-container { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; align-content: flex-start; width: 100%; margin: 0; padding: 0; }
-            .print-etiqueta { width: calc(33.333% - 10px); border: 2px solid #000; padding: 10px; font-family: Arial, sans-serif; box-sizing: border-box; page-break-inside: avoid; break-inside: avoid; border-radius: 8px; text-align: center; margin-bottom: 5px; }
+            .print-etiqueta { 
+                position: relative; 
+                z-index: 1; 
+                overflow: hidden; /* Mantém a marca d'água dentro da etiqueta */
+                width: calc(33.333% - 10px); 
+                border: 2px solid #000; 
+                padding: 10px; 
+                font-family: Arial, sans-serif; 
+                box-sizing: border-box; 
+                page-break-inside: avoid; 
+                break-inside: avoid; 
+                border-radius: 8px; 
+                text-align: center; 
+                margin-bottom: 5px; 
+            }
+            /* MARCA D'ÁGUA DA ETIQUETA */
+            .print-etiqueta-watermark {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 75%;
+                height: 75%;
+                object-fit: contain;
+                opacity: 0.15; /* Deixa bem transparente */
+                z-index: -1; /* Joga para trás do texto */
+                pointer-events: none;
+            }
             .print-etiqueta h4 { margin: 0 0 5px 0; font-size: 15px; text-transform: uppercase; font-weight: 900; }
             .print-etiqueta p { margin: 3px 0; font-size: 11px; font-weight: bold; color: #333; }
-            .print-etiqueta .dimensao { font-size: 16px; font-weight: bold; border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; padding: 5px 0; margin: 8px 0; background: #f9f9f9; }
+            .print-etiqueta .dimensao { font-size: 16px; font-weight: bold; border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; padding: 5px 0; margin: 8px 0; background: rgba(255,255,255,0.7); }
         }
     </style>
 </head>
@@ -1129,7 +1156,7 @@
         const empresaNome = c.nome || "Minha Empresa";
         const empresaDoc = c.endereco || ""; 
         const empresaTel = c.telefone || "";
-        const empresaPix = c.chave_pix || "Não cadastrada"; // NOVO: CHAVE PIX DOS AJUSTES
+        const empresaPix = c.chave_pix || "Não cadastrada"; 
         
         const dataHj = formatarDataBR(new Date().toISOString().split('T')[0]);
         const tituloDoc = p.tipo === 'orcamento' ? `Orçamento ${String(p.id).slice(-4)}-${new Date().getFullYear()}` : `Fatura ${String(p.id).slice(-4)}-${new Date().getFullYear()}`;
@@ -1755,7 +1782,7 @@
     }
 
     // ==========================================
-    // ETIQUETAS DO PLANO DE CORTE (COM LOGO)
+    // ETIQUETAS DO PLANO DE CORTE (COM MARCA D'ÁGUA)
     // ==========================================
     function imprimirEtiquetasCorte() {
         if(pecasCorte.length === 0) return showToast("A lista de peças está vazia!", "error");
@@ -1777,7 +1804,7 @@
             for(let i = 0; i < p.qtd; i++) {
                 htmlEtiquetas += `
                     <div class="print-etiqueta">
-                        <img src="${logoSrc}" style="max-height: 25px; object-fit: contain; margin-bottom: 5px; display: block; margin-left: auto; margin-right: auto;">
+                        <img src="${logoSrc}" class="print-etiqueta-watermark" onerror="this.style.display='none'">
                         <h4>${cliente}</h4>
                         <p style="color:#555; font-size:10px;">${mat}</p>
                         <p style="font-size:14px; margin-top:5px;"><strong>${desc}</strong></p>
@@ -1789,7 +1816,7 @@
         });
 
         const areaImpressao = document.getElementById('area-impressao');
-        // Usa a estrutura FLEXBOX no CSS de impressão para evitar páginas em branco
+        
         areaImpressao.innerHTML = `
             <div style="font-family: Arial, sans-serif; text-align: center; margin-bottom: 20px;">
                 <h2 style="margin:0;">ETIQUETAS PARA CORTE</h2>
