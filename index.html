@@ -163,22 +163,21 @@
             .print-fatura-assinatura div { border-top: 1px solid #000; width: 60%; margin: 0 auto; padding-top: 5px; }
             .print-fatura-rodape { text-align: center; font-size: 10px; color: #666; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 40px; }
 
-            /* ESTILOS IMPRESSÃO ETIQUETAS COM MARCA D'ÁGUA */
+            /* ESTILOS IMPRESSÃO ETIQUETAS COM MARCA D'ÁGUA GRANDE E SEM BORDA */
             .print-etiquetas-container { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; align-content: flex-start; width: 100%; margin: 0; padding: 0; }
             .print-etiqueta { 
                 position: relative; 
                 z-index: 1; 
-                overflow: hidden; /* Mantém a marca d'água dentro da etiqueta */
+                overflow: hidden; 
                 width: calc(33.333% - 10px); 
-                border: 2px solid #000; 
-                padding: 10px; 
+                border: none; /* SEM QUADRADO EM VOLTA */
+                padding: 15px 10px; 
                 font-family: Arial, sans-serif; 
                 box-sizing: border-box; 
                 page-break-inside: avoid; 
                 break-inside: avoid; 
-                border-radius: 8px; 
                 text-align: center; 
-                margin-bottom: 5px; 
+                margin-bottom: 10px; /* Espaço para recorte */
             }
             /* MARCA D'ÁGUA DA ETIQUETA */
             .print-etiqueta-watermark {
@@ -186,11 +185,11 @@
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                width: 75%;
-                height: 75%;
+                width: 100%; /* AUMENTADA PARA OCUPAR TODO O ESPAÇO */
+                height: 100%; /* AUMENTADA PARA OCUPAR TODO O ESPAÇO */
                 object-fit: contain;
-                opacity: 0.15; /* Deixa bem transparente */
-                z-index: -1; /* Joga para trás do texto */
+                opacity: 0.12; /* Bem transparente para não atrapalhar o texto */
+                z-index: -1; 
                 pointer-events: none;
             }
             .print-etiqueta h4 { margin: 0 0 5px 0; font-size: 15px; text-transform: uppercase; font-weight: 900; }
