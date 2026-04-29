@@ -120,8 +120,10 @@
         #graficoFinanceiro { width: 100% !important; height: 100% !important; }
 
         #area-impressao { display: none; }
+        
+        /* IMPRESSÃO GERAL */
         @media print {
-            body { background: white !important; margin: 0; padding: 0; }
+            body { background: white !important; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             body * { visibility: hidden; }
             #area-impressao, #area-impressao * { visibility: visible; }
             #area-impressao { display: block; position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; box-sizing: border-box; min-height: 100vh; }
@@ -161,12 +163,12 @@
             .print-fatura-assinatura div { border-top: 1px solid #000; width: 60%; margin: 0 auto; padding-top: 5px; }
             .print-fatura-rodape { text-align: center; font-size: 10px; color: #666; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 40px; }
 
-            /* ESTILOS IMPRESSÃO ETIQUETAS */
-            .print-etiquetas-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 100%; }
-            .print-etiqueta { border: 2px solid #000; padding: 12px; font-family: Arial, sans-serif; page-break-inside: avoid; border-radius: 8px; text-align: center; }
-            .print-etiqueta h4 { margin: 0 0 5px 0; font-size: 16px; text-transform: uppercase; font-weight: 900; }
-            .print-etiqueta p { margin: 3px 0; font-size: 12px; font-weight: bold; }
-            .print-etiqueta .dimensao { font-size: 18px; font-weight: bold; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 5px 0; margin: 8px 0; background: #f0f0f0; }
+            /* ESTILOS IMPRESSÃO ETIQUETAS CORRIGIDO PARA EVITAR PÁGINA EM BRANCO */
+            .print-etiquetas-container { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; align-content: flex-start; width: 100%; margin: 0; padding: 0; }
+            .print-etiqueta { width: calc(33.333% - 10px); border: 2px solid #000; padding: 10px; font-family: Arial, sans-serif; box-sizing: border-box; page-break-inside: avoid; break-inside: avoid; border-radius: 8px; text-align: center; margin-bottom: 5px; }
+            .print-etiqueta h4 { margin: 0 0 5px 0; font-size: 15px; text-transform: uppercase; font-weight: 900; }
+            .print-etiqueta p { margin: 3px 0; font-size: 11px; font-weight: bold; color: #333; }
+            .print-etiqueta .dimensao { font-size: 16px; font-weight: bold; border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; padding: 5px 0; margin: 8px 0; background: #f9f9f9; }
         }
     </style>
 </head>
@@ -329,7 +331,7 @@
             
             <button onclick="calcularAlgoritmoDeCorte()" style="width:100%; padding:15px; background:var(--gold); border:none; border-radius:8px; color:black; font-weight:bold; margin-bottom:10px; cursor:pointer;"><i class="fas fa-magic"></i> 1. GERAR MAPA DE CORTE</button>
             <button onclick="imprimirPlanoCorte()" style="width:100%; padding:15px; background:none; border:1px solid var(--blue); border-radius:8px; color:var(--blue); font-weight:bold; cursor:pointer; margin-bottom:10px;"><i class="fas fa-print"></i> 2. EXPORTAR LISTA E MAPAS (PDF)</button>
-            <!-- NOVO BOTÃO DE ETIQUETAS -->
+            <!-- BOTÃO DE ETIQUETAS -->
             <button onclick="imprimirEtiquetasCorte()" style="width:100%; padding:15px; background:none; border:1px solid var(--orange); border-radius:8px; color:var(--orange); font-weight:bold; cursor:pointer; margin-bottom:10px;"><i class="fas fa-tags"></i> 3. IMPRIMIR ETIQUETAS</button>
             <button onclick="gerarListaCompraDoPlano()" style="width:100%; padding:15px; background:none; border:1px dashed var(--pink); border-radius:8px; color:var(--pink); font-weight:bold; cursor:pointer;"><i class="fas fa-shopping-cart"></i> 4. GERAR LISTA DE COMPRAS</button>
             
@@ -362,6 +364,7 @@
             <label>Nome da Empresa</label><input type="text" id="cfg_nome">
             <label>Telefone / WhatsApp</label><input type="text" id="cfg_telefone">
             <label>Endereço / CNPJ</label><input type="text" id="cfg_endereco">
+            <label>Chave PIX (Para receber via Fatura)</label><input type="text" id="cfg_chave_pix" placeholder="Ex: Celular, CNPJ ou Email">
             <label>Mensagem Rodapé</label><input type="text" id="cfg_msg">
             
             <button onclick="salvarConfig()" style="width:100%; padding:15px; background:var(--blue); border:none; border-radius:8px; color:white; font-weight:bold; margin-top:20px; cursor:pointer;">SALVAR AJUSTES</button>
@@ -423,7 +426,7 @@
             <label>Data</label>
             <input type="date" id="f_data">
             
-            <!-- NOVO BOTAO DE IMPRESSAO DA FATURA/ORCAMENTO -->
+            <!-- BOTAO DE IMPRESSAO DA FATURA/ORCAMENTO -->
             <button id="btn_imprimir_pedido" class="btn-outline" style="color:var(--teal); border-color:var(--teal); margin-top:10px; display:none;" onclick="imprimirPedidoOuOrcamento()"><i class="fas fa-file-pdf"></i> GERAR PDF (ORÇAMENTO / PEDIDO)</button>
 
             <button id="btn_duplicar_pedido" class="btn-outline" style="color:var(--gold); border-color:var(--gold); margin-top:10px; display:none;" onclick="duplicarRegistroAtual('pedido')"><i class="fas fa-copy"></i> DUPLICAR / USAR COMO MODELO</button>
@@ -662,9 +665,36 @@
     const formatMoeda = (valor) => parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const formatarDataBR = (data) => { if(!data) return ''; const partes = data.split('-'); return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : data; };
 
-    function carregarConfiguracoes() { const c = DB.config || {}; document.getElementById('nome_display').innerText = c.nome || "Minha Empresa"; if(c.logo) { document.getElementById('logo_display').src = c.logo; document.getElementById('img_preview').src = c.logo; document.getElementById('img_preview').style.display = 'block'; } document.getElementById('cfg_nome').value = c.nome || ""; document.getElementById('cfg_telefone').value = c.telefone || ""; document.getElementById('cfg_endereco').value = c.endereco || ""; document.getElementById('cfg_msg').value = c.mensagem || ""; }
+    function carregarConfiguracoes() { 
+        const c = DB.config || {}; 
+        document.getElementById('nome_display').innerText = c.nome || "Minha Empresa"; 
+        if(c.logo) { 
+            document.getElementById('logo_display').src = c.logo; 
+            document.getElementById('img_preview').src = c.logo; 
+            document.getElementById('img_preview').style.display = 'block'; 
+        } 
+        document.getElementById('cfg_nome').value = c.nome || ""; 
+        document.getElementById('cfg_telefone').value = c.telefone || ""; 
+        document.getElementById('cfg_endereco').value = c.endereco || ""; 
+        document.getElementById('cfg_chave_pix').value = c.chave_pix || ""; 
+        document.getElementById('cfg_msg').value = c.mensagem || ""; 
+    }
+
     document.getElementById('cfg_logo_file').addEventListener('change', function(e) { const file = e.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = function(event) { document.getElementById('img_preview').src = event.target.result; document.getElementById('img_preview').style.display = 'block'; }; reader.readAsDataURL(file); } });
-    function salvarConfig() { DB.config = { nome: document.getElementById('cfg_nome').value, telefone: document.getElementById('cfg_telefone').value, endereco: document.getElementById('cfg_endereco').value, mensagem: document.getElementById('cfg_msg').value, logo: document.getElementById('img_preview').src }; saveDB(); carregarConfiguracoes(); showToast("Configurações salvas!", "success"); }
+    
+    function salvarConfig() { 
+        DB.config = { 
+            nome: document.getElementById('cfg_nome').value, 
+            telefone: document.getElementById('cfg_telefone').value, 
+            endereco: document.getElementById('cfg_endereco').value, 
+            chave_pix: document.getElementById('cfg_chave_pix').value, 
+            mensagem: document.getElementById('cfg_msg').value, 
+            logo: document.getElementById('img_preview').src 
+        }; 
+        saveDB(); 
+        carregarConfiguracoes(); 
+        showToast("Configurações salvas!", "success"); 
+    }
 
     function carregarDados() { 
         dadosPedidos = DB.servicos.sort((a,b) => b.id - a.id); 
@@ -1086,7 +1116,7 @@
     }
 
     // ==========================================
-    // NOVA FUNÇÃO: GERAR PDF ORÇAMENTO / FATURA
+    // IMPRIMIR PDF: ORÇAMENTO / FATURA
     // ==========================================
     function imprimirPedidoOuOrcamento() {
         const id_atual = document.getElementById('f_id').value;
@@ -1097,34 +1127,22 @@
 
         const c = DB.config || {};
         const empresaNome = c.nome || "Minha Empresa";
-        const empresaDoc = c.endereco || ""; // Usando endereco para CNPJ/Endereço
+        const empresaDoc = c.endereco || ""; 
         const empresaTel = c.telefone || "";
+        const empresaPix = c.chave_pix || "Não cadastrada"; // NOVO: CHAVE PIX DOS AJUSTES
         
         const dataHj = formatarDataBR(new Date().toISOString().split('T')[0]);
         const tituloDoc = p.tipo === 'orcamento' ? `Orçamento ${String(p.id).slice(-4)}-${new Date().getFullYear()}` : `Fatura ${String(p.id).slice(-4)}-${new Date().getFullYear()}`;
         
         let enderecoClienteCompleto = [p.endereco, p.numero, p.complemento, p.cidade].filter(Boolean).join(', ');
 
-        // Cria as linhas da tabela combinando o Serviço Principal, Mão de obra e os Itens
         let linhasTabela = "";
-        
-        if (p.servico) {
-            linhasTabela += `<tr><td style="font-weight:bold;">${p.servico}</td><td>-</td><td>-</td><td>1</td><td>-</td></tr>`;
-        }
-
-        if (p.mao_obra && p.mao_obra > 0) {
-            linhasTabela += `<tr><td>Mão de Obra Avulsa</td><td>Un</td><td>R$ ${formatMoeda(p.mao_obra)}</td><td>1</td><td>R$ ${formatMoeda(p.mao_obra)}</td></tr>`;
-        }
-
+        if (p.servico) { linhasTabela += `<tr><td style="font-weight:bold;">${p.servico}</td><td>-</td><td>-</td><td>1</td><td>-</td></tr>`; }
+        if (p.mao_obra && p.mao_obra > 0) { linhasTabela += `<tr><td>Mão de Obra Avulsa</td><td>Un</td><td>R$ ${formatMoeda(p.mao_obra)}</td><td>1</td><td>R$ ${formatMoeda(p.mao_obra)}</td></tr>`; }
         if (p.itens_usados && p.itens_usados.length > 0) {
-            p.itens_usados.forEach(i => {
-                linhasTabela += `<tr><td>${i.item}</td><td>Un</td><td>R$ ${formatMoeda(i.valor)}</td><td>${i.qtd}</td><td>R$ ${formatMoeda(i.valor * i.qtd)}</td></tr>`;
-            });
+            p.itens_usados.forEach(i => { linhasTabela += `<tr><td>${i.item}</td><td>Un</td><td>R$ ${formatMoeda(i.valor)}</td><td>${i.qtd}</td><td>R$ ${formatMoeda(i.valor * i.qtd)}</td></tr>`; });
         }
-
-        if(linhasTabela === "") {
-            linhasTabela = `<tr><td colspan="5" style="text-align:center;">Nenhum item adicionado</td></tr>`;
-        }
+        if(linhasTabela === "") { linhasTabela = `<tr><td colspan="5" style="text-align:center;">Nenhum item adicionado</td></tr>`; }
 
         let infoPagamento = "";
         if (p.tipo === 'orcamento') {
@@ -1135,7 +1153,7 @@
                 infoPagamento = `<strong>TOTALMENTE PAGO</strong><br>Obrigado pela preferência!`;
             } else {
                 infoPagamento = `Meios de pagamento: Dinheiro, cartão de débito ou pix.<br>
-                                 <strong>PIX:</strong> ${empresaTel}<br>
+                                 <strong>PIX:</strong> ${empresaPix}<br>
                                  <strong>Resta Pagar:</strong> R$ ${formatMoeda(valorDevendo)}`;
             }
         }
@@ -1147,7 +1165,7 @@
                     <div class="print-fatura-empresa">
                         <h2>${empresaNome}</h2>
                         <p>${empresaDoc}</p>
-                        <p>📞 ${empresaTel}</p>
+                        <p>📞 ${empresaTel} ${c.chave_pix ? ' | ✉️ PIX: ' + c.chave_pix : ''}</p>
                     </div>
                     <div class="print-fatura-data">
                         📅 ${dataHj}
@@ -1737,7 +1755,7 @@
     }
 
     // ==========================================
-    // NOVA FUNÇÃO: GERAR ETIQUETAS DO PLANO DE CORTE
+    // ETIQUETAS DO PLANO DE CORTE (CORRIGIDAS)
     // ==========================================
     function imprimirEtiquetasCorte() {
         if(pecasCorte.length === 0) return showToast("A lista de peças está vazia!", "error");
@@ -1746,20 +1764,19 @@
         
         let htmlEtiquetas = '';
 
-        // Cria uma etiqueta para CADA quantidade de CADA peça
         pecasCorte.forEach((p) => {
             let desc = p.desc || "Peça sem nome";
             let dimensao = `${p.comp} x ${p.larg}`;
             let mat = `${p.material || 'Padrão'} - ${p.espessura || '15mm'}`;
             let fita = p.fitaResumo !== '-' ? `Fita: ${p.fitaResumo} ${p.cor_fita ? '('+p.cor_fita+')' : ''}` : "Sem Fita";
 
-            // Multiplica pela quantidade
+            // Multiplica pela quantidade (se qtd=3, gera 3 etiquetas iguais dessa peça)
             for(let i = 0; i < p.qtd; i++) {
                 htmlEtiquetas += `
                     <div class="print-etiqueta">
                         <h4>${cliente}</h4>
-                        <p style="color:#555">${mat}</p>
-                        <p style="font-size:14px;"><strong>${desc}</strong></p>
+                        <p style="color:#555; font-size:10px;">${mat}</p>
+                        <p style="font-size:14px; margin-top:5px;"><strong>${desc}</strong></p>
                         <div class="dimensao">${dimensao} mm</div>
                         <p>${fita}</p>
                     </div>
@@ -1768,12 +1785,13 @@
         });
 
         const areaImpressao = document.getElementById('area-impressao');
+        // Usa a estrutura FLEXBOX no CSS de impressão para evitar páginas em branco
         areaImpressao.innerHTML = `
             <div style="font-family: Arial, sans-serif; text-align: center; margin-bottom: 20px;">
-                <h2>ETIQUETAS PARA CORTE</h2>
-                <p>Imprima em papel adesivo (ou recorte).</p>
+                <h2 style="margin:0;">ETIQUETAS PARA CORTE</h2>
+                <p style="margin:5px 0;">Imprima em papel adesivo (ou recorte).</p>
             </div>
-            <div class="print-etiquetas-grid">
+            <div class="print-etiquetas-container">
                 ${htmlEtiquetas}
             </div>
         `;
