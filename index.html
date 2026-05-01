@@ -441,7 +441,7 @@
                 
                 <div style="display:flex; gap:10px; margin-top:10px;">
                     <button class="btn-outline" style="color:var(--cyan); border-color:var(--cyan); flex:1; font-size:11px;" onclick="abrirSeletorServico()">+ ADD SERVIÇO</button>
-                    <button class="btn-outline" style="color:var(--orange); border-color:var(--orange); flex:1; font-size:11px;" onclick="abrirSeletorEstoque()">+ ADD PEÇA (ESTOQUE)</button>
+                    <button class="btn-outline" style="color:var(--orange); border-color:var(--orange); flex:1; font-size:11px;" onclick="abrirSeletorEstoque('pedido')">+ ADD PEÇA (ESTOQUE)</button>
                 </div>
                 
                 <div style="display:flex; gap:10px;">
@@ -483,9 +483,10 @@
                     <div style="flex:1"><label>Valor Unit. R$</label><input type="number" id="c_item_valor" step="0.01"></div>
                 </div>
                 <!-- BOTÕES DE AÇÃO DO ITEM DE COMPRA -->
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button class="btn-outline" style="color:var(--pink); border-color:var(--pink); flex:1; font-size:10px;" onclick="adicionarItemCompraUI()">+ ADD NA LISTA</button>
-                    <button class="btn-outline" style="color:var(--orange); border-color:var(--orange); flex:1; font-size:10px;" onclick="adicionarItemCompraAoEstoque()">+ ADD AO ESTOQUE</button>
+                <div style="display:flex; flex-wrap: wrap; gap:10px; margin-top:10px;">
+                    <button class="btn-outline" style="color:var(--pink); border-color:var(--pink); flex:1; min-width: 45%; font-size:10px; margin-bottom: 0;" onclick="adicionarItemCompraUI()">+ ADD NA LISTA</button>
+                    <button class="btn-outline" style="color:var(--green); border-color:var(--green); flex:1; min-width: 45%; font-size:10px; margin-bottom: 0;" onclick="adicionarItemCompraAoEstoque()">+ NOVO P/ ESTOQUE</button>
+                    <button class="btn-outline" style="color:var(--orange); border-color:var(--orange); flex:1; min-width: 100%; font-size:11px; margin-bottom: 10px;" onclick="abrirSeletorEstoque('compra')">- PUXAR DO ESTOQUE (BAIXA AUTOMÁTICA)</button>
                 </div>
             </div>
 
@@ -688,6 +689,8 @@
 
     let dadosPedidos = [], dadosEstoque = [], dadosGastos = [], dadosOrcamentos = [], dadosCatalogo = [], dadosCompras = [], meuGrafico = null, telaAtiva = 'tela_home';
     let itensNoPedido = [], itensCompraAtual = [];
+    let contextoSeletorEstoque = 'pedido'; // Define para onde o item do estoque vai
+    
     const formatMoeda = (valor) => parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const formatarDataBR = (data) => { if(!data) return ''; const partes = data.split('-'); return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : data; };
 
@@ -1294,11 +1297,32 @@
 
     function editarItemCompraLista(idx) {
         const i = itensCompraAtual[idx];
-        document.getElementById('c_item_nome').value = i.item; document.getElementById('c_item_qtd').value = i.qtd; document.getElementById('c_item_valor').value = i.valor;
-        itensCompraAtual.splice(idx, 1); renderizarItensCompra();
+        if (i.id_referencia) {
+            return alert("Itens puxados do estoque não podem ser editados. Exclua da lista (para restaurar o estoque) e puxe novamente.");
+        }
+        document.getElementById('c_item_nome').value = i.item; 
+        document.getElementById('c_item_qtd').value = i.qtd; 
+        document.getElementById('c_item_valor').value = i.valor;
+        itensCompraAtual.splice(idx, 1); 
+        renderizarItensCompra();
     }
 
-    function removerItemCompra(idx) { itensCompraAtual.splice(idx, 1); renderizarItensCompra(); }
+    function removerItemCompra(idx) { 
+        const itemRemovido = itensCompraAtual[idx];
+        
+        // Se veio do estoque e já havia sido salvo antes, devolve pro banco
+        if (itemRemovido.id_referencia && !itemRemovido.estoque_pendente) {
+            const prod = DB.estoque.find(e => e.id == itemRemovido.id_referencia);
+            if (prod) {
+                prod.quantidade += itemRemovido.qtd;
+                saveDB();
+                showToast("Item devolvido ao estoque!", "info");
+            }
+        }
+        
+        itensCompraAtual.splice(idx, 1); 
+        renderizarItensCompra(); 
+    }
 
     function renderizarItensCompra() {
         const container = document.getElementById('container_itens_compra');
@@ -1315,6 +1339,17 @@
 
     function salvarCompra() {
         let statusAtual = document.getElementById('c_status').value;
+        
+        // --- LÓGICA DE BAIXA DE ESTOQUE ---
+        itensCompraAtual.forEach(i => {
+            if (i.id_referencia && i.estoque_pendente) {
+                const prod = DB.estoque.find(e => e.id == i.id_referencia);
+                if (prod) prod.quantidade -= i.qtd; // Desconta do banco
+                delete i.estoque_pendente; // Remove a flag para não descontar de novo em caso de edição
+            }
+        });
+        // -----------------------------------
+
         const obj = { 
             id: document.getElementById('c_id').value || generateID(), 
             cliente: document.getElementById('c_cliente').value, 
@@ -1399,8 +1434,43 @@
     function recalcularTotal() { const mao = parseFloat(document.getElementById('f_mao_obra').value) || 0; const somaItens = itensNoPedido.reduce((a, i) => a + (i.qtd * i.valor), 0); document.getElementById('f_total').value = (mao + somaItens).toFixed(2); }
     function renderizarItensPedido() { document.getElementById('container_itens_venda').innerHTML = itensNoPedido.map((i, idx) => { let iconeTipo = i.tipo_item === 'servico' ? '<i class="fas fa-tools" style="color:var(--cyan); margin-right:5px;"></i>' : (i.tipo_item === 'compra' ? '<i class="fas fa-shopping-cart" style="color:var(--pink); margin-right:5px;"></i>' : '<i class="fas fa-box" style="color:var(--orange); margin-right:5px;"></i>'); return `<div class="item-selecionado"><span style="display:flex; align-items:center;">${iconeTipo} <div>${i.qtd}x ${i.item} <br><b style="color:var(--green)">R$ ${formatMoeda(i.qtd * i.valor)}</b></div></span><i class="fas fa-trash" style="color:var(--red); cursor:pointer;" onclick="removerItem(${idx})"></i></div>`; }).join(''); }
     function removerItem(idx) { itensNoPedido.splice(idx, 1); renderizarItensPedido(); recalcularTotal(); }
-    function abrirSeletorEstoque() { const sel = document.getElementById('sel_produto_estoque'); sel.innerHTML = dadosEstoque.map(e => `<option value="${e.id}">${e.item} (Disp: ${e.quantidade}) - R$ ${formatMoeda(e.valor_venda)}</option>`).join(''); document.getElementById('modalSeletorEstoque').style.display = 'flex'; }
-    function confirmarAdicaoItem() { const id = document.getElementById('sel_produto_estoque').value; const prod = dadosEstoque.find(e => e.id == id); if(prod) { itensNoPedido.push({ id_referencia: prod.id, item: prod.item, qtd: parseInt(document.getElementById('sel_qtd_estoque').value), valor: prod.valor_venda, tipo_item: 'estoque' }); renderizarItensPedido(); recalcularTotal(); document.getElementById('modalSeletorEstoque').style.display = 'none'; } }
+    
+    function abrirSeletorEstoque(contexto = 'pedido') { 
+        contextoSeletorEstoque = contexto; 
+        const sel = document.getElementById('sel_produto_estoque'); 
+        sel.innerHTML = dadosEstoque.map(e => `<option value="${e.id}">${e.item} (Disp: ${e.quantidade}) - R$ ${formatMoeda(e.valor_venda)}</option>`).join(''); 
+        document.getElementById('modalSeletorEstoque').style.display = 'flex'; 
+    }
+
+    function confirmarAdicaoItem() { 
+        const id = document.getElementById('sel_produto_estoque').value; 
+        const prod = dadosEstoque.find(e => e.id == id); 
+        const qtdDesejada = parseInt(document.getElementById('sel_qtd_estoque').value) || 1;
+        
+        if(prod) { 
+            if(qtdDesejada > prod.quantidade) {
+                return showToast("Quantidade insuficiente no estoque!", "error");
+            }
+
+            if(contextoSeletorEstoque === 'pedido') {
+                itensNoPedido.push({ id_referencia: prod.id, item: prod.item, qtd: qtdDesejada, valor: prod.valor_venda, tipo_item: 'estoque' }); 
+                renderizarItensPedido(); 
+                recalcularTotal(); 
+            } else if (contextoSeletorEstoque === 'compra') {
+                itensCompraAtual.push({ 
+                    id_referencia: prod.id, 
+                    item: `[Estoque] ${prod.item}`, 
+                    qtd: qtdDesejada, 
+                    valor: prod.valor_venda,
+                    estoque_pendente: true // Marca para descontar apenas quando salvar a lista
+                });
+                renderizarItensCompra();
+                showToast(`Item do estoque adicionado à lista!`, "success");
+            }
+            document.getElementById('modalSeletorEstoque').style.display = 'none'; 
+        } 
+    }
+
     function abrirSeletorServico() { const sel = document.getElementById('sel_servico_catalogo'); sel.innerHTML = dadosCatalogo.map(c => `<option value="${c.id}">${c.nome} - R$ ${formatMoeda(c.preco)}</option>`).join(''); document.getElementById('modalSeletorServico').style.display = 'flex'; }
     function confirmarAdicaoServico() { const id = document.getElementById('sel_servico_catalogo').value; const serv = dadosCatalogo.find(c => c.id == id); if(serv) { itensNoPedido.push({ id_referencia: serv.id, item: serv.nome, qtd: parseInt(document.getElementById('sel_qtd_servico').value), valor: serv.preco, tipo_item: 'servico' }); renderizarItensPedido(); recalcularTotal(); document.getElementById('modalSeletorServico').style.display = 'none'; } }
 
