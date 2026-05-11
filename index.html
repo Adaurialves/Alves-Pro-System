@@ -155,6 +155,11 @@
             #cota-topo { top: 60px; font-size: 14px; } #cota-lateral { font-size: 14px; right: 10px;}
         }
 
+        /* Botoes de filetagem na lista de corte */
+        .badge-fita { display: inline-block; padding: 4px 8px; font-size: 10px; border: 1px solid #444; border-radius: 4px; cursor: pointer; color: #888; background: rgba(0,0,0,0.3); transition: 0.2s; margin-right: 4px; font-weight: bold; }
+        .badge-fita:hover { background: rgba(255, 255, 255, 0.1); }
+        .badge-fita.ativa { background: var(--gold); color: black; border-color: var(--gold); }
+
         /* === IMPRESSÃO === */
         #area-impressao { display: none; }
         @media print {
@@ -387,6 +392,9 @@
                     <button id="btn_pedra" class="toggle-btn-3d ativo" onclick="toggleGrupo3D('pedra')" style="display:none;"><span>Pedra/Cuba</span><i class="fas fa-gem"></i></button>
                 </div>
 
+                <!-- NOVO BOTAO: EXPORTAR PARA CORTE -->
+                <button onclick="exportar3DParaCorte()" style="background:var(--gold); width:100%; padding:12px; color:black; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-bottom: 10px;"><i class="fas fa-border-all"></i> ENVIAR P/ PLANO DE CORTE</button>
+
                 <button onclick="resetarCamera3D()" style="background:#444; width:100%; padding:12px; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;"><i class="fas fa-video"></i> RESETAR CÂMERA</button>
             </div>
 
@@ -464,7 +472,6 @@
             
             <button onclick="calcularAlgoritmoDeCorte()" style="width:100%; padding:15px; background:var(--gold); border:none; border-radius:8px; color:black; font-weight:bold; margin-bottom:10px; cursor:pointer;"><i class="fas fa-magic"></i> 1. GERAR MAPA DE CORTE</button>
             <button onclick="imprimirPlanoCorte()" style="width:100%; padding:15px; background:none; border:1px solid var(--blue); border-radius:8px; color:var(--blue); font-weight:bold; cursor:pointer; margin-bottom:10px;"><i class="fas fa-print"></i> 2. EXPORTAR LISTA E MAPAS (PDF)</button>
-            <!-- BOTÃO DE ETIQUETAS -->
             <button onclick="imprimirEtiquetasCorte()" style="width:100%; padding:15px; background:none; border:1px solid var(--orange); border-radius:8px; color:var(--orange); font-weight:bold; cursor:pointer; margin-bottom:10px;"><i class="fas fa-tags"></i> 3. IMPRIMIR ETIQUETAS</button>
             <button onclick="gerarListaCompraDoPlano()" style="width:100%; padding:15px; background:none; border:1px dashed var(--pink); border-radius:8px; color:var(--pink); font-weight:bold; cursor:pointer;"><i class="fas fa-shopping-cart"></i> 4. GERAR LISTA DE COMPRAS</button>
             
@@ -706,7 +713,11 @@
                 <li><span>Parafuso 4.0 x 40mm:</span> <span id="res-p40">1 cx</span></li>
                 <li><span>Parafuso 4.0 x 16mm:</span> <span id="res-p16">1 cx</span></li>
             </ul>
-            <button onclick="fecharModais()" style="width: 100%; padding: 12px; background: #333; color: white; border: none; border-radius: 6px; margin-top: 15px; cursor:pointer; font-weight:bold;">VOLTAR AO PROJETO</button>
+            
+            <!-- NOVO BOTAO: EXPORTAR FERRAGENS PARA COMPRAS -->
+            <button onclick="exportarFerragensParaCompras()" style="width: 100%; padding: 12px; background: var(--pink); color: white; border: none; border-radius: 6px; margin-top: 15px; cursor:pointer; font-weight:bold;"><i class="fas fa-shopping-cart"></i> GERAR LISTA DE COMPRAS</button>
+            
+            <button onclick="fecharModais()" style="width: 100%; padding: 12px; background: #333; color: white; border: none; border-radius: 6px; margin-top: 10px; cursor:pointer; font-weight:bold;">VOLTAR AO PROJETO</button>
         </div>
     </div>
 
@@ -949,7 +960,7 @@
 
         dadosGastos.forEach(g => {
             if((g.descricao || '').toLowerCase().includes(termo)) {
-                if(divG) divG.innerHTML += `<div class="item-card" style="border-left-color:var(--red)"><div class="card-header"><h4 onclick="editarGasto(${g.id})">${g.descricao}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('gastos', ${g.id})"></i></div><div class="info-linha"><span>Data: <b>${formatarDataBR(g.data)}</b></span> | <span>Valor: <b style="color:var(--red)">R$ ${formatMoeda(g.valor)}</b></span></div></div>`;
+                if(divG) divG.innerHTML += `<div class="item-card" style="border-left-color:var(--red)"><div class="card-header"><h4 onclick="editarGastos(${g.id})">${g.descricao}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('gastos', ${g.id})"></i></div><div class="info-linha"><span>Data: <b>${formatarDataBR(g.data)}</b></span> | <span>Valor: <b style="color:var(--red)">R$ ${formatMoeda(g.valor)}</b></span></div></div>`;
             }
         });
 
@@ -1449,6 +1460,7 @@
     function removerItemCompra(idx) { 
         const itemRemovido = itensCompraAtual[idx];
         
+        // Se veio do estoque e já havia sido salvo antes, devolve pro banco
         if (itemRemovido.id_referencia && !itemRemovido.estoque_pendente) {
             const prod = DB.estoque.find(e => e.id == itemRemovido.id_referencia);
             if (prod) {
@@ -1478,13 +1490,15 @@
     function salvarCompra() {
         let statusAtual = document.getElementById('c_status').value;
         
+        // --- LÓGICA DE BAIXA DE ESTOQUE ---
         itensCompraAtual.forEach(i => {
             if (i.id_referencia && i.estoque_pendente) {
                 const prod = DB.estoque.find(e => e.id == i.id_referencia);
-                if (prod) prod.quantidade -= i.qtd; 
-                delete i.estoque_pendente; 
+                if (prod) prod.quantidade -= i.qtd; // Desconta do banco
+                delete i.estoque_pendente; // Remove a flag para não descontar de novo em caso de edição
             }
         });
+        // -----------------------------------
 
         const obj = { 
             id: document.getElementById('c_id').value || generateID(), 
@@ -1562,7 +1576,7 @@
     function editarEstoque(id) { const e = DB.estoque.find(x => x.id == id); document.getElementById('e_id').value = e.id; document.getElementById('e_item').value = e.item; document.getElementById('e_localizacao').value = e.localizacao || ''; document.getElementById('e_qtd').value = e.quantidade; document.getElementById('e_venda').value = e.valor_venda; document.getElementById('modalEstoque').style.display = 'flex'; }
     
     function salvarGasto() { const obj = { id: document.getElementById('g_id').value || generateID(), descricao: document.getElementById('g_descricao').value, valor: parseFloat(document.getElementById('g_valor').value) || 0, data: document.getElementById('g_data').value }; if(document.getElementById('g_id').value) { const i = DB.gastos.findIndex(x => x.id == obj.id); DB.gastos[i] = obj; } else DB.gastos.push(obj); saveDB(); fecharModais(); }
-    function editarGasto(id) { const g = DB.gastos.find(x => x.id == id); document.getElementById('g_id').value = g.id; document.getElementById('g_descricao').value = g.descricao; document.getElementById('g_valor').value = g.valor; document.getElementById('g_data').value = g.data; document.getElementById('btn_duplicar_gasto').style.display = 'block'; document.getElementById('modalGastos').style.display = 'flex'; }
+    function editarGastos(id) { const g = DB.gastos.find(x => x.id == id); document.getElementById('g_id').value = g.id; document.getElementById('g_descricao').value = g.descricao; document.getElementById('g_valor').value = g.valor; document.getElementById('g_data').value = g.data; document.getElementById('btn_duplicar_gasto').style.display = 'block'; document.getElementById('modalGastos').style.display = 'flex'; }
     
     function salvarServicoCatalogo() { const obj = { id: document.getElementById('sc_id').value || generateID(), nome: document.getElementById('sc_nome').value, preco: parseFloat(document.getElementById('sc_preco').value) || 0 }; if(document.getElementById('sc_id').value) { const i = DB.catalogo_servicos.findIndex(x => x.id == obj.id); DB.catalogo_servicos[i] = obj; } else DB.catalogo_servicos.push(obj); saveDB(); fecharModais(); }
     function editarServicoCatalogo(id) { const c = DB.catalogo_servicos.find(x => x.id == id); document.getElementById('sc_id').value = c.id; document.getElementById('sc_nome').value = c.nome; document.getElementById('sc_preco').value = c.preco; document.getElementById('modalServicosCatalogo').style.display = 'flex'; }
@@ -1598,7 +1612,7 @@
                     item: `[Estoque] ${prod.item}`, 
                     qtd: qtdDesejada, 
                     valor: prod.valor_venda,
-                    estoque_pendente: true
+                    estoque_pendente: true // Marca para descontar apenas quando salvar a lista
                 });
                 renderizarItensCompra();
                 showToast(`Item do estoque adicionado à lista!`, "success");
@@ -1664,7 +1678,7 @@
         let fitaEdges = { c1: f_c1, c2: f_c2, l1: f_l1, l2: f_l2 };
 
         pecasCorte.push({ 
-            id_peca: Date.now(), desc, comp, larg, qtd, fitaResumo, fitaEdges, cor_fita,
+            id_peca: Date.now() + Math.random(), desc, comp, larg, qtd, fitaResumo, fitaEdges, cor_fita,
             material, espessura, chapa_comp, chapa_larg
         });
         
@@ -1703,16 +1717,36 @@
         }
         
         div.innerHTML = pecasCorte.map((p, idx) => `
-            <div class="item-selecionado">
-                <div style="line-height:1.3;">
-                    <span style="font-size:10px; font-weight:bold; color:var(--teal); text-transform:uppercase;">[${p.material || 'Padrão'} - ${p.espessura || '15mm'}]</span><br>
-                    <span style="font-size:13px; font-weight:bold; color:white;">${p.desc}</span><br>
-                    <span style="font-size:11px; color:#aaa;">Qtd: ${p.qtd} un | ${p.comp}mm x ${p.larg}mm</span><br>
-                    <span style="font-size:10px; color:#aaa;"><i class="fas fa-tape"></i> Fita: ${p.fitaResumo} ${p.cor_fita ? `(Cor: ${p.cor_fita})` : ''}</span>
+            <div class="item-selecionado" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                <div style="display:flex; justify-content: space-between; width: 100%;">
+                    <div style="line-height:1.3;">
+                        <span style="font-size:10px; font-weight:bold; color:var(--teal); text-transform:uppercase;">[${p.material || 'Padrão'} - ${p.espessura || '15mm'}]</span><br>
+                        <span style="font-size:13px; font-weight:bold; color:white;">${p.desc}</span><br>
+                        <span style="font-size:11px; color:#aaa;">Qtd: ${p.qtd} un | ${p.comp}mm x ${p.larg}mm</span>
+                    </div>
+                    <i class="fas fa-trash" style="color:var(--red); cursor:pointer; font-size:16px; padding: 5px;" onclick="removerPecaCorte(${idx})"></i>
                 </div>
-                <i class="fas fa-trash" style="color:var(--red); cursor:pointer; font-size:16px;" onclick="removerPecaCorte(${idx})"></i>
+                
+                <div style="background: rgba(255,255,255,0.03); padding: 5px; border-radius: 6px; width: 100%; box-sizing: border-box;">
+                    <span style="font-size:9px; color:var(--gold); display:block; margin-bottom:5px; text-transform:uppercase;"><i class="fas fa-tape"></i> Filetamento (Clique para alterar):</span>
+                    <span class="badge-fita ${p.fitaEdges.c1 ? 'ativa' : ''}" onclick="toggleFitaPeca(${idx}, 'c1')">C1</span>
+                    <span class="badge-fita ${p.fitaEdges.c2 ? 'ativa' : ''}" onclick="toggleFitaPeca(${idx}, 'c2')">C2</span>
+                    <span class="badge-fita ${p.fitaEdges.l1 ? 'ativa' : ''}" onclick="toggleFitaPeca(${idx}, 'l1')">L1</span>
+                    <span class="badge-fita ${p.fitaEdges.l2 ? 'ativa' : ''}" onclick="toggleFitaPeca(${idx}, 'l2')">L2</span>
+                    ${p.cor_fita ? `<span style="font-size:10px; color:#aaa; margin-left:5px;">(Cor: ${p.cor_fita})</span>` : ''}
+                </div>
             </div>
         `).join('');
+    }
+
+    function toggleFitaPeca(idx, borda) {
+        let p = pecasCorte[idx];
+        p.fitaEdges[borda] = !p.fitaEdges[borda];
+        let fitaText = [];
+        if(p.fitaEdges.c1 || p.fitaEdges.c2) fitaText.push((p.fitaEdges.c1 && p.fitaEdges.c2 ? "2" : "1") + " C");
+        if(p.fitaEdges.l1 || p.fitaEdges.l2) fitaText.push((p.fitaEdges.l1 && p.fitaEdges.l2 ? "2" : "1") + " L");
+        p.fitaResumo = fitaText.length > 0 ? fitaText.join('/') : "-";
+        renderizarPecasCorte();
     }
 
     function salvarPlanoCorte() {
@@ -1993,6 +2027,8 @@
         if(pecasCorte.length === 0) return showToast("A lista de peças está vazia!", "error");
 
         const cliente = document.getElementById('corte_cliente_nome').value || "Projeto Diversos";
+        
+        // RECUPERA A LOGO DA EMPRESA
         const logoSrc = DB.config.logo || 'icone.png';
 
         let htmlEtiquetas = '';
@@ -2003,6 +2039,7 @@
             let mat = `${p.material || 'Padrão'} - ${p.espessura || '15mm'}`;
             let fita = p.fitaResumo !== '-' ? `Fita: ${p.fitaResumo} ${p.cor_fita ? '('+p.cor_fita+')' : ''}` : "Sem Fita";
 
+            // Multiplica pela quantidade (se qtd=3, gera 3 etiquetas iguais dessa peça)
             for(let i = 0; i < p.qtd; i++) {
                 htmlEtiquetas += `
                     <div class="print-etiqueta">
@@ -2018,6 +2055,7 @@
         });
 
         const areaImpressao = document.getElementById('area-impressao');
+        
         areaImpressao.innerHTML = `
             <div style="font-family: Arial, sans-serif; text-align: center; margin-bottom: 20px;">
                 <h2 style="margin:0;">ETIQUETAS PARA CORTE</h2>
@@ -2481,8 +2519,8 @@
                 
                 for(let s=0; s<4; s++) { 
                     let yS = yDisp + 20 + (s * ((hSap - 90)/4 + 20)); 
-                    addPeca("Frente", lC - 10, 60, E, cx, yS, zFront + E/2, matFrenteGav, grupoFrentes); 
-                    addPeca("Ban", wT-25, E, pL-20, cx, yS + E, zFront - (pL-20)/2, matPecasGav, grupoFrentes); 
+                    addPeca("Frente Gav", lC - 10, 60, E, cx, yS, zFront + E/2, matFrenteGav, grupoFrentes); 
+                    addPeca("Band Sap", wT-25, E, pL-20, cx, yS + E, zFront - (pL-20)/2, matPecasGav, grupoFrentes); 
                     ferragens.corredicas++; 
                 }
                 desenharLinhaCota(`${hSap}`, cx, yDisp, cx, yDisp + hSap, true); 
@@ -2491,8 +2529,8 @@
             } else if (mGavInst < mGavD) {
                 mGavInst++; 
                 let pL = P - 80, lC = L_IntMod - 100, wT = lC - (E * 2), zC = (-P/2) + (pL/2);
-                addPeca("Lat Gav.", E, hGav, pL, cx - wT/2 - E/2, yDisp, zC, matMDF, grupoEstrutura); 
-                addPeca("Lat Gav.", E, hGav, pL, cx + wT/2 + E/2, yDisp, zC, matMDF, grupoEstrutura);
+                addPeca("Lat Gav", E, hGav, pL, cx - wT/2 - E/2, yDisp, zC, matMDF, grupoEstrutura); 
+                addPeca("Lat Gav", E, hGav, pL, cx + wT/2 + E/2, yDisp, zC, matMDF, grupoEstrutura);
                 let zFront = zC + pL/2, zTras = zC - pL/2; 
                 addPeca("Aba Frontal", 50, hGav, E, cx - wT/2 - E - 25, yDisp, zFront - E/2, matMDF, grupoEstrutura); 
                 addPeca("Aba Frontal", 50, hGav, E, cx + wT/2 + E + 25, yDisp, zFront - E/2, matMDF, grupoEstrutura); 
@@ -2793,6 +2831,143 @@
         document.getElementById('res-p16').innerText = Math.ceil((ferragens.dobradicas * 4 + ferragens.corredicas * 8) / 100) + " cx (aprox)";
         
         document.getElementById('modalResumo3D').style.display = 'flex';
+    }
+
+    // ==========================================
+    // EXPORTAÇÃO DO 3D PARA CORTE E COMPRAS
+    // ==========================================
+    
+    function exportar3DParaCorte() {
+        if(!confirm("Isso irá adicionar as peças do projeto 3D ao Plano de Corte. Deseja continuar?")) return;
+
+        let espPadrao = document.getElementById(moduloAtual === 'roupeiro' ? 'in_mdf' : 'in_ban_mdf').value + "mm";
+        let matCaixa = moduloAtual === 'roupeiro' ? "MDF Caixa/Portas" : "MDF Gabinete";
+
+        let pecasAgrupadas = {};
+
+        pecasInterativas.forEach(malha => {
+            if (malha.parent === grupoPedra || malha.parent === grupoDimensoes) return;
+            if (malha.userData.nome.includes("Perfil") || malha.userData.nome.includes("Cuba") || malha.userData.nome.includes("Tampo Pedra") || malha.userData.nome.includes("Saia Pedra")) return;
+
+            let dims = [malha.userData.w, malha.userData.h, malha.userData.d].sort((a, b) => b - a);
+            let comp = Math.round(dims[0]);
+            let larg = Math.round(dims[1]);
+            let espNum = Math.round(dims[2]);
+
+            let espText = espNum <= 6 ? "6mm" : espPadrao;
+            let matReal = espNum <= 6 ? "MDF Fundo" : matCaixa;
+            let nome = malha.userData.nome;
+
+            if (moduloAtual === 'banheiro' && (nome.includes("Porta") || nome.includes("Gaveta") || nome.includes("Basculante"))) {
+                matReal = "MDF Frentes/Portas";
+            }
+
+            // ---- INTELIGÊNCIA DE FILETAMENTO AUTOMÁTICO ----
+            let edgeC1 = false, edgeC2 = false, edgeL1 = false, edgeL2 = false;
+            let nLower = nome.toLowerCase();
+
+            if (nLower.includes("porta") || nLower.includes("frente") || nLower.includes("gaveta") || nLower.includes("basculante")) {
+                // Portas e frentes: fileta os 4 lados
+                edgeC1 = true; edgeC2 = true; edgeL1 = true; edgeL2 = true;
+            } else if (nLower.includes("fundo") || nLower.includes("lat gav") || nLower.includes("c.fundo") || nLower.includes("c.frente") || nLower.includes("aba") || nLower.includes("eng") || nLower.includes("arremate") || nLower.includes("tamp")) {
+                // Peças de estrutura de gaveta ou fundos ocultos: sem fita
+                // Ajuste fino: Se for Engrosso, Arremate ou Tamp, fileta 1 lado.
+                if (nLower.includes("eng") || nLower.includes("arremate") || nLower.includes("tamp") || nLower.includes("vista")) {
+                    edgeC1 = true; 
+                } else {
+                    edgeC1 = false; edgeC2 = false; edgeL1 = false; edgeL2 = false;
+                }
+            } else {
+                // Bases, Laterais, Prateleiras, Tetos: Fileta 1 lado (frontal)
+                edgeC1 = true; 
+            }
+
+            // Gera o texto de resumo
+            let fitaTextArr = [];
+            if(edgeC1 || edgeC2) fitaTextArr.push((edgeC1 && edgeC2 ? "2" : "1") + " C");
+            if(edgeL1 || edgeL2) fitaTextArr.push((edgeL1 && edgeL2 ? "2" : "1") + " L");
+            let resFita = fitaTextArr.length > 0 ? fitaTextArr.join('/') : "-";
+            // ------------------------------------------------
+
+            let key = `${nome}_${comp}_${larg}_${espText}_${matReal}_${resFita}`;
+
+            if(!pecasAgrupadas[key]) {
+                pecasAgrupadas[key] = {
+                    desc: nome,
+                    comp: comp,
+                    larg: larg,
+                    qtd: 0,
+                    espessura: espText,
+                    material: matReal,
+                    fitaEdges: {c1: edgeC1, c2: edgeC2, l1: edgeL1, l2: edgeL2},
+                    fitaResumo: resFita
+                };
+            }
+            pecasAgrupadas[key].qtd++;
+        });
+
+        Object.values(pecasAgrupadas).forEach(p => {
+            pecasCorte.push({
+                id_peca: Date.now() + Math.random(),
+                desc: `[3D] ${p.desc}`,
+                comp: p.comp,
+                larg: p.larg,
+                qtd: p.qtd,
+                fitaResumo: p.fitaResumo, 
+                fitaEdges: p.fitaEdges,
+                cor_fita: "",
+                material: p.material,
+                espessura: p.espessura,
+                chapa_comp: 2750,
+                chapa_larg: 1850
+            });
+        });
+
+        renderizarPecasCorte();
+        mudarTela('tela_corte');
+        showToast("Peças exportadas para o Plano de Corte!", "success");
+    }
+
+    function exportarFerragensParaCompras() {
+        let itens = [];
+
+        if (ferragens.corredicas > 0) itens.push({ item: "Corrediças Telescópicas (Pares)", qtd: ferragens.corredicas, valor: 0 });
+        if (ferragens.dobradicas > 0) itens.push({ item: "Dobradiças Retas/Curvas", qtd: ferragens.dobradicas, valor: 0 });
+        if (ferragens.cantoneiras > 0) itens.push({ item: "Cantoneiras / Suportes", qtd: ferragens.cantoneiras, valor: 0 });
+
+        let cxP40 = Math.ceil(ferragens.cantoneiras / 100);
+        if(cxP40 < 1) cxP40 = 1;
+        itens.push({ item: "Parafuso 4.0 x 40mm (Caixa)", qtd: cxP40, valor: 0 });
+
+        let cxP16 = Math.ceil((ferragens.dobradicas * 4 + ferragens.corredicas * 8) / 100);
+        if(cxP16 < 1) cxP16 = 1;
+        itens.push({ item: "Parafuso 4.0 x 16mm (Caixa)", qtd: cxP16, valor: 0 });
+
+        let tipoPuxador = (moduloAtual==='banheiro') ? document.getElementById('in_ban_puxador').value : 'alca';
+        if(tipoPuxador === 'perfil' && moduloAtual === 'banheiro') {
+            let metros = Math.ceil(ferragens.perfilTotal / 1000);
+            if (metros > 0) itens.push({ item: "Perfil Gola/Alumínio (Barra/Metros)", qtd: metros, valor: 0 });
+        } else {
+            if (ferragens.puxadores > 0) itens.push({ item: "Puxadores", qtd: ferragens.puxadores, valor: 0 });
+        }
+
+        let nomeRef = moduloAtual === 'roupeiro' ? "Ferragens: Roupeiro 3D" : "Ferragens: Banheiro 3D";
+
+        let novaLista = {
+            id: generateID(),
+            cliente: nomeRef,
+            itens: itens,
+            total: 0,
+            data: new Date().toISOString().split('T')[0],
+            status: 'em_compra'
+        };
+
+        DB.compras.push(novaLista);
+        saveDB();
+        
+        fecharModais();
+        mudarTela('tela_compras');
+        showToast("Lista de Ferragens gerada em Compras!", "success");
     }
 </script>
 </body>
