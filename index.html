@@ -207,7 +207,133 @@ function abrirSeletorEstoque(c='pedido'){contextoSeletorEstoque=c;document.getEl
 function confirmarAdicaoItem(){const id=document.getElementById('sel_produto_estoque').value,p=dadosEstoque.find(e=>e.id==id),q=parseInt(document.getElementById('sel_qtd_estoque').value)||1;if(p){if(q>p.quantidade)return showToast("Quantidade insuficiente!","error");if(contextoSeletorEstoque==='pedido'){itensNoPedido.push({id_referencia:p.id,item:p.item,qtd:q,valor:p.valor_venda,tipo_item:'estoque'});renderizarItensPedido();recalcularTotal()}else if(contextoSeletorEstoque==='compra'){itensCompraAtual.push({id_referencia:p.id,item:`[Est] ${p.item}`,qtd:q,valor:p.valor_venda,estoque_pendente:true});renderizarItensCompra();showToast("Add à lista!","success")}document.getElementById('modalSeletorEstoque').style.display='none'}}
 function abrirSeletorServico(){document.getElementById('sel_servico_catalogo').innerHTML=dadosCatalogo.map(c=>`<option value="${c.id}">${c.nome} - R$ ${formatMoeda(c.preco)}</option>`).join('');document.getElementById('modalSeletorServico').style.display='flex'}
 function confirmarAdicaoServico(){const id=document.getElementById('sel_servico_catalogo').value,s=dadosCatalogo.find(c=>c.id==id);if(s){itensNoPedido.push({id_referencia:s.id,item:s.nome,qtd:parseInt(document.getElementById('sel_qtd_servico').value),valor:s.preco,tipo_item:'servico'});renderizarItensPedido();recalcularTotal();document.getElementById('modalSeletorServico').style.display='none'}}
-function gerarRelatorio(tipo){const mA=document.getElementById('filtro_mes').value,yA=new Date().getFullYear(),eN=DB.config.nome||"Minha Empresa";let pF=[],gF=[],tT="";if(tipo==='mensal'){pF=dadosPedidos.filter(p=>p.data&&p.data.split('-')[1]===mA&&p.data.split('-')[0]==yA&&p.tipo==='servico');gF=dadosGastos.filter(g=>g.data&&g.data.split('-')[1]===mA&&g.data.split('-')[0]==yA);tT=`Relatório Mensal - ${mA}/${yA}`}else{pF=dadosPedidos.filter(p=>p.data&&p.data.split('-')[0]==yA&&p.tipo==='servico');gF=dadosGastos.filter(g=>g.data&&g.data.split('-')[0]==yA);tT=`Relatório Anual - ${yA}`}const tV=pF.reduce((a,b)=>a+(b.total||0),0),tP=pF.reduce((a,b)=>a+(b.pago||0),0),tA=tV-tP,tG=gF.reduce((a,b)=>a+(b.valor||0),0),sC=tP-tG;let hP=pF.map(p=>`<tr><td style="border:1px solid #ccc;padding:5px">${formatarDataBR(p.data)}</td><td style="border:1px solid #ccc;padding:5px">${p.cliente||'S/N'}</td><td style="border:1px solid #ccc;padding:5px">R$ ${formatMoeda(p.total)}</td><td style="border:1px solid #ccc;padding:5px">R$ ${formatMoeda(p.pago)}</td><td style="border:1px solid #ccc;padding:5px">R$ ${formatMoeda(p.total-p.pago)}</td></tr>`).join(''),hG=gF.map(g=>`<tr><td style="border:1px solid #ccc;padding:5px">${formatarDataBR(g.data)}</td><td style="border:1px solid #ccc;padding:5px">${g.descricao}</td><td style="border:1px solid #ccc;padding:5px">R$ ${formatMoeda(g.valor)}</td></tr>`).join('');if(!hP)hP=`<tr><td colspan="5" style="text-align:center;padding:5px">Nenhum registro</td></tr>`;if(!hG)hG=`<tr><td colspan="3" style="text-align:center;padding:5px">Nenhum registro</td></tr>`;document.getElementById('area-impressao').innerHTML=`<div style="font-family:sans-serif;color:#000"><h1 style="text-align:center;border-bottom:2px solid #000">${eN}<br><small style="font-size:14px;color:#555">${tT}</small></h1><div style="display:flex;justify-content:space-between;margin-bottom:20px;background:#f0f0f0;padding:15px;border-radius:8px"><div><strong>Vendido (Bruto):</strong> R$ ${formatMoeda(tV)}<br><strong>Recebido:</strong> R$ ${formatMoeda(tP)}<br><strong>A Receber:</strong> R$ ${formatMoeda(tA)}</div><div><strong>Saídas/Gastos:</strong> R$ ${formatMoeda(tG)}<br><strong style="font-size:18px;color:${sC<0?'red':'green'}">Em Caixa (Líquido): R$ ${formatMoeda(sC)}</strong></div></div><h3>Pedidos / Receitas</h3><table style="width:100%;border-collapse:collapse;text-align:left;font-size:12px;margin-bottom:20px"><thead><tr style="background:#eee"><th style="padding:5px;border:1px solid #ccc">Data</th><th style="padding:5px;border:1px solid #ccc">Cliente</th><th style="padding:5px;border:1px solid #ccc">Total</th><th style="padding:5px;border:1px solid #ccc">Pago</th><th style="padding:5px;border:1px solid #ccc">Falta</th></tr></thead><tbody>${hP}</tbody></table><h3>Saídas / Gastos</h3><table style="width:100%;border-collapse:collapse;text-align:left;font-size:12px"><thead><tr style="background:#eee"><th style="padding:5px;border:1px solid #ccc">Data</th><th style="padding:5px;border:1px solid #ccc">Descrição</th><th style="padding:5px;border:1px solid #ccc">Valor</th></tr></thead><tbody>${hG}</tbody></table></div>`;setTimeout(()=>window.print(),300)}
+function gerarRelatorio(tipo) {
+    const mA = document.getElementById('filtro_mes').value;
+    const yA = new Date().getFullYear();
+    const eN = DB.config.nome || "Minha Empresa";
+    let pF = [], gF = [], tT = "";
+
+    // Filtros de tempo
+    if (tipo === 'mensal') {
+        pF = dadosPedidos.filter(p => p.data && p.data.split('-')[1] === mA && p.data.split('-')[0] == yA && p.tipo === 'servico');
+        gF = dadosGastos.filter(g => g.data && g.data.split('-')[1] === mA && g.data.split('-')[0] == yA);
+        tT = `Relatório Financeiro Detalhado - Mês ${mA}/${yA}`;
+    } else {
+        pF = dadosPedidos.filter(p => p.data && p.data.split('-')[0] == yA && p.tipo === 'servico');
+        gF = dadosGastos.filter(g => g.data && g.data.split('-')[0] == yA);
+        tT = `Relatório Financeiro Anual Detalhado - Ano ${yA}`;
+    }
+
+    // Cálculos Gerais
+    const tV = pF.reduce((a, b) => a + (b.total || 0), 0);
+    const tP = pF.reduce((a, b) => a + (b.pago || 0), 0);
+    const tA = tV - tP;
+    const tG = gF.reduce((a, b) => a + (b.valor || 0), 0);
+    const sC = tP - tG;
+
+    // Gerador de Linhas dos Pedidos (COM DETALHES DE PARCELAS E ENDEREÇO)
+    let hP = pF.map(p => {
+        // Detalhamento de Parcelas e Datas
+        let detPagamentos = '';
+        if (p.pago_entrada > 0) detPagamentos += `<b>Entrada:</b> R$ ${formatMoeda(p.pago_entrada)} <i>(${formatarDataBR(p.data_entrada) || 'Data Ñ Inf.'})</i><br>`;
+        if (p.pago_parcela1 > 0) detPagamentos += `<b>Parc 1:</b> R$ ${formatMoeda(p.pago_parcela1)} <i>(${formatarDataBR(p.data_parcela1) || 'Data Ñ Inf.'})</i><br>`;
+        if (p.pago_parcela2 > 0) detPagamentos += `<b>Parc 2:</b> R$ ${formatMoeda(p.pago_parcela2)} <i>(${formatarDataBR(p.data_parcela2) || 'Data Ñ Inf.'})</i><br>`;
+        if (p.pago_parcela3 > 0) detPagamentos += `<b>Parc 3:</b> R$ ${formatMoeda(p.pago_parcela3)} <i>(${formatarDataBR(p.data_parcela3) || 'Data Ñ Inf.'})</i>`;
+        
+        if (detPagamentos === '') {
+            if(p.pago > 0) detPagamentos = `<i>Pgto Geral: R$ ${formatMoeda(p.pago)}</i>`;
+            else detPagamentos = `<i>Sem pagamentos registrados</i>`;
+        }
+
+        // Informações do Cliente
+        let infoCliente = `<strong style="font-size:14px;">${p.cliente || 'Cliente Padrão'}</strong><br>`;
+        if(p.servico) infoCliente += `<span style="font-size:11px;color:#444"><b>Serviço:</b> ${p.servico.split(' | ')[0]}</span><br>`;
+        let enderecoCompleto = [p.endereco, p.numero, p.cidade].filter(Boolean).join(', ');
+        if(enderecoCompleto) infoCliente += `<span style="font-size:11px;color:#444"><b>End:</b> ${enderecoCompleto}</span>`;
+
+        // Coluna de Valores
+        let infoValores = `Bruto: R$ ${formatMoeda(p.total)}<br>
+                           <span style="color:green">Pago: R$ ${formatMoeda(p.pago)}</span><br>
+                           <span style="color:${(p.total - p.pago) > 0 ? 'red' : '#444'}; font-weight:bold;">Falta: R$ ${formatMoeda(p.total - p.pago)}</span>`;
+
+        return `<tr>
+            <td style="border:1px solid #ccc;padding:8px;vertical-align:top;width:80px;font-size:11px;">${formatarDataBR(p.data)}<br><br><span style="font-size:9px; background:#ddd; padding:2px 4px; border-radius:4px;">${(p.status || '').toUpperCase()}</span></td>
+            <td style="border:1px solid #ccc;padding:8px;vertical-align:top">${infoCliente}</td>
+            <td style="border:1px solid #ccc;padding:8px;vertical-align:top;font-size:11px;line-height:1.4;">${detPagamentos}</td>
+            <td style="border:1px solid #ccc;padding:8px;vertical-align:top;font-size:12px;line-height:1.4;white-space:nowrap;">${infoValores}</td>
+        </tr>`;
+    }).join('');
+
+    // Gerador de Linhas dos Gastos
+    let hG = gF.map(g => `<tr>
+        <td style="border:1px solid #ccc;padding:8px">${formatarDataBR(g.data)}</td>
+        <td style="border:1px solid #ccc;padding:8px">${g.descricao}</td>
+        <td style="border:1px solid #ccc;padding:8px;font-weight:bold;color:red">R$ ${formatMoeda(g.valor)}</td>
+    </tr>`).join('');
+
+    if (!hP) hP = `<tr><td colspan="4" style="text-align:center;padding:15px;color:#666">Nenhum serviço registrado neste período.</td></tr>`;
+    if (!hG) hG = `<tr><td colspan="3" style="text-align:center;padding:15px;color:#666">Nenhum gasto registrado neste período.</td></tr>`;
+
+    // Montar o HTML para a Impressão
+    document.getElementById('area-impressao').innerHTML = `
+    <div style="font-family:'Segoe UI', sans-serif; color:#000; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 20px;">
+        <h1 style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:20px;">
+            ${eN}<br>
+            <small style="font-size:16px; color:#555; font-weight:normal;">${tT}</small>
+        </h1>
+        
+        <!-- Bloco de Resumo Financeiro -->
+        <div style="display:flex; justify-content:space-between; margin-bottom:25px; background:#f8f9fa; padding:15px; border-radius:8px; border: 1px solid #ddd;">
+            <div style="font-size:14px; line-height:1.6;">
+                <span style="color:#555">Total Vendido (Bruto):</span> <strong>R$ ${formatMoeda(tV)}</strong><br>
+                <span style="color:#555">Total Já Recebido:</span> <strong style="color:green">R$ ${formatMoeda(tP)}</strong><br>
+                <span style="color:#555">Falta Receber dos Clientes:</span> <strong style="color:#ff9f0a">R$ ${formatMoeda(tA)}</strong>
+            </div>
+            <div style="font-size:14px; line-height:1.6; text-align:right;">
+                <span style="color:#555">Total de Despesas / Gastos:</span> <strong style="color:red">R$ ${formatMoeda(tG)}</strong><br><br>
+                <span style="font-size:18px; color:#555;">Caixa Líquido do Período:</span> 
+                <strong style="font-size:20px; color:${sC < 0 ? 'red' : 'green'};">R$ ${formatMoeda(sC)}</strong>
+            </div>
+        </div>
+
+        <!-- Tabela de Receitas -->
+        <h3 style="margin-bottom:10px; color:#333; border-bottom:1px solid #ccc; padding-bottom:5px;">RECEITAS E SERVIÇOS (Pedidos)</h3>
+        <table style="width:100%; border-collapse:collapse; text-align:left; font-size:13px; margin-bottom:30px;">
+            <thead>
+                <tr style="background:#eee;">
+                    <th style="padding:10px; border:1px solid #ccc; width:10%;">Data</th>
+                    <th style="padding:10px; border:1px solid #ccc; width:45%;">Cliente / Serviço / Local</th>
+                    <th style="padding:10px; border:1px solid #ccc; width:25%;">Histórico de Pagamentos</th>
+                    <th style="padding:10px; border:1px solid #ccc; width:20%;">Resumo de Valores</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${hP}
+            </tbody>
+        </table>
+
+        <!-- Tabela de Despesas -->
+        <h3 style="margin-bottom:10px; color:#333; border-bottom:1px solid #ccc; padding-bottom:5px;">DESPESAS E SAÍDAS (Gastos/Compras)</h3>
+        <table style="width:100%; border-collapse:collapse; text-align:left; font-size:13px; margin-bottom:20px;">
+            <thead>
+                <tr style="background:#eee;">
+                    <th style="padding:10px; border:1px solid #ccc; width:15%;">Data</th>
+                    <th style="padding:10px; border:1px solid #ccc; width:65%;">Descrição do Gasto</th>
+                    <th style="padding:10px; border:1px solid #ccc; width:20%;">Valor Pago</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${hG}
+            </tbody>
+        </table>
+        
+        <div style="text-align:center; font-size:10px; color:#888; margin-top:40px; border-top:1px dashed #ccc; padding-top:10px;">
+            Relatório gerado pelo ALVES Pro System em ${formatarDataBR(new Date().toISOString().split('T')[0])}
+        </div>
+    </div>`;
+
+    setTimeout(() => window.print(), 400);
+}
 let pecasCorte=[],gruposChapasCalculadas=[],planoAtualId=null,planoAtualNome="";
 function novoPlanoCorte(){if(pecasCorte.length>0&&!confirm("Limpar tela? Dados não salvos perdidos."))return;planoAtualId=null;planoAtualNome="";pecasCorte=[];gruposChapasCalculadas=[];document.getElementById('corte_cliente_nome').value="";document.getElementById('container_mapas_visuais').innerHTML="";document.getElementById('resultado_chapas').innerText="-";document.getElementById('resultado_area').innerText="Área total: -";document.getElementById('resultado_fita').innerText="Total de Fita: -";renderizarPecasCorte();showToast("Tela limpa!","info")}
 function adicionarPecaCorte(){const d=document.getElementById('corte_desc_peca').value,c=parseFloat(document.getElementById('corte_comp_peca').value),l=parseFloat(document.getElementById('corte_larg_peca').value),q=parseInt(document.getElementById('corte_qtd_peca').value),m=document.getElementById('corte_material').value||"Padrão",e=document.getElementById('corte_espessura').value||"15mm",cc=parseFloat(document.getElementById('corte_chapa_comp').value)||2750,cl=parseFloat(document.getElementById('corte_chapa_larg').value)||1850,cf=document.getElementById('corte_cor_fita_peca').value||"",fc1=document.getElementById('corte_fita_c1').checked,fc2=document.getElementById('corte_fita_c2').checked,fl1=document.getElementById('corte_fita_l1').checked,fl2=document.getElementById('corte_fita_l2').checked;if(!d||!c||!l||isNaN(q)||q<=0||isNaN(c)||isNaN(l))return showToast("Preencha tudo!","error");let fT=[];if(fc1||fc2)fT.push((fc1&&fc2?"2":"1")+" C");if(fl1||fl2)fT.push((fl1&&fl2?"2":"1")+" L");let fR=fT.length>0?fT.join('/'):"-",fE={c1:fc1,c2:fc2,l1:fl1,l2:fl2};pecasCorte.push({id_peca:Date.now()+Math.random(),desc:d,comp:c,larg:l,qtd:q,fitaResumo:fR,fitaEdges:fE,cor_fita:cf,material:m,espessura:e,chapa_comp:cc,chapa_larg:cl});document.getElementById('corte_desc_peca').value='';document.getElementById('corte_comp_peca').value='';document.getElementById('corte_larg_peca').value='';document.getElementById('corte_qtd_peca').value='';document.getElementById('corte_cor_fita_peca').value='';document.getElementById('corte_fita_c1').checked=false;document.getElementById('corte_fita_c2').checked=false;document.getElementById('corte_fita_l1').checked=false;document.getElementById('corte_fita_l2').checked=false;renderizarPecasCorte();showToast("Peça adicionada!")}
