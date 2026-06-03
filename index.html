@@ -59,7 +59,7 @@ input:not([type="checkbox"]),select,textarea{width:100%;padding:12px;margin:5px 
 .todo-input-row { display: flex; align-items: center; background: #25252b; margin-bottom: 20px; padding: 14px 15px; border-radius: 4px; border: 1px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3);}
 .todo-input { background: transparent; border: none; color: white; flex: 1; outline: none; font-size: 15px; margin-left: 10px; padding: 0; }
 .todo-input::placeholder { color: #888; }
-.todo-title { display: flex; align-items: center; font-size: 22px; color: var(--gold); font-weight: bold; margin-bottom: 25px; gap: 15px; }
+.todo-title { display: flex; justify-content: space-between; align-items: center; font-size: 22px; color: var(--gold); font-weight: bold; margin-bottom: 25px; }
 .subtask-row { display:flex; align-items:center; padding:10px 0; border-bottom:1px dashed #444; }
 
 @media(max-width:768px){.container-3d{flex-direction:column;height:calc(100vh - 160px);border:none;border-radius:0}#canvas-container{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1}.painel-controles-3d{position:absolute;bottom:0;left:0;width:100%;height:65vh;z-index:10;border-top:3px solid var(--blue);border-right:none;transform:translateY(110%);transition:.4s ease-in-out;padding-bottom:80px;background:rgba(30,31,39,.95);backdrop-filter:blur(10px)}.painel-controles-3d.visivel{transform:translateY(0)}#btn-mobile-3d{display:flex;align-items:center;justify-content:center}#cota-topo{top:60px;font-size:14px}#cota-lateral{font-size:14px;right:10px}}
@@ -131,8 +131,12 @@ input:not([type="checkbox"]),select,textarea{width:100%;padding:12px;margin:5px 
     <!-- TELA DE DETALHES DA PENDÊNCIA (ESTILO MICROSOFT TO DO) -->
     <div id="tela_pendencias_detalhes" class="tela">
         <div class="todo-title">
-            <i class="fas fa-arrow-left" style="cursor:pointer; color:#888;" onclick="mudarTela('tela_pendencias'); renderizarTudo();"></i>
-            <span id="todo_list_title">Nome da Lista</span>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <i class="fas fa-arrow-left" style="cursor:pointer; color:#888;" onclick="mudarTela('tela_pendencias'); renderizarTudo();"></i>
+                <span id="todo_list_title">Nome da Lista</span>
+            </div>
+            <!-- BOTAO DO WHATSAPP -->
+            <i class="fab fa-whatsapp" style="color:#25D366; cursor:pointer; font-size:26px;" onclick="enviarWhatsAppPendencia()"></i>
         </div>
         
         <div class="todo-input-row">
@@ -366,7 +370,7 @@ function abrirAlvesPro3D(){document.getElementById('res-corredicas').innerText=f
 function exportar3DParaCorte(){if(!confirm("Adicionar ao Plano de Corte?"))return;let e=(moduloAtual==='roupeiro'?document.getElementById('in_mdf').value:(moduloAtual==='banheiro'?document.getElementById('in_ban_mdf').value:document.getElementById('g3d_mdf_caixa').value))+"mm",mC=moduloAtual==='roupeiro'?"MDF Caixa/Portas":"MDF Estrutura",pA={};pecasInterativas.forEach(m=>{if(m.parent===grupoPedra||m.parent===grupoDimensoes)return;if(m.userData.nome.includes("Perfil")||m.userData.nome.includes("Cuba")||m.userData.nome.includes("Tampo Pedra")||m.userData.nome.includes("Saia Pedra")||m.userData.nome.includes("Inox"))return;let d=[m.userData.w,m.userData.h,m.userData.d].sort((a,b)=>b-a),c=Math.round(d[0]),l=Math.round(d[1]),en=Math.round(d[2]),et=en<=6?"6mm":e,mr=en<=6?"MDF Fundo":mC,n=m.userData.nome;if((moduloAtual==='banheiro'||moduloAtual==='cozinha')&&(n.includes("Porta")||n.includes("Gaveta")||n.includes("Basculante")))mr="MDF Frentes";let eC1=false,eC2=false,eL1=false,eL2=false,nl=n.toLowerCase();if(nl.includes("porta")||nl.includes("frente")||nl.includes("gaveta")||nl.includes("basculante")){eC1=true;eC2=true;eL1=true;eL2=true}else if(nl.includes("fundo")||nl.includes("lat gav")||nl.includes("c.fundo")||nl.includes("c.frente")||nl.includes("aba")||nl.includes("eng")||nl.includes("arremate")||nl.includes("tamp")||nl.includes("vista")){if(nl.includes("eng")||nl.includes("arremate")||nl.includes("tamp")||nl.includes("vista"))eC1=true;else{eC1=false;eC2=false;eL1=false;eL2=false}}else eC1=true;let fT=[];if(eC1||eC2)fT.push((eC1&&eC2?"2":"1")+" C");if(eL1||eL2)fT.push((eL1&&eL2?"2":"1")+" L");let rF=fT.length>0?fT.join('/'):"-",k=`${n}_${c}_${l}_${et}_${mr}_${rF}`;if(!pA[k])pA[k]={desc:n,comp:c,larg:l,qtd:0,espessura:et,material:mr,fitaEdges:{c1:eC1,c2:eC2,l1:eL1,l2:eL2},fitaResumo:rF};pA[k].qtd++});Object.values(pA).forEach(p=>{pecasCorte.push({id_peca:Date.now()+Math.random(),desc:`[3D] ${p.desc}`,comp:p.comp,larg:p.larg,qtd:p.qtd,fitaResumo:p.fitaResumo,fitaEdges:p.fitaEdges,cor_fita:"",material:p.material,espessura:p.espessura,chapa_comp:2750,chapa_larg:1850})});renderizarPecasCorte();mudarTela('tela_corte');showToast("Exportado!","success")}
 function exportarFerragensParaCompras(){let i=[];if(ferragens.corredicas>0)i.push({item:"Corrediças",qtd:ferragens.corredicas,valor:0});if(ferragens.dobradicas>0)i.push({item:"Dobradiças",qtd:ferragens.dobradicas,valor:0});if(ferragens.cantoneiras>0)i.push({item:"Cantoneiras",qtd:ferragens.cantoneiras,valor:0});i.push({item:"Parafuso 4x40",qtd:Math.max(1,Math.ceil(ferragens.cantoneiras/100)),valor:0});i.push({item:"Parafuso 4x16",qtd:Math.max(1,Math.ceil((ferragens.dobradicas*4+ferragens.corredicas*8)/100)),valor:0});let tP=(moduloAtual==='banheiro')?document.getElementById('in_ban_puxador').value:'alca';if(tP==='perfil'&&(moduloAtual==='banheiro'||moduloAtual==='cozinha')){let m=Math.ceil(ferragens.perfilTotal/1000);if(m>0)i.push({item:"Perfil Gola",qtd:m,valor:0})}else if(ferragens.puxadores>0)i.push({item:"Puxadores",qtd:ferragens.puxadores,valor:0});DB.compras.push({id:generateID(),cliente:"Ferragens 3D",itens:i,total:0,data:new Date().toISOString().split('T')[0],status:'em_compra'});saveDB();fecharModais();mudarTela('tela_compras');showToast("Gerada!","success")}
 
-// --- LÓGICA DE PENDÊNCIAS COM SUBTAREFAS (ETAPAS) ---
+// --- LÓGICA DE PENDÊNCIAS COM SUBTAREFAS (ETAPAS) E WHATSAPP ---
 let idPendenciaAberta = null;
 let idxTarefaEditando = null;
 
@@ -420,7 +424,7 @@ function adicionarTarefaRapida() {
     const p = DB.pendencias.find(x => x.id == idPendenciaAberta);
     if(p) {
         if(!p.itens) p.itens = [];
-        p.itens.unshift({ nome: txt, concluido: false, subitens: [] }); // Adiciona no topo
+        p.itens.unshift({ nome: txt, concluido: false, subitens: [] });
         saveDB();
         input.value = "";
         renderizarItensDetalhe();
@@ -455,7 +459,6 @@ function salvarPendencia(){
     showToast("Lista criada!","success");
 }
 
-// ----- MODAL DA TAREFA (PARA EDITAR E ADICIONAR SUB-TAREFAS) -----
 function abrirTarefaModal(idx) {
     idxTarefaEditando = idx;
     const p = DB.pendencias.find(x => x.id == idPendenciaAberta);
@@ -559,5 +562,33 @@ function renderizarSubtarefasModal() {
             <i class="fas fa-times" style="color:#666; font-size:12px; cursor:pointer; padding:5px;" onclick="removerSubtarefaModal(${idx})"></i>
         </div>
     `).join('');
+}
+
+function enviarWhatsAppPendencia() {
+    if(!idPendenciaAberta) return;
+    const p = DB.pendencias.find(x => x.id == idPendenciaAberta);
+    if(!p) return;
+
+    let texto = `📋 *${p.titulo}*\n\n`;
+
+    if(!p.itens || p.itens.length === 0) {
+        texto += "Nenhuma tarefa adicionada.";
+    } else {
+        let concluidas = 0;
+        p.itens.forEach(t => {
+            if(t.concluido) concluidas++;
+            texto += `${t.concluido ? '✅' : '⬜'} *${t.nome}*\n`;
+            
+            if(t.subitens && t.subitens.length > 0) {
+                t.subitens.forEach(sub => {
+                    texto += `   ${sub.concluido ? '✅' : '⬜'} ${sub.nome}\n`;
+                });
+            }
+        });
+        texto += `\n📊 *Resumo:* ${concluidas}/${p.itens.length} tarefas concluídas.`;
+    }
+
+    const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+    window.open(url, '_blank');
 }
 </script></body></html>
