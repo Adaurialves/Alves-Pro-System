@@ -13,59 +13,42 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
-:root{--gold:#d4af37;--bg:#0f1117;--card:#1e1f27;--blue:#0a84ff;--green:#30d158;--red:#ff453a;--purple:#af52de;--text:#ffffff;--orange:#ff9f0a;--cyan:#5ac8fa;--teal:#32ade6;--light-gray:#e5e5ea;--pink:#ff2d55;--shadow:0 4px 20px rgba(0,0,0,0.4);--radius:12px}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;margin:0;padding:10px 10px 90px 10px;overflow-x:hidden;min-height:100vh;-webkit-font-smoothing:antialiased}
+:root{--gold:#d4af37;--bg:#0f1117;--card:#1e1f27;--blue:#0a84ff;--green:#30d158;--red:#ff453a;--purple:#af52de;--text:#ffffff;--orange:#ff9f0a;--cyan:#5ac8fa;--teal:#32ade6;--light-gray:#e5e5ea;--pink:#ff2d55}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;margin:0;padding:10px 10px 80px 10px;overflow-x:hidden}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-@keyframes slideDown{from{opacity:0;transform:translate(-50%,-20px)}to{opacity:1;transform:translate(-50%,0)}}
-@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 .tela{display:none;animation:fadeIn .4s ease-out}.tela.ativa{display:block}
 .toast-container{position:fixed;top:15px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:10px;width:90%;max-width:400px;pointer-events:none}
-.toast{background:var(--card);color:#fff;padding:15px;border-radius:10px;box-shadow:var(--shadow);font-size:13px;display:flex;align-items:center;gap:12px;border-left:4px solid var(--green);animation:slideDown .3s forwards;transition:opacity .3s;font-weight:bold;pointer-events:auto;backdrop-filter:blur(10px)}
-.toast.error{border-left-color:var(--red)}.toast.info{border-left-color:var(--blue)}.toast.warning{border-left-color:var(--orange)}
-.empresa-header{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;margin-bottom:15px;background:var(--card);padding:15px;border-radius:var(--radius);border:1px solid #333;text-align:center;box-shadow:var(--shadow)}
+.toast{background:var(--card);color:#fff;padding:15px;border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,.8);font-size:13px;display:flex;align-items:center;gap:12px;border-left:4px solid var(--green);animation:slideDown .3s forwards;transition:opacity .3s;font-weight:bold;pointer-events:auto}
+.toast.error{border-left-color:var(--red)}.toast.info{border-left-color:var(--blue)}
+@keyframes slideDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+.empresa-header{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;margin-bottom:15px;background:var(--card);padding:15px;border-radius:12px;border:1px solid #333;text-align:center}
 .empresa-logo{width:70px;height:70px;border-radius:8px;object-fit:contain;background:#fff;padding:2px;margin:0 auto}
-.empresa-info h3{margin:0;color:var(--gold);font-size:18px;text-transform:uppercase;letter-spacing:.5px}.empresa-info p{margin:4px 0 0 0;font-size:12px;color:#888}
+.empresa-info h3{margin:0;color:var(--gold);font-size:18px;text-transform:uppercase}.empresa-info p{margin:4px 0 0 0;font-size:12px;color:#888}
 .menu-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin-bottom:15px}
-.menu-item{flex:1 1 18%;min-width:60px;background:var(--card);padding:10px 2px;border-radius:10px;text-align:center;cursor:pointer;border:1px solid #333;font-size:9px;text-transform:uppercase;font-weight:bold;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.menu-item:hover{transform:translateY(-2px);border-color:#555}.menu-item:active{transform:scale(.95)}.menu-item i{display:block;margin-bottom:5px;font-size:16px}
+.menu-item{flex:1 1 18%;min-width:60px;background:var(--card);padding:10px 2px;border-radius:10px;text-align:center;cursor:pointer;border:1px solid #333;font-size:9px;text-transform:uppercase;font-weight:bold;transition:.2s}
+.menu-item:active{transform:scale(.95)}.menu-item i{display:block;margin-bottom:5px;font-size:16px}
 .busca-container{margin-bottom:15px;position:relative;display:none}.busca-container.visivel{display:block}
-.busca-input{width:100%;padding:12px 40px 12px 15px;background:var(--card);border:1px solid #444;border-radius:10px;color:#fff;font-size:14px;box-sizing:border-box;transition:border-color .2s}.busca-input:focus{outline:none;border-color:var(--blue)}.busca-container i{position:absolute;right:15px;top:14px;color:#666}
-.item-card{background:var(--card);padding:16px;border-radius:14px;margin-bottom:12px;border-left:4px solid var(--blue);border-bottom:1px solid #333;position:relative;box-shadow:0 2px 8px rgba(0,0,0,.2);transition:transform .2s}
-.item-card:hover{transform:translateY(-1px)}
+.busca-input{width:100%;padding:12px 40px 12px 15px;background:var(--card);border:1px solid #444;border-radius:10px;color:#fff;font-size:14px;box-sizing:border-box}.busca-container i{position:absolute;right:15px;top:14px;color:#666}
+.item-card{background:var(--card);padding:16px;border-radius:14px;margin-bottom:12px;border-left:4px solid var(--blue);border-bottom:1px solid #333;position:relative}
 .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
-.card-header h4{margin:0;font-size:17px;color:var(--gold);text-transform:uppercase;width:70%;cursor:pointer;letter-spacing:.3px}
-.btn-acao-card{color:#888;font-size:18px;cursor:pointer;transition:.3s;padding:5px}.btn-acao-card:hover{color:var(--red);transform:scale(1.1)}
-.badge-status{display:inline-block;padding:3px 8px;border-radius:4px;font-size:9px;font-weight:bold;text-transform:uppercase;margin-bottom:8px;letter-spacing:.5px}
+.card-header h4{margin:0;font-size:17px;color:var(--gold);text-transform:uppercase;width:70%;cursor:pointer}
+.acoes-card{display:flex;gap:15px;align-items:center}.btn-acao-card{color:#888;font-size:18px;cursor:pointer;transition:.3s}
+.badge-status{display:inline-block;padding:3px 8px;border-radius:4px;font-size:9px;font-weight:bold;text-transform:uppercase;margin-bottom:8px}
 .status-pendente{background:var(--red);color:#fff}.status-andamento,.status-em_compra{background:var(--blue);color:#fff}.status-concluido,.status-aprovado{background:var(--green);color:#fff}.status-aguardando,.status-orcamento{background:var(--orange);color:#fff}
-.status-parcial{background:var(--orange);color:#fff}.status-quitado{background:var(--green);color:#fff}.status-vencido{background:var(--red);color:#fff;animation:pulse 2s infinite}
-.info-linha{border-top:1px solid rgba(255,255,255,.05);margin-top:8px;padding-top:8px}.label-mini{font-size:10px;color:#888;text-transform:uppercase;font-weight:bold;display:block;margin-bottom:2px;letter-spacing:.5px}.texto-info{font-size:15px;color:#ddd;line-height:1.4;white-space:pre-line}
-.financeiro-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}.fin-box{background:rgba(255,255,255,.03);padding:8px;border-radius:8px;text-align:center;border:1px solid #333;transition:background .2s}.fin-box:hover{background:rgba(255,255,255,.06)}.fin-box span{display:block;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.5px}.fin-box strong{font-size:13px;color:var(--text)}
-.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.95);z-index:2000;justify-content:center;align-items:center;backdrop-filter:blur(5px)}.modal-content{background:var(--card);padding:20px;border-radius:15px;width:92%;max-width:450px;border:1px solid var(--gold);max-height:90vh;overflow-y:auto;animation:fadeIn .3s ease-out;box-shadow:0 10px 40px rgba(0,0,0,.8)}
+.status-parcial{background:var(--orange);color:#fff}.status-quitado{background:var(--green);color:#fff}.status-vencido{background:var(--red);color:#fff}
+.info-linha{border-top:1px solid rgba(255,255,255,.05);margin-top:8px;padding-top:8px}.label-mini{font-size:10px;color:#888;text-transform:uppercase;font-weight:bold;display:block;margin-bottom:2px}.texto-info{font-size:15px;color:#ddd;line-height:1.4;white-space:pre-line}
+.financeiro-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}.fin-box{background:rgba(255,255,255,.03);padding:8px;border-radius:8px;text-align:center;border:1px solid #333}.fin-box span{display:block;font-size:9px;color:#888}.fin-box strong{font-size:13px;color:var(--text)}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.95);z-index:2000;justify-content:center;align-items:center}.modal-content{background:var(--card);padding:20px;border-radius:15px;width:92%;max-width:450px;border:1px solid var(--gold);max-height:90vh;overflow-y:auto;animation:fadeIn .3s ease-out}
 .modal-large{max-width:800px!important;width:95%!important;max-height:95vh!important}
-input:not([type="checkbox"]),select,textarea{width:100%;padding:12px;margin:5px 0 12px 0;background:#2b2d3a;border:1px solid #444;border-radius:8px;color:#fff;box-sizing:border-box;font-size:14px;transition:border-color .2s}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);background:#2f3140}
-label{font-size:11px;color:var(--gold);font-weight:bold;text-transform:uppercase;display:block;margin-bottom:2px;letter-spacing:.5px}
-.check-inline{width:auto;margin:0 5px 0 0!important;display:inline-block;vertical-align:middle}
-.label-check{display:flex;align-items:center;font-size:12px;color:#ddd;cursor:pointer;text-transform:none;background:rgba(255,255,255,.05);padding:8px;border-radius:6px;flex:1;justify-content:center;border:1px solid #444;transition:all .2s}
-.label-check:hover{background:rgba(255,255,255,.08);border-color:#666}
-.btn-flutuante{position:fixed;bottom:20px;right:20px;width:60px;height:60px;background:linear-gradient(135deg,var(--green),#28a745);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;border:none;z-index:100;box-shadow:0 4px 20px rgba(48,209,88,.4);cursor:pointer;transition:.2s}
-.btn-flutuante:hover{transform:scale(1.1) rotate(90deg)}.btn-flutuante:active{transform:scale(.95)}
-.item-selecionado{padding:10px;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;font-size:13px;background:rgba(255,255,255,.02);transition:background .2s}
-.item-selecionado:hover{background:rgba(255,255,255,.05)}
-.btn-outline{background:none;border:1px dashed;width:100%;padding:12px;border-radius:8px;font-weight:bold;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;text-transform:uppercase;font-size:11px;letter-spacing:.5px}
-.btn-outline:hover{background:rgba(255,255,255,.05);transform:translateY(-1px)}
-.grafico-wrapper{background:var(--card);padding:10px;border-radius:15px;border:1px solid #333;height:350px;position:relative;width:100%;box-sizing:border-box;box-shadow:var(--shadow)}#graficoFinanceiro{width:100%!important;height:100%!important}#area-impressao{display:none}
-.badge-fita{display:inline-block;padding:4px 8px;font-size:10px;border:1px solid #444;border-radius:4px;cursor:pointer;color:#888;background:rgba(0,0,0,.3);transition:.2s;margin-right:4px;font-weight:bold}
-.badge-fita:hover{background:rgba(255,255,255,.1)}.badge-fita.ativa{background:var(--gold);color:#000;border-color:var(--gold)}
-.todo-row{display:flex;align-items:center;background:#25252b;margin-bottom:2px;padding:14px 15px;border-radius:4px;cursor:pointer;transition:.2s}
-.todo-row:hover{background:#2d2d35;transform:translateX(2px)}
-.todo-circle{width:18px;height:18px;border:1px solid #888;border-radius:50%;margin-right:15px;display:flex;justify-content:center;align-items:center;font-size:10px;transition:.2s;flex-shrink:0}
-.todo-circle.done{background:var(--green);border-color:var(--green);color:white;animation:fadeIn .3s}
-.todo-input-row{display:flex;align-items:center;background:#25252b;margin-bottom:20px;padding:14px 15px;border-radius:4px;border:1px solid #444;box-shadow:0 4px 10px rgba(0,0,0,.3)}
-.todo-input{background:transparent;border:none;color:white;flex:1;outline:none;font-size:15px;margin-left:10px;padding:0}.todo-input::placeholder{color:#888}
+input:not([type="checkbox"]),select,textarea{width:100%;padding:12px;margin:5px 0 12px 0;background:#2b2d3a;border:1px solid #444;border-radius:8px;color:#fff;box-sizing:border-box;font-size:14px}label{font-size:11px;color:var(--gold);font-weight:bold;text-transform:uppercase;display:block;margin-bottom:2px}
+.check-inline{width:auto;margin:0 5px 0 0!important;display:inline-block;vertical-align:middle}.label-check{display:flex;align-items:center;font-size:12px;color:#ddd;cursor:pointer;text-transform:none;background:rgba(255,255,255,.05);padding:8px;border-radius:6px;flex:1;justify-content:center;border:1px solid #444}
+.btn-flutuante{position:fixed;bottom:20px;right:20px;width:60px;height:60px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;border:none;z-index:100;box-shadow:0 4px 15px rgba(0,0,0,.5);cursor:pointer;transition:.2s}
+.item-selecionado{padding:10px;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;font-size:13px;background:rgba(255,255,255,.02)}.btn-outline{background:none;border:1px dashed;width:100%;padding:12px;border-radius:8px;font-weight:bold;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.grafico-wrapper{background:var(--card);padding:10px;border-radius:15px;border:1px solid #333;height:350px;position:relative;width:100%;box-sizing:border-box}#graficoFinanceiro{width:100%!important;height:100%!important}#area-impressao{display:none}
+.badge-fita{display:inline-block;padding:4px 8px;font-size:10px;border:1px solid #444;border-radius:4px;cursor:pointer;color:#888;background:rgba(0,0,0,.3);transition:.2s;margin-right:4px;font-weight:bold}.badge-fita:hover{background:rgba(255,255,255,.1)}.badge-fita.ativa{background:var(--gold);color:#000;border-color:var(--gold)}
+.todo-row{display:flex;align-items:center;background:#25252b;margin-bottom:2px;padding:14px 15px;border-radius:4px;cursor:pointer;transition:.2s}.todo-row:hover{background:#2d2d35}
+.todo-circle{width:18px;height:18px;border:1px solid #888;border-radius:50%;margin-right:15px;display:flex;justify-content:center;align-items:center;font-size:10px;transition:.2s;flex-shrink:0}.todo-circle.done{background:var(--green);border-color:var(--green);color:white}
+.todo-input-row{display:flex;align-items:center;background:#25252b;margin-bottom:20px;padding:14px 15px;border-radius:4px;border:1px solid #444;box-shadow:0 4px 10px rgba(0,0,0,.3)}.todo-input{background:transparent;border:none;color:white;flex:1;outline:none;font-size:15px;margin-left:10px;padding:0}.todo-input::placeholder{color:#888}
 .todo-title{display:flex;justify-content:space-between;align-items:center;font-size:22px;color:var(--gold);font-weight:bold;margin-bottom:25px}
 .comparison-area{background:var(--card);border:1px solid #333;border-radius:12px;overflow:hidden;margin-bottom:15px}
 .comparison-header{background:rgba(255,255,255,0.05);color:var(--gold);padding:12px;font-weight:bold;display:flex;justify-content:space-between;align-items:center}
@@ -73,44 +56,40 @@ label{font-size:11px;color:var(--gold);font-weight:bold;text-transform:uppercase
 .color-target-full{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:background .3s}
 .color-label{background:rgba(0,0,0,0.6);color:white;padding:6px 16px;border-radius:20px;font-size:.9em;font-weight:bold;pointer-events:none;backdrop-filter:blur(4px)}
 .color-hex{margin-top:10px;font-family:monospace;font-size:1.2em;font-weight:bold;color:rgba(0,0,0,0.7);background:rgba(255,255,255,0.8);padding:4px 10px;border-radius:6px;pointer-events:none}
-.btn-compare{background:var(--blue);color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.85em;font-weight:600;transition:all .2s}
-.btn-compare:hover{background:#0070e0;transform:translateY(-1px)}
+.btn-compare{background:var(--blue);color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.85em;font-weight:600}
 .calibration-slider-container{background:var(--card);padding:15px;border-radius:12px;border:1px solid #333;margin-bottom:15px}
 input[type="range"]{flex:1;height:6px;border-radius:5px;background:linear-gradient(to right,#000 0%,#808080 50%,#fff 100%);outline:none;-webkit-appearance:none}
 input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--blue);cursor:pointer;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)}
-input[type="color"]{height:50px;padding:2px;cursor:pointer;background:var(--card);border:1px solid #444;border-radius:8px}
+input[type="color"]{height:50px;padding:2px;cursor:pointer;background:var(--card);border:1px solid #444}
 .apagar-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:15px}
-.apagar-box{background:var(--card);padding:12px;border-radius:10px;text-align:center;border:1px solid #333;transition:transform .2s}
-.apagar-box:hover{transform:translateY(-2px)}
-.apagar-box span{display:block;font-size:9px;color:#888;text-transform:uppercase;font-weight:bold;margin-bottom:4px;letter-spacing:.5px}
+.apagar-box{background:var(--card);padding:12px;border-radius:10px;text-align:center;border:1px solid #333}
+.apagar-box span{display:block;font-size:9px;color:#888;text-transform:uppercase;font-weight:bold;margin-bottom:4px}
 .apagar-box strong{font-size:15px}
 .apagar-filtro{display:flex;gap:8px;margin-bottom:15px;flex-wrap:wrap}
-.apagar-filtro button{flex:1;min-width:70px;padding:8px 4px;background:var(--card);border:1px solid #444;border-radius:8px;color:#888;font-size:10px;font-weight:bold;cursor:pointer;text-transform:uppercase;transition:.2s;letter-spacing:.3px}
-.apagar-filtro button:hover{background:rgba(255,255,255,.05)}.apagar-filtro button.ativo{border-color:var(--red);color:var(--red);background:rgba(255,69,58,0.1)}
+.apagar-filtro button{flex:1;min-width:70px;padding:8px 4px;background:var(--card);border:1px solid #444;border-radius:8px;color:#888;font-size:10px;font-weight:bold;cursor:pointer;text-transform:uppercase;transition:.2s}
+.apagar-filtro button.ativo{border-color:var(--red);color:var(--red);background:rgba(255,69,58,0.1)}
 .pagamento-historico{background:rgba(255,255,255,.03);border:1px solid #333;border-radius:8px;padding:12px;margin-top:10px;max-height:200px;overflow-y:auto}
-.pagamento-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed #333;font-size:12px;transition:background .2s}
-.pagamento-row:hover{background:rgba(255,255,255,.03)}
+.pagamento-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed #333;font-size:12px}
 .pagamento-row:last-child{border-bottom:none}
-.restante-display{background:rgba(255,69,58,0.1);border:2px solid var(--red);border-radius:10px;padding:15px;text-align:center;margin:10px 0;transition:all .3s}
+.restante-display{background:rgba(255,69,58,0.1);border:2px solid var(--red);border-radius:10px;padding:15px;text-align:center;margin:10px 0}
 .restante-display.quitado{background:rgba(48,209,88,0.1);border-color:var(--green)}
-.restante-display span{display:block;font-size:10px;color:#888;text-transform:uppercase;font-weight:bold;letter-spacing:.5px}
+.restante-display span{display:block;font-size:10px;color:#888;text-transform:uppercase;font-weight:bold}
 .restante-display strong{font-size:22px;color:var(--red)}
 .restante-display.quitado strong{color:var(--green)}
-/* Indicador de sincronização */
-.sync-indicator{position:fixed;top:10px;right:10px;z-index:9999;display:flex;align-items:center;gap:6px;background:var(--card);padding:6px 12px;border-radius:20px;font-size:10px;font-weight:bold;border:1px solid #333;transition:all .3s;opacity:0;pointer-events:none;box-shadow:var(--shadow)}
+.sync-indicator{position:fixed;top:10px;right:10px;z-index:9999;display:flex;align-items:center;gap:6px;background:var(--card);padding:6px 12px;border-radius:20px;font-size:10px;font-weight:bold;border:1px solid #333;transition:all .3s;opacity:0;pointer-events:none}
 .sync-indicator.visible{opacity:1}
 .sync-indicator.saving{border-color:var(--orange);color:var(--orange)}
 .sync-indicator.synced{border-color:var(--green);color:var(--green)}
 .sync-indicator.error{border-color:var(--red);color:var(--red)}
 .sync-indicator i{font-size:12px}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 .sync-indicator.saving i{animation:spin 1s linear infinite}
-/* Logo */
 .logo-preview-container{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:15px}
 .logo-preview-box{width:120px;height:120px;border:2px dashed #444;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.03);position:relative}
 .logo-preview-box img{max-width:100%;max-height:100%;object-fit:contain}
 .logo-preview-box .placeholder{color:#666;font-size:10px;text-align:center;padding:10px}
 .logo-type-tabs{display:flex;gap:5px;width:100%;margin-bottom:10px}
-.logo-type-tab{flex:1;padding:8px;background:rgba(255,255,255,0.03);border:1px solid #444;border-radius:6px;color:#888;font-size:10px;font-weight:bold;text-align:center;cursor:pointer;transition:.2s;text-transform:uppercase;letter-spacing:.5px}
+.logo-type-tab{flex:1;padding:8px;background:rgba(255,255,255,0.03);border:1px solid #444;border-radius:6px;color:#888;font-size:10px;font-weight:bold;text-align:center;cursor:pointer;transition:.2s;text-transform:uppercase}
 .logo-type-tab.ativo{background:rgba(90,200,250,0.1);border-color:var(--cyan);color:var(--cyan)}
 .logo-url-input,.logo-file-input{display:none}
 .logo-url-input.visivel,.logo-file-input.visivel{display:block}
@@ -118,25 +97,13 @@ input[type="color"]{height:50px;padding:2px;cursor:pointer;background:var(--card
 .logo-status.ok{background:rgba(48,209,88,0.1);color:var(--green);border:1px solid rgba(48,209,88,0.3)}
 .logo-status.erro{background:rgba(255,69,58,0.1);color:var(--red);border:1px solid rgba(255,69,58,0.3)}
 .logo-status.info{background:rgba(10,132,255,0.1);color:var(--blue);border:1px solid rgba(10,132,255,0.3)}
-/* Botão principal */
-.btn-primary{background:linear-gradient(135deg,var(--blue),#0070e0);color:white;border:none;padding:15px;border-radius:8px;font-weight:bold;cursor:pointer;width:100%;font-size:14px;transition:all .2s;text-transform:uppercase;letter-spacing:.5px;box-shadow:0 4px 15px rgba(10,132,255,.3)}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(10,132,255,.5)}
-.btn-primary:active{transform:translateY(0)}
-.btn-success{background:linear-gradient(135deg,var(--green),#28a745);color:white;border:none;padding:15px;border-radius:8px;font-weight:bold;cursor:pointer;width:100%;font-size:14px;transition:all .2s;text-transform:uppercase;letter-spacing:.5px;box-shadow:0 4px 15px rgba(48,209,88,.3)}
-.btn-success:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(48,209,88,.5)}
-.btn-danger{background:transparent;border:1px solid var(--red);color:var(--red);padding:15px;border-radius:8px;font-weight:bold;cursor:pointer;width:100%;font-size:14px;transition:all .2s;text-transform:uppercase;letter-spacing:.5px}
-.btn-danger:hover{background:rgba(255,69,58,.1)}
-/* Loading */
-.loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:9998;display:none;justify-content:center;align-items:center;backdrop-filter:blur(5px)}
-.loading-overlay.active{display:flex}
-.loading-spinner{width:50px;height:50px;border:4px solid rgba(255,255,255,.1);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite}
 @media print{
 @page{margin:0}
 body{background:#fff!important;margin:0;padding:0}
 body *{visibility:hidden}
 #area-impressao,#area-impressao *{visibility:visible}
 #area-impressao{display:block;position:absolute;left:0;top:0;width:100%;background:#fff;color:#000;box-sizing:border-box;min-height:100vh}
-.btn-flutuante,.menu-grid,.busca-container,.empresa-header,.toast-container,.sync-indicator,.loading-overlay{display:none!important}
+.btn-flutuante,.menu-grid,.busca-container,.empresa-header,.toast-container,.sync-indicator{display:none!important}
 }
 </style>
 </head>
@@ -144,13 +111,10 @@ body *{visibility:hidden}
 <div id="app_principal">
 <div id="toast_container" class="toast-container"></div>
 <div id="sync_indicator" class="sync-indicator"><i class="fas fa-circle-notch"></i><span id="sync_text">Sincronizando...</span></div>
-<div id="loading_overlay" class="loading-overlay"><div class="loading-spinner"></div></div>
-
 <div class="empresa-header">
 <img id="logo_display" src="" alt="Logo" class="empresa-logo" style="display:none;" onerror="this.style.display='none'">
 <div class="empresa-info"><h3 id="nome_display">Minha Empresa</h3><p id="contato_display">Configure seus dados na aba Ajustes</p></div>
 </div>
-
 <div class="menu-grid">
 <div class="menu-item" onclick="mudarTela('tela_home')"><i class="fas fa-chart-line" style="color:var(--gold)"></i>Painel</div>
 <div class="menu-item" onclick="mudarTela('tela_pedidos')"><i class="fas fa-list" style="color:var(--green)"></i>Pedidos</div>
@@ -168,34 +132,31 @@ body *{visibility:hidden}
 <div class="menu-item" onclick="mudarTela('tela_cores')"><i class="fas fa-palette" style="color:var(--purple)"></i>Cores</div>
 <div class="menu-item" onclick="mudarTela('tela_config')"><i class="fas fa-cog" style="color:#aaa"></i>Ajustes</div>
 </div>
-
 <div id="barra_busca" class="busca-container"><input type="text" id="input_busca" class="busca-input" placeholder="Pesquisar..." oninput="renderizarTudo()"><i class="fas fa-search"></i></div>
-
 <div id="tela_home" class="tela ativa">
-<div style="background:var(--card);padding:20px;border-radius:15px;border:1px solid var(--gold);margin-bottom:15px;box-shadow:var(--shadow)">
+<div style="background:var(--card);padding:20px;border-radius:15px;border:1px solid var(--gold);margin-bottom:15px;">
 <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #333;padding-bottom:12px;margin-bottom:15px;">
-<span style="color:var(--gold);font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px"><i class="fas fa-chart-pie"></i> Balanço Mensal</span>
-<select id="filtro_mes" onchange="renderizarGrafico()" style="padding:6px 10px;background:#2b2d3a;border:1px solid #444;border-radius:8px;color:white;font-size:12px;outline:none;width:auto;margin:0;cursor:pointer">
+<span style="color:var(--gold);font-size:13px;font-weight:bold;text-transform:uppercase;"><i class="fas fa-chart-pie"></i> Balanço Mensal</span>
+<select id="filtro_mes" onchange="renderizarGrafico()" style="padding:6px 10px;background:#2b2d3a;border:1px solid #444;border-radius:8px;color:white;font-size:12px;outline:none;width:auto;margin:0;">
 <option value="01">Jan</option><option value="02">Fev</option><option value="03">Mar</option><option value="04">Abr</option><option value="05">Mai</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Ago</option><option value="09">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option>
 </select>
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-<div style="background:rgba(48,209,88,0.05);border:1px solid rgba(48,209,88,0.2);padding:12px;border-radius:12px;text-align:center"><span style="color:#aaa;font-size:10px;font-weight:bold;text-transform:uppercase;display:block;margin-bottom:5px;letter-spacing:.5px"><i class="fas fa-hand-holding-usd"></i> Recebido</span><strong id="h_recebido" style="font-size:17px;color:var(--green)">R$ 0,00</strong></div>
-<div style="background:rgba(255,159,10,0.05);border:1px solid rgba(255,159,10,0.2);padding:12px;border-radius:12px;text-align:center"><span style="color:#aaa;font-size:10px;font-weight:bold;text-transform:uppercase;display:block;margin-bottom:5px;letter-spacing:.5px"><i class="fas fa-clock"></i> A Receber</span><strong id="h_areceber" style="font-size:17px;color:var(--orange)">R$ 0,00</strong></div>
+<div style="background:rgba(48,209,88,0.05);border:1px solid rgba(48,209,88,0.2);padding:12px;border-radius:12px;text-align:center;"><span style="color:#aaa;font-size:10px;font-weight:bold;text-transform:uppercase;display:block;margin-bottom:5px;"><i class="fas fa-hand-holding-usd"></i> Já Recebido</span><strong id="h_recebido" style="font-size:17px;color:var(--green);">R$ 0,00</strong></div>
+<div style="background:rgba(255,159,10,0.05);border:1px solid rgba(255,159,10,0.2);padding:12px;border-radius:12px;text-align:center;"><span style="color:#aaa;font-size:10px;font-weight:bold;text-transform:uppercase;display:block;margin-bottom:5px;"><i class="fas fa-clock"></i> A Receber</span><strong id="h_areceber" style="font-size:17px;color:var(--orange);">R$ 0,00</strong></div>
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">
-<div style="background:rgba(255,69,58,0.05);border:1px solid rgba(255,69,58,0.2);padding:12px;border-radius:12px;text-align:center"><span style="color:#aaa;font-size:10px;font-weight:bold;text-transform:uppercase;display:block;margin-bottom:5px;letter-spacing:.5px"><i class="fas fa-arrow-down"></i> Gastos</span><strong id="h_gastos" style="font-size:17px;color:var(--red)">R$ 0,00</strong></div>
-<div style="background:rgba(10,132,255,0.05);border:1px solid rgba(10,132,255,0.2);padding:12px;border-radius:12px;text-align:center"><span style="color:#aaa;font-size:10px;font-weight:bold;text-transform:uppercase;display:block;margin-bottom:5px;letter-spacing:.5px"><i class="fas fa-wallet"></i> Em Caixa</span><strong id="h_lucro" style="font-size:17px;color:var(--blue)">R$ 0,00</strong></div>
+<div style="background:rgba(255,69,58,0.05);border:1px solid rgba(255,69,58,0.2);padding:12px;border-radius:12px;text-align:center;"><span style="color:#aaa;font-size:10px;font-weight:bold;text-transform:uppercase;display:block;margin-bottom:5px;"><i class="fas fa-arrow-down"></i> Saídas (Gastos)</span><strong id="h_gastos" style="font-size:17px;color:var(--red);">R$ 0,00</strong></div>
+<div style="background:rgba(10,132,255,0.05);border:1px solid rgba(10,132,255,0.2);padding:12px;border-radius:12px;text-align:center;"><span style="color:#aaa;font-size:10px;font-weight:bold;text-transform:uppercase;display:block;margin-bottom:5px;"><i class="fas fa-wallet"></i> Em Caixa</span><strong id="h_lucro" style="font-size:17px;color:var(--blue);">R$ 0,00</strong></div>
 </div>
-<div style="text-align:center;margin-bottom:15px"><span style="font-size:11px;color:#888">Total Vendido no Mês: <b id="h_bruto" style="color:#ddd">R$ 0,00</b></span></div>
-<div style="display:flex;gap:10px">
-<button onclick="gerarRelatorio('mensal')" class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);font-size:10px;padding:8px;margin:0"><i class="fas fa-file-pdf"></i> MENSAL</button>
-<button onclick="gerarRelatorio('anual')" class="btn-outline" style="color:var(--gold);border-color:var(--gold);font-size:10px;padding:8px;margin:0"><i class="fas fa-file-pdf"></i> ANUAL</button>
+<div style="text-align:center;margin-bottom:15px;"><span style="font-size:11px;color:#888;">Total Vendido no Mês: <b id="h_bruto" style="color:#ddd;">R$ 0,00</b></span></div>
+<div style="display:flex;gap:10px;">
+<button onclick="gerarRelatorio('mensal')" class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);font-size:10px;padding:8px;margin:0;"><i class="fas fa-file-pdf"></i> RELATÓRIO MENSAL</button>
+<button onclick="gerarRelatorio('anual')" class="btn-outline" style="color:var(--gold);border-color:var(--gold);font-size:10px;padding:8px;margin:0;"><i class="fas fa-file-pdf"></i> RELATÓRIO ANUAL</button>
 </div>
 </div>
 <div class="grafico-wrapper"><canvas id="graficoFinanceiro"></canvas></div>
 </div>
-
 <div id="tela_pedidos" class="tela"><div id="listaPedidosFull"></div></div>
 <div id="tela_orcamentos" class="tela"><div id="listaOrcamentos"></div></div>
 <div id="tela_compras" class="tela"><div id="listaCompras"></div></div>
@@ -203,12 +164,11 @@ body *{visibility:hidden}
 <div id="tela_estoque" class="tela"><div id="listaEstoque"></div></div>
 <div id="tela_servicos" class="tela"><div id="listaServicosCatalogo"></div></div>
 <div id="tela_gastos" class="tela"><div id="listaGastos"></div></div>
-
 <div id="tela_a_pagar" class="tela">
 <div class="apagar-summary">
-<div class="apagar-box" style="border-color:rgba(255,69,58,0.3)"><span><i class="fas fa-file-invoice"></i> Dívidas</span><strong id="ap_total_dividas" style="color:var(--red)">R$ 0,00</strong></div>
-<div class="apagar-box" style="border-color:rgba(48,209,88,0.3)"><span><i class="fas fa-check-circle"></i> Pago</span><strong id="ap_total_pago" style="color:var(--green)">R$ 0,00</strong></div>
-<div class="apagar-box" style="border-color:rgba(255,159,10,0.3)"><span><i class="fas fa-hourglass-half"></i> Restante</span><strong id="ap_total_restante" style="color:var(--orange)">R$ 0,00</strong></div>
+<div class="apagar-box" style="border-color:rgba(255,69,58,0.3);"><span><i class="fas fa-file-invoice"></i> Total Dívidas</span><strong id="ap_total_dividas" style="color:var(--red);">R$ 0,00</strong></div>
+<div class="apagar-box" style="border-color:rgba(48,209,88,0.3);"><span><i class="fas fa-check-circle"></i> Total Pago</span><strong id="ap_total_pago" style="color:var(--green);">R$ 0,00</strong></div>
+<div class="apagar-box" style="border-color:rgba(255,159,10,0.3);"><span><i class="fas fa-hourglass-half"></i> Restante</span><strong id="ap_total_restante" style="color:var(--orange);">R$ 0,00</strong></div>
 </div>
 <div class="apagar-filtro">
 <button class="ativo" onclick="filtrarAPagar('todos',this)">Todos</button>
@@ -220,176 +180,72 @@ body *{visibility:hidden}
 </div>
 <div id="listaAPagar"></div>
 </div>
-
-<div id="tela_pendencias" class="tela"><div style="margin-bottom:15px;font-size:12px;color:#aaa"><i class="fas fa-info-circle"></i> Selecione uma Lista ou adicione no <b>+</b></div><div id="listaPendencias"></div></div>
-<div id="tela_pendencias_detalhes" class="tela"><div class="todo-title"><div style="display:flex;align-items:center;gap:15px"><i class="fas fa-arrow-left" style="cursor:pointer;color:#888" onclick="mudarTela('tela_pendencias');renderizarTudo()"></i><span id="todo_list_title">Nome da Lista</span></div><i class="fab fa-whatsapp" style="color:#25D366;cursor:pointer;font-size:26px" onclick="enviarWhatsAppPendencia()"></i></div><div class="todo-input-row"><div class="todo-circle" style="border-color:var(--blue);cursor:pointer" onclick="adicionarTarefaRapida()"><i class="fas fa-plus" style="color:var(--blue)"></i></div><input type="text" id="todo_new_task" class="todo-input" placeholder="Adicionar tarefa..." onkeypress="if(event.key==='Enter'){event.preventDefault();adicionarTarefaRapida()}"></div><div id="todo_tasks_container"></div></div>
-
-<div id="tela_lembretes" class="tela"><div style="margin-bottom:15px;font-size:12px;color:#aaa"><i class="fas fa-info-circle"></i> Crie grupos no <b>+</b></div><div id="listaLembretes"></div></div>
-<div id="tela_lembretes_detalhes" class="tela"><div class="todo-title"><div style="display:flex;align-items:center;gap:15px"><i class="fas fa-arrow-left" style="cursor:pointer;color:#888" onclick="mudarTela('tela_lembretes');renderizarTudo()"></i><span id="lembrete_list_title">Nome</span></div><i class="fas fa-file-pdf" style="color:var(--orange);cursor:pointer;font-size:26px" onclick="imprimirLembrete()"></i></div><div class="todo-input-row" style="flex-wrap:wrap;gap:10px;padding:10px"><input type="text" id="lembrete_new_task" class="todo-input" placeholder="Novo Lembrete..." style="flex:1;min-width:180px;margin-left:0"><input type="date" id="lembrete_new_date" style="width:auto;margin:0;padding:8px;background:transparent;color:#fff;border:1px solid #444;border-radius:4px"><div class="todo-circle" style="border-color:var(--orange);cursor:pointer;margin:0;width:35px;height:35px;border-radius:4px" onclick="adicionarTarefaLembrete()"><i class="fas fa-plus" style="color:var(--orange)"></i></div></div><div id="lembrete_tasks_container"></div></div>
-
+<div id="tela_pendencias" class="tela"><div style="margin-bottom:15px;font-size:12px;color:#aaa;"><i class="fas fa-info-circle"></i> Selecione uma Lista ou adicione no <b>+</b></div><div id="listaPendencias"></div></div>
+<div id="tela_pendencias_detalhes" class="tela"><div class="todo-title"><div style="display:flex;align-items:center;gap:15px;"><i class="fas fa-arrow-left" style="cursor:pointer;color:#888;" onclick="mudarTela('tela_pendencias');renderizarTudo();"></i><span id="todo_list_title">Nome da Lista</span></div><i class="fab fa-whatsapp" style="color:#25D366;cursor:pointer;font-size:26px;" onclick="enviarWhatsAppPendencia()"></i></div><div class="todo-input-row"><div class="todo-circle" style="border-color:var(--blue);cursor:pointer;" onclick="adicionarTarefaRapida()"><i class="fas fa-plus" style="color:var(--blue);"></i></div><input type="text" id="todo_new_task" class="todo-input" placeholder="Adicionar tarefa..." onkeypress="if(event.key==='Enter'){event.preventDefault();adicionarTarefaRapida();}"></div><div id="todo_tasks_container"></div></div>
+<div id="tela_lembretes" class="tela"><div style="margin-bottom:15px;font-size:12px;color:#aaa;"><i class="fas fa-info-circle"></i> Crie grupos no <b>+</b></div><div id="listaLembretes"></div></div>
+<div id="tela_lembretes_detalhes" class="tela"><div class="todo-title"><div style="display:flex;align-items:center;gap:15px;"><i class="fas fa-arrow-left" style="cursor:pointer;color:#888;" onclick="mudarTela('tela_lembretes');renderizarTudo();"></i><span id="lembrete_list_title">Nome</span></div><i class="fas fa-file-pdf" style="color:var(--orange);cursor:pointer;font-size:26px;" onclick="imprimirLembrete()"></i></div><div class="todo-input-row" style="flex-wrap:wrap;gap:10px;padding:10px;"><input type="text" id="lembrete_new_task" class="todo-input" placeholder="Novo Lembrete..." style="flex:1;min-width:180px;margin-left:0;"><input type="date" id="lembrete_new_date" style="width:auto;margin:0;padding:8px;background:transparent;color:#fff;border:1px solid #444;border-radius:4px;"><div class="todo-circle" style="border-color:var(--orange);cursor:pointer;margin:0;width:35px;height:35px;border-radius:4px;" onclick="adicionarTarefaLembrete()"><i class="fas fa-plus" style="color:var(--orange);"></i></div></div><div id="lembrete_tasks_container"></div></div>
 <div id="tela_corte" class="tela">
-<div style="display:flex;gap:10px;margin-bottom:15px"><button onclick="novoPlanoCorte()" style="flex:1;padding:12px;background:var(--card);border:1px solid #444;border-radius:8px;color:var(--cyan);font-weight:bold;cursor:pointer;font-size:11px"><i class="fas fa-plus"></i> NOVO</button><button onclick="abrirPlanosSalvos()" style="flex:1;padding:12px;background:var(--card);border:1px solid #444;border-radius:8px;color:#ddd;font-weight:bold;cursor:pointer;font-size:11px"><i class="fas fa-folder-open" style="color:var(--gold)"></i> ABRIR</button><button onclick="salvarPlanoCorte()" style="flex:1;padding:12px;background:var(--card);border:1px solid #444;border-radius:8px;color:var(--green);font-weight:bold;cursor:pointer;font-size:11px"><i class="fas fa-save"></i> SALVAR</button></div>
-<div class="item-card" style="border-left-color:var(--light-gray)"><h4 style="color:var(--light-gray);margin-top:0"><i class="fas fa-vector-square"></i> Info e Chapa Base</h4><label>Cliente / Projeto</label><input type="text" id="corte_cliente_nome" placeholder="Ex: Móveis Cozinha"><div style="display:flex;gap:10px"><div style="flex:2"><label>Material</label><input type="text" id="corte_material" value="MDF Branco"></div><div style="flex:1"><label>Espessura</label><input type="text" id="corte_espessura" value="15mm"></div></div><div style="display:flex;gap:10px"><div style="flex:1"><label>Comp. Chapa (mm)</label><input type="number" id="corte_chapa_comp" value="2750"></div><div style="flex:1"><label>Largura Chapa (mm)</label><input type="number" id="corte_chapa_larg" value="1850"></div></div><div style="display:flex;gap:10px"><div style="flex:1"><label>Espessura Serra (mm)</label><input type="number" id="corte_serra" value="4"></div></div><div style="margin-top:10px"><label class="label-check" style="background:rgba(10,132,255,0.1);border-color:var(--blue);color:var(--blue);justify-content:flex-start;padding-left:15px"><input type="checkbox" id="corte_rotacao" class="check-inline"> Permitir Rotação</label></div></div>
-<div class="item-card" style="border-left-color:var(--blue)"><h4 style="color:var(--blue);margin-top:0"><i class="fas fa-plus"></i> Adicionar Peças</h4><div style="display:flex;gap:10px"><div style="flex:1"><label>Qtd</label><input type="number" id="corte_qtd_peca" value="1"></div><div style="flex:1"><label>Comp. (mm)</label><input type="number" id="corte_comp_peca"></div><div style="flex:1"><label>Larg. (mm)</label><input type="number" id="corte_larg_peca"></div></div><div style="margin-top:5px"><label>Descrição</label><input type="text" id="corte_desc_peca"></div><div style="margin-top:10px"><label>Cor Fita</label><input type="text" id="corte_cor_fita_peca" placeholder="Opcional"></div><div style="margin-top:10px"><label style="color:var(--gold)"><i class="fas fa-tape"></i> Fita:</label><div style="display:flex;gap:10px;margin-top:5px"><div style="flex:1;display:flex;flex-direction:column;gap:5px"><label class="label-check"><input type="checkbox" id="corte_fita_c1" class="check-inline"> C1</label><label class="label-check"><input type="checkbox" id="corte_fita_c2" class="check-inline"> C2</label></div><div style="flex:1;display:flex;flex-direction:column;gap:5px"><label class="label-check"><input type="checkbox" id="corte_fita_l1" class="check-inline"> L1</label><label class="label-check"><input type="checkbox" id="corte_fita_l2" class="check-inline"> L2</label></div></div></div><button class="btn-outline" style="color:var(--blue);border-color:var(--blue);margin-top:15px" onclick="adicionarPecaCorte()">+ INCLUIR PEÇA</button></div>
-<div class="item-card" style="border-left-color:var(--gold)"><h4 style="color:var(--gold);margin-top:0"><i class="fas fa-list"></i> Lista de Corte</h4><div id="lista_pecas_corte" style="max-height:250px;overflow-y:auto;margin-bottom:15px"></div><div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:8px;text-align:center;margin-bottom:15px;border:1px solid #444"><span style="font-size:12px;color:#aaa;font-weight:bold">RESULTADO:</span><br><strong id="resultado_chapas" style="color:var(--gold);font-size:20px">-</strong><p id="resultado_area" style="margin:5px 0 0 0;font-size:12px;color:#888">Área: -</p><p id="resultado_fita" style="margin:5px 0 0 0;font-size:13px;color:var(--cyan);font-weight:bold">Fita: -</p></div><button onclick="calcularAlgoritmoDeCorte()" style="width:100%;padding:15px;background:var(--gold);border:none;border-radius:8px;color:black;font-weight:bold;margin-bottom:10px;cursor:pointer"><i class="fas fa-magic"></i> 1. GERAR MAPA</button><button onclick="imprimirPlanoCorte()" style="width:100%;padding:15px;background:none;border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:bold;cursor:pointer;margin-bottom:10px"><i class="fas fa-print"></i> 2. EXPORTAR PDF</button><button onclick="imprimirEtiquetasCorte()" style="width:100%;padding:15px;background:none;border:1px solid var(--orange);border-radius:8px;color:var(--orange);font-weight:bold;cursor:pointer;margin-bottom:10px"><i class="fas fa-tags"></i> 3. ETIQUETAS</button><button onclick="gerarListaCompraDoPlano()" style="width:100%;padding:15px;background:none;border:1px dashed var(--pink);border-radius:8px;color:var(--pink);font-weight:bold;cursor:pointer"><i class="fas fa-shopping-cart"></i> 4. GERAR COMPRAS</button><div id="container_mapas_visuais" style="margin-top:15px"></div></div>
+<div style="display:flex;gap:10px;margin-bottom:15px;"><button onclick="novoPlanoCorte()" style="flex:1;padding:12px;background:var(--card);border:1px solid #444;border-radius:8px;color:var(--cyan);font-weight:bold;cursor:pointer;font-size:11px;"><i class="fas fa-plus"></i> NOVO</button><button onclick="abrirPlanosSalvos()" style="flex:1;padding:12px;background:var(--card);border:1px solid #444;border-radius:8px;color:#ddd;font-weight:bold;cursor:pointer;font-size:11px;"><i class="fas fa-folder-open" style="color:var(--gold);"></i> ABRIR</button><button onclick="salvarPlanoCorte()" style="flex:1;padding:12px;background:var(--card);border:1px solid #444;border-radius:8px;color:var(--green);font-weight:bold;cursor:pointer;font-size:11px;"><i class="fas fa-save"></i> SALVAR</button></div>
+<div class="item-card" style="border-left-color:var(--light-gray);"><h4 style="color:var(--light-gray);margin-top:0;"><i class="fas fa-vector-square"></i> Info e Chapa Base</h4><label>Cliente / Projeto</label><input type="text" id="corte_cliente_nome" placeholder="Ex: Móveis Cozinha"><div style="display:flex;gap:10px;"><div style="flex:2"><label>Material</label><input type="text" id="corte_material" value="MDF Branco"></div><div style="flex:1"><label>Espessura</label><input type="text" id="corte_espessura" value="15mm"></div></div><div style="display:flex;gap:10px;"><div style="flex:1"><label>Comp. Chapa (mm)</label><input type="number" id="corte_chapa_comp" value="2750"></div><div style="flex:1"><label>Largura Chapa (mm)</label><input type="number" id="corte_chapa_larg" value="1850"></div></div><div style="display:flex;gap:10px;"><div style="flex:1"><label>Espessura Serra (mm)</label><input type="number" id="corte_serra" value="4"></div></div><div style="margin-top:10px;"><label class="label-check" style="background:rgba(10,132,255,0.1);border-color:var(--blue);color:var(--blue);justify-content:flex-start;padding-left:15px;"><input type="checkbox" id="corte_rotacao" class="check-inline"> Permitir Rotação</label></div></div>
+<div class="item-card" style="border-left-color:var(--blue);"><h4 style="color:var(--blue);margin-top:0;"><i class="fas fa-plus"></i> Adicionar Peças</h4><div style="display:flex;gap:10px;"><div style="flex:1"><label>Qtd</label><input type="number" id="corte_qtd_peca" value="1"></div><div style="flex:1"><label>Comp. (mm)</label><input type="number" id="corte_comp_peca"></div><div style="flex:1"><label>Larg. (mm)</label><input type="number" id="corte_larg_peca"></div></div><div style="margin-top:5px;"><label>Descrição</label><input type="text" id="corte_desc_peca"></div><div style="margin-top:10px;"><label>Cor Fita</label><input type="text" id="corte_cor_fita_peca" placeholder="Opcional"></div><div style="margin-top:10px;"><label style="color:var(--gold)"><i class="fas fa-tape"></i> Fita:</label><div style="display:flex;gap:10px;margin-top:5px;"><div style="flex:1;display:flex;flex-direction:column;gap:5px;"><label class="label-check"><input type="checkbox" id="corte_fita_c1" class="check-inline"> C1</label><label class="label-check"><input type="checkbox" id="corte_fita_c2" class="check-inline"> C2</label></div><div style="flex:1;display:flex;flex-direction:column;gap:5px;"><label class="label-check"><input type="checkbox" id="corte_fita_l1" class="check-inline"> L1</label><label class="label-check"><input type="checkbox" id="corte_fita_l2" class="check-inline"> L2</label></div></div></div><button class="btn-outline" style="color:var(--blue);border-color:var(--blue);margin-top:15px;" onclick="adicionarPecaCorte()">+ INCLUIR PEÇA</button></div>
+<div class="item-card" style="border-left-color:var(--gold);"><h4 style="color:var(--gold);margin-top:0;"><i class="fas fa-list"></i> Lista de Corte</h4><div id="lista_pecas_corte" style="max-height:250px;overflow-y:auto;margin-bottom:15px;"></div><div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:8px;text-align:center;margin-bottom:15px;border:1px solid #444;"><span style="font-size:12px;color:#aaa;font-weight:bold;">RESULTADO:</span><br><strong id="resultado_chapas" style="color:var(--gold);font-size:20px;">-</strong><p id="resultado_area" style="margin:5px 0 0 0;font-size:12px;color:#888;">Área: -</p><p id="resultado_fita" style="margin:5px 0 0 0;font-size:13px;color:var(--cyan);font-weight:bold;">Fita: -</p></div><button onclick="calcularAlgoritmoDeCorte()" style="width:100%;padding:15px;background:var(--gold);border:none;border-radius:8px;color:black;font-weight:bold;margin-bottom:10px;cursor:pointer;"><i class="fas fa-magic"></i> 1. GERAR MAPA</button><button onclick="imprimirPlanoCorte()" style="width:100%;padding:15px;background:none;border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:bold;cursor:pointer;margin-bottom:10px;"><i class="fas fa-print"></i> 2. EXPORTAR PDF</button><button onclick="imprimirEtiquetasCorte()" style="width:100%;padding:15px;background:none;border:1px solid var(--orange);border-radius:8px;color:var(--orange);font-weight:bold;cursor:pointer;margin-bottom:10px;"><i class="fas fa-tags"></i> 3. ETIQUETAS</button><button onclick="gerarListaCompraDoPlano()" style="width:100%;padding:15px;background:none;border:1px dashed var(--pink);border-radius:8px;color:var(--pink);font-weight:bold;cursor:pointer;"><i class="fas fa-shopping-cart"></i> 4. GERAR COMPRAS</button><div id="container_mapas_visuais" style="margin-top:15px;"></div></div>
 </div>
-
 <div id="tela_venda_m2" class="tela">
-<div class="item-card" style="border-left-color:var(--teal)"><h4 style="color:var(--teal);margin-top:0"><i class="fas fa-square"></i> Material / Dimensões</h4><div style="display:flex;gap:10px"><div style="flex:1"><label>Largura (mm)</label><input type="number" id="vm2_largura" value="1850" oninput="calcularVendaM2();renderizarPecasVendaM2()"></div><div style="flex:1"><label>Comprimento (mm)</label><input type="number" id="vm2_comprimento" value="2750" oninput="calcularVendaM2();renderizarPecasVendaM2()"></div></div><div style="display:flex;gap:10px"><div style="flex:1"><label>Custo (R$)</label><input type="number" id="vm2_custo_painel" value="300" oninput="calcularVendaM2();renderizarPecasVendaM2()"></div><div style="flex:1"><label>Margem</label><select id="vm2_margem" onchange="calcularVendaM2();renderizarPecasVendaM2()" style="margin:0;padding:12px"><option value="1">x1</option><option value="1.5">x1.5</option><option value="2" selected>x2</option><option value="2.5">x2.5</option><option value="3">x3</option></select></div><div style="flex:1"><label>Fita (R$/m)</label><input type="number" id="vm2_custo_fita" value="2" oninput="calcularVendaM2();renderizarPecasVendaM2()"></div></div><div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;margin-top:10px;display:flex;justify-content:space-around;text-align:center"><div><span style="font-size:10px;color:#aaa">Área</span><br><strong id="vm2_area_painel" style="color:#fff">5.09 m²</strong></div><div><span style="font-size:10px;color:#aaa">Venda/m²</span><br><strong id="vm2_custo_m2" style="color:var(--green)">R$ 0,00</strong></div></div></div>
-<div class="item-card" style="border-left-color:var(--blue)"><h4 style="color:var(--blue);margin-top:0"><i class="fas fa-plus"></i> Adicionar Peças</h4><div style="display:flex;gap:10px"><div style="flex:1"><label>Qtd</label><input type="number" id="vm2_qtd_peca" value="1"></div><div style="flex:1"><label>Comp. (mm)</label><input type="number" id="vm2_comp_peca"></div><div style="flex:1"><label>Larg. (mm)</label><input type="number" id="vm2_larg_peca"></div></div><div style="margin-top:10px"><label style="color:var(--gold)"><i class="fas fa-tape"></i> Fita:</label><div style="display:flex;gap:10px;margin-top:5px"><div style="flex:1;display:flex;flex-direction:column;gap:5px"><label class="label-check"><input type="checkbox" id="vm2_fita_c1" class="check-inline"> C1</label><label class="label-check"><input type="checkbox" id="vm2_fita_c2" class="check-inline"> C2</label></div><div style="flex:1;display:flex;flex-direction:column;gap:5px"><label class="label-check"><input type="checkbox" id="vm2_fita_l1" class="check-inline"> L1</label><label class="label-check"><input type="checkbox" id="vm2_fita_l2" class="check-inline"> L2</label></div></div></div><button class="btn-outline" style="color:var(--blue);border-color:var(--blue);margin-top:15px" onclick="adicionarPecaVendaM2()">+ INCLUIR PEÇA</button></div>
-<div class="item-card" style="border-left-color:var(--gold)"><h4 style="color:var(--gold);margin-top:0"><i class="fas fa-list"></i> Peças Calculadas</h4><div id="lista_pecas_venda_m2" style="max-height:250px;overflow-y:auto;margin-bottom:15px"></div><div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:8px;text-align:center;border:1px solid #444;margin-bottom:15px"><span style="font-size:12px;color:#aaa;font-weight:bold">VALOR FINAL:</span><br><strong id="vm2_valor_total" style="color:var(--gold);font-size:24px">R$ 0,00</strong><p style="margin:5px 0 0 0;font-size:12px;color:#888">Área: <span id="vm2_total_area_pecas">0.00 m²</span> | Fita: <span id="vm2_total_fita">0.00 m</span></p></div><div style="border-top:1px dashed #444;padding-top:15px"><h4 style="color:var(--purple);margin:0 0 10px 0;font-size:13px"><i class="fas fa-save"></i> Salvar como Orçamento</h4><label>Cliente / Projeto</label><input type="text" id="vm2_cliente" placeholder="Ex: Orçamento Peças"><button onclick="salvarVendaM2ComoOrcamento()" style="width:100%;padding:15px;background:var(--purple);border:none;border-radius:8px;color:white;font-weight:bold;cursor:pointer"><i class="fas fa-file-invoice-dollar"></i> SALVAR ORÇAMENTO</button></div></div>
+<div class="item-card" style="border-left-color:var(--teal);"><h4 style="color:var(--teal);margin-top:0;"><i class="fas fa-square"></i> Material / Dimensões</h4><div style="display:flex;gap:10px;"><div style="flex:1"><label>Largura (mm)</label><input type="number" id="vm2_largura" value="1850" oninput="calcularVendaM2();renderizarPecasVendaM2();"></div><div style="flex:1"><label>Comprimento (mm)</label><input type="number" id="vm2_comprimento" value="2750" oninput="calcularVendaM2();renderizarPecasVendaM2();"></div></div><div style="display:flex;gap:10px;"><div style="flex:1"><label>Custo (R$)</label><input type="number" id="vm2_custo_painel" value="300" oninput="calcularVendaM2();renderizarPecasVendaM2();"></div><div style="flex:1"><label>Margem</label><select id="vm2_margem" onchange="calcularVendaM2();renderizarPecasVendaM2();" style="margin:0;padding:12px;"><option value="1">x1</option><option value="1.5">x1.5</option><option value="2" selected>x2</option><option value="2.5">x2.5</option><option value="3">x3</option></select></div><div style="flex:1"><label>Fita (R$/m)</label><input type="number" id="vm2_custo_fita" value="2" oninput="calcularVendaM2();renderizarPecasVendaM2();"></div></div><div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;margin-top:10px;display:flex;justify-content:space-around;text-align:center;"><div><span style="font-size:10px;color:#aaa;">Área</span><br><strong id="vm2_area_painel" style="color:#fff;">5.09 m²</strong></div><div><span style="font-size:10px;color:#aaa;">Venda/m²</span><br><strong id="vm2_custo_m2" style="color:var(--green);">R$ 0,00</strong></div></div></div>
+<div class="item-card" style="border-left-color:var(--blue);"><h4 style="color:var(--blue);margin-top:0;"><i class="fas fa-plus"></i> Adicionar Peças</h4><div style="display:flex;gap:10px;"><div style="flex:1"><label>Qtd</label><input type="number" id="vm2_qtd_peca" value="1"></div><div style="flex:1"><label>Comp. (mm)</label><input type="number" id="vm2_comp_peca"></div><div style="flex:1"><label>Larg. (mm)</label><input type="number" id="vm2_larg_peca"></div></div><div style="margin-top:10px;"><label style="color:var(--gold)"><i class="fas fa-tape"></i> Fita:</label><div style="display:flex;gap:10px;margin-top:5px;"><div style="flex:1;display:flex;flex-direction:column;gap:5px;"><label class="label-check"><input type="checkbox" id="vm2_fita_c1" class="check-inline"> C1</label><label class="label-check"><input type="checkbox" id="vm2_fita_c2" class="check-inline"> C2</label></div><div style="flex:1;display:flex;flex-direction:column;gap:5px;"><label class="label-check"><input type="checkbox" id="vm2_fita_l1" class="check-inline"> L1</label><label class="label-check"><input type="checkbox" id="vm2_fita_l2" class="check-inline"> L2</label></div></div></div><button class="btn-outline" style="color:var(--blue);border-color:var(--blue);margin-top:15px;" onclick="adicionarPecaVendaM2()">+ INCLUIR PEÇA</button></div>
+<div class="item-card" style="border-left-color:var(--gold);"><h4 style="color:var(--gold);margin-top:0;"><i class="fas fa-list"></i> Peças Calculadas</h4><div id="lista_pecas_venda_m2" style="max-height:250px;overflow-y:auto;margin-bottom:15px;"></div><div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:8px;text-align:center;border:1px solid #444;margin-bottom:15px;"><span style="font-size:12px;color:#aaa;font-weight:bold;">VALOR FINAL:</span><br><strong id="vm2_valor_total" style="color:var(--gold);font-size:24px;">R$ 0,00</strong><p style="margin:5px 0 0 0;font-size:12px;color:#888;">Área: <span id="vm2_total_area_pecas">0.00 m²</span> | Fita: <span id="vm2_total_fita">0.00 m</span></p></div><div style="border-top:1px dashed #444;padding-top:15px;"><h4 style="color:var(--purple);margin:0 0 10px 0;font-size:13px;"><i class="fas fa-save"></i> Salvar como Orçamento</h4><label>Cliente / Projeto</label><input type="text" id="vm2_cliente" placeholder="Ex: Orçamento Peças"><button onclick="salvarVendaM2ComoOrcamento()" style="width:100%;padding:15px;background:var(--purple);border:none;border-radius:8px;color:white;font-weight:bold;cursor:pointer;"><i class="fas fa-file-invoice-dollar"></i> SALVAR ORÇAMENTO</button></div></div>
 </div>
-
 <div id="tela_cores" class="tela">
-<div class="comparison-area"><div class="comparison-header"><span>📐 Área de Comparação</span><button class="btn-compare" onclick="toggleFullscreenCores()">🔍 Tela Cheia</button></div><div class="comparison-display"><div class="color-target-full" id="targetDisplay" style="background:#3498db"><span class="color-label">COR ALVO</span><span class="color-hex" id="targetHex">#3498DB</span></div></div></div>
-<div class="calibration-slider-container"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:600;color:var(--gold)"><span>🎚️ Calibrador</span><span id="brightnessValue" style="background:var(--blue);color:white;padding:4px 10px;border-radius:15px;font-size:.85em">0</span></div><div style="display:flex;align-items:center;gap:10px"><span style="font-size:1.2em">🌑</span><input type="range" id="brightnessSlider" min="-100" max="100" value="0" step="1"><span style="font-size:1.2em">☀️</span><button onclick="resetBrightnessCores()" style="background:#555;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:.8em">Reset</button></div></div>
-<div class="item-card" style="border-left-color:var(--blue)"><h4 style="color:var(--blue);margin-top:0"><i class="fas fa-bullseye"></i> Cor Alvo</h4><label>Selecione a cor:</label><input type="color" id="targetColor" value="#3498db"><label>Nome (opcional):</label><input type="text" id="colorName" placeholder="Ex: Azul Piscina"></div>
-<div class="item-card" style="border-left-color:var(--green)"><h4 style="color:var(--green);margin-top:0"><i class="fas fa-flask"></i> Quantidade</h4><div style="display:flex;gap:10px"><div style="flex:1"><label>Silicone (ml)</label><input type="number" id="baseAmount" value="100" min="10" step="10"></div><div style="flex:1"><label>Potência</label><input type="number" id="calibration" value="1.0" min="0.1" step="0.1"></div></div></div>
-<div class="item-card" style="border-left-color:var(--purple)"><h4 style="color:var(--purple);margin-top:0"><i class="fas fa-palette"></i> Corantes</h4><div style="display:flex;gap:10px;margin-bottom:15px"><input type="color" id="newColorantHex" value="#ff0000" style="flex:0 0 50px;height:48px;padding:2px"><input type="text" id="newColorantName" placeholder="Nome" style="flex:1;margin:0"><button onclick="addColorantCores()" style="background:var(--green);color:white;border:none;padding:0 15px;border-radius:8px;cursor:pointer;font-weight:bold">+</button></div><div id="colorantList" style="display:grid;gap:8px"></div><p id="emptyListMsg" style="text-align:center;color:#666;padding:15px;display:none">Nenhum corante.</p></div>
-<button onclick="calcularMisturaCores()" style="width:100%;padding:15px;background:var(--blue);border:none;border-radius:8px;color:white;font-weight:bold;font-size:1.1em;cursor:pointer;margin-bottom:15px"><i class="fas fa-calculator"></i> CALCULAR RECEITA</button>
-<div id="resultBox" style="background:rgba(48,209,88,0.1);border:1px solid var(--green);border-radius:12px;padding:20px;margin-bottom:15px;display:none;color:var(--text)"><h2 style="text-align:center;margin-bottom:15px;color:var(--green)">✨ Receita Pronta</h2><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px"><div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;text-align:center"><span style="font-size:1.5em;font-weight:bold;display:block" id="resTotalDrops">0</span><span style="font-size:.8em;color:#888">Gotas</span></div><div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;text-align:center"><span style="font-size:1.5em;font-weight:bold;display:block" id="resMl">0.0</span><span style="font-size:.8em;color:#888">ml</span></div><div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;text-align:center"><span style="font-size:1.5em;font-weight:bold;display:block" id="resBase">0</span><span style="font-size:.8em;color:#888">ml base</span></div></div><div style="background:rgba(255,255,255,0.03);padding:15px;border-radius:8px"><h4 style="margin-bottom:10px;color:var(--gold)">📋 Instruções:</h4><div id="recipeSteps"></div></div><button onclick="salvarReceitaCores()" style="width:100%;margin-top:15px;padding:12px;background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);border-radius:8px;cursor:pointer;font-weight:bold"><i class="fas fa-save"></i> Salvar Receita</button></div>
-<div class="item-card" style="border-left-color:var(--gold)"><h4 style="color:var(--gold);margin-top:0"><i class="fas fa-history"></i> Receitas Salvas</h4><div id="historyList"></div></div>
+<div class="comparison-area"><div class="comparison-header"><span>📐 Área de Comparação</span><button class="btn-compare" onclick="toggleFullscreenCores()">🔍 Tela Cheia</button></div><div class="comparison-display"><div class="color-target-full" id="targetDisplay" style="background:#3498db;"><span class="color-label">COR ALVO</span><span class="color-hex" id="targetHex">#3498DB</span></div></div></div>
+<div class="calibration-slider-container"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:600;color:var(--gold);"><span>🎚️ Calibrador</span><span id="brightnessValue" style="background:var(--blue);color:white;padding:4px 10px;border-radius:15px;font-size:.85em;">0</span></div><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:1.2em;">🌑</span><input type="range" id="brightnessSlider" min="-100" max="100" value="0" step="1"><span style="font-size:1.2em;">☀️</span><button onclick="resetBrightnessCores()" style="background:#555;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:.8em;">Reset</button></div></div>
+<div class="item-card" style="border-left-color:var(--blue);"><h4 style="color:var(--blue);margin-top:0;"><i class="fas fa-bullseye"></i> Cor Alvo</h4><label>Selecione a cor:</label><input type="color" id="targetColor" value="#3498db"><label>Nome (opcional):</label><input type="text" id="colorName" placeholder="Ex: Azul Piscina"></div>
+<div class="item-card" style="border-left-color:var(--green);"><h4 style="color:var(--green);margin-top:0;"><i class="fas fa-flask"></i> Quantidade</h4><div style="display:flex;gap:10px;"><div style="flex:1;"><label>Silicone (ml)</label><input type="number" id="baseAmount" value="100" min="10" step="10"></div><div style="flex:1;"><label>Potência</label><input type="number" id="calibration" value="1.0" min="0.1" step="0.1"></div></div></div>
+<div class="item-card" style="border-left-color:var(--purple);"><h4 style="color:var(--purple);margin-top:0;"><i class="fas fa-palette"></i> Corantes</h4><div style="display:flex;gap:10px;margin-bottom:15px;"><input type="color" id="newColorantHex" value="#ff0000" style="flex:0 0 50px;height:48px;padding:2px;"><input type="text" id="newColorantName" placeholder="Nome" style="flex:1;margin:0;"><button onclick="addColorantCores()" style="background:var(--green);color:white;border:none;padding:0 15px;border-radius:8px;cursor:pointer;font-weight:bold;">+</button></div><div id="colorantList" style="display:grid;gap:8px;"></div><p id="emptyListMsg" style="text-align:center;color:#666;padding:15px;display:none;">Nenhum corante.</p></div>
+<button onclick="calcularMisturaCores()" style="width:100%;padding:15px;background:var(--blue);border:none;border-radius:8px;color:white;font-weight:bold;font-size:1.1em;cursor:pointer;margin-bottom:15px;"><i class="fas fa-calculator"></i> CALCULAR RECEITA</button>
+<div id="resultBox" style="background:rgba(48,209,88,0.1);border:1px solid var(--green);border-radius:12px;padding:20px;margin-bottom:15px;display:none;color:var(--text);"><h2 style="text-align:center;margin-bottom:15px;color:var(--green);">✨ Receita Pronta</h2><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px;"><div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;text-align:center;"><span style="font-size:1.5em;font-weight:bold;display:block;" id="resTotalDrops">0</span><span style="font-size:.8em;color:#888;">Gotas</span></div><div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;text-align:center;"><span style="font-size:1.5em;font-weight:bold;display:block;" id="resMl">0.0</span><span style="font-size:.8em;color:#888;">ml</span></div><div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;text-align:center;"><span style="font-size:1.5em;font-weight:bold;display:block;" id="resBase">0</span><span style="font-size:.8em;color:#888;">ml base</span></div></div><div style="background:rgba(255,255,255,0.03);padding:15px;border-radius:8px;"><h4 style="margin-bottom:10px;color:var(--gold);">📋 Instruções:</h4><div id="recipeSteps"></div></div><button onclick="salvarReceitaCores()" style="width:100%;margin-top:15px;padding:12px;background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);border-radius:8px;cursor:pointer;font-weight:bold;"><i class="fas fa-save"></i> Salvar Receita</button></div>
+<div class="item-card" style="border-left-color:var(--gold);"><h4 style="color:var(--gold);margin-top:0;"><i class="fas fa-history"></i> Receitas Salvas</h4><div id="historyList"></div></div>
 </div>
-
 <div id="tela_config" class="tela">
-<div class="item-card" style="border-left-color:var(--green);margin-bottom:20px"><h4 style="color:var(--green);margin-top:0;text-align:center"><i class="fas fa-cloud"></i> Nuvem</h4><div style="text-align:center;font-size:12px;color:#aaa;margin-bottom:10px">Dados salvos automaticamente.</div><div id="sync_status_config" style="margin:10px 0;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:11px;color:#888">Status: Verificando...</div><button class="btn-outline" style="color:var(--green);border-color:var(--green)" onclick="exportarBackup()"><i class="fas fa-download"></i> BACKUP MANUAL</button><button class="btn-outline" style="color:var(--blue);border-color:var(--blue)" onclick="document.getElementById('import_file').click()"><i class="fas fa-upload"></i> RESTAURAR BACKUP</button><input type="file" id="import_file" style="display:none" accept=".json" onchange="importarBackup(event)"></div>
-<div class="item-card" style="border-left-color:#aaa"><h4 style="color:var(--gold);margin-top:0;text-align:center"><i class="fas fa-building"></i> Empresa</h4>
-<label style="text-align:center;margin-top:15px">Logo da Empresa</label>
+<div class="item-card" style="border-left-color:var(--green);margin-bottom:20px;"><h4 style="color:var(--green);margin-top:0;text-align:center;"><i class="fas fa-cloud"></i> Nuvem</h4><div style="text-align:center;font-size:12px;color:#aaa;margin-bottom:10px;">Dados salvos automaticamente.</div><div id="sync_status_config" style="margin:10px 0;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:11px;color:#888;">Status: Verificando...</div><button class="btn-outline" style="color:var(--green);border-color:var(--green);" onclick="exportarBackup()"><i class="fas fa-download"></i> BACKUP MANUAL</button><button class="btn-outline" style="color:var(--blue);border-color:var(--blue);" onclick="document.getElementById('import_file').click()"><i class="fas fa-upload"></i> RESTAURAR BACKUP</button><input type="file" id="import_file" style="display:none" accept=".json" onchange="importarBackup(event)"></div>
+<div class="item-card" style="border-left-color:#aaa;"><h4 style="color:var(--gold);margin-top:0;text-align:center;"><i class="fas fa-building"></i> Empresa</h4>
+<label style="text-align:center;margin-top:15px;">Logo da Empresa</label>
 <div class="logo-preview-container">
-<div class="logo-preview-box" id="logo_preview_box"><img id="img_preview" src="" style="display:none" onerror="this.style.display='none';document.getElementById('logo_status_msg').className='logo-status erro';document.getElementById('logo_status_msg').innerHTML='❌ Falha ao carregar'"><span id="img_placeholder" class="placeholder">Sem Logo<br><small>Escolha uma opção</small></span></div>
+<div class="logo-preview-box" id="logo_preview_box"><img id="img_preview" src="" style="display:none;" onerror="this.style.display='none';document.getElementById('logo_status_msg').className='logo-status erro';document.getElementById('logo_status_msg').innerHTML='❌ Falha ao carregar';"><span id="img_placeholder" class="placeholder">Sem Logo<br><small>Escolha uma opção</small></span></div>
 <div id="logo_status_msg" class="logo-status info">ℹ️ Escolha uma opção</div>
 </div>
 <div class="logo-type-tabs"><div class="logo-type-tab ativo" onclick="trocarAbaLogo('url',this)"><i class="fas fa-link"></i> URL (GitHub)</div><div class="logo-type-tab" onclick="trocarAbaLogo('arquivo',this)"><i class="fas fa-upload"></i> Arquivo</div></div>
-<div class="logo-url-input visivel" id="box_logo_url"><label><i class="fab fa-github"></i> URL da Imagem</label><input type="url" id="cfg_logo_url" placeholder="https://raw.githubusercontent.com/..." oninput="previewLogoUrl()"><div style="display:flex;gap:5px;margin-top:5px"><button onclick="testarLogoUrl()" style="flex:1;padding:8px;background:var(--blue);border:none;border-radius:6px;color:white;font-weight:bold;cursor:pointer;font-size:11px"><i class="fas fa-check"></i> TESTAR</button><button onclick="limparLogo()" style="flex:1;padding:8px;background:var(--red);border:none;border-radius:6px;color:white;font-weight:bold;cursor:pointer;font-size:11px"><i class="fas fa-trash"></i> LIMPAR</button></div><small style="color:#888;display:block;margin-top:8px;line-height:1.4">💡 <b>Dica GitHub:</b> Use o botão "Raw". O link deve começar com:<br><code style="background:rgba(255,255,255,0.05);padding:2px 5px;border-radius:3px;font-size:10px">https://raw.githubusercontent.com/...</code></small></div>
-<div class="logo-file-input" id="box_logo_arquivo"><label>Upload de Arquivo</label><input type="file" id="cfg_logo_file" accept="image/*" style="background:none;border:none;padding:0;width:100%"><small style="color:#888;display:block;margin-top:5px">⚠️ Prefira URL do GitHub.</small></div>
-<label>Nome</label><input type="text" id="cfg_nome"><label>Telefone</label><input type="text" id="cfg_telefone"><label>Endereço</label><input type="text" id="cfg_endereco"><label>Chave PIX</label><input type="text" id="cfg_chave_pix"><label>Msg Rodapé</label><input type="text" id="cfg_msg"><button onclick="salvarConfig()" class="btn-primary" style="margin-top:20px">SALVAR AJUSTES</button><button onclick="limparBancoDados()" class="btn-danger" style="margin-top:10px"><i class="fas fa-trash"></i> APAGAR DADOS NUVEM</button></div>
+<div class="logo-url-input visivel" id="box_logo_url"><label><i class="fab fa-github"></i> URL da Imagem</label><input type="url" id="cfg_logo_url" placeholder="https://raw.githubusercontent.com/..." oninput="previewLogoUrl()"><div style="display:flex;gap:5px;margin-top:5px;"><button onclick="testarLogoUrl()" style="flex:1;padding:8px;background:var(--blue);border:none;border-radius:6px;color:white;font-weight:bold;cursor:pointer;font-size:11px;"><i class="fas fa-check"></i> TESTAR</button><button onclick="limparLogo()" style="flex:1;padding:8px;background:var(--red);border:none;border-radius:6px;color:white;font-weight:bold;cursor:pointer;font-size:11px;"><i class="fas fa-trash"></i> LIMPAR</button></div><small style="color:#888;display:block;margin-top:8px;line-height:1.4;">💡 <b>Dica GitHub:</b> Use o botão "Raw". O link deve começar com:<br><code style="background:rgba(255,255,255,0.05);padding:2px 5px;border-radius:3px;font-size:10px;">https://raw.githubusercontent.com/...</code></small></div>
+<div class="logo-file-input" id="box_logo_arquivo"><label>Upload de Arquivo</label><input type="file" id="cfg_logo_file" accept="image/*" style="background:none;border:none;padding:0;width:100%;"><small style="color:#888;display:block;margin-top:5px;">⚠️ Prefira URL do GitHub.</small></div>
+<label>Nome</label><input type="text" id="cfg_nome"><label>Telefone</label><input type="text" id="cfg_telefone"><label>Endereço</label><input type="text" id="cfg_endereco"><label>Chave PIX</label><input type="text" id="cfg_chave_pix"><label>Msg Rodapé</label><input type="text" id="cfg_msg"><button onclick="salvarConfig()" style="width:100%;padding:15px;background:var(--blue);border:none;border-radius:8px;color:white;font-weight:bold;margin-top:20px;cursor:pointer;">SALVAR AJUSTES</button><button onclick="limparBancoDados()" style="width:100%;padding:15px;background:transparent;border:1px solid var(--red);border-radius:8px;color:var(--red);font-weight:bold;margin-top:10px;cursor:pointer;"><i class="fas fa-trash"></i> APAGAR DADOS NUVEM</button></div>
 </div>
-
 <button class="btn-flutuante" onclick="abrirModalPorTela()">+</button>
-
-<!-- MODAL PEDIDO - CORRIGIDO E ROBUSTO -->
-<div id="modalPedido" class="modal">
-<div class="modal-content" style="border-color:var(--green)">
-<h3 style="color:var(--green);margin-top:0;text-align:center"><i class="fas fa-file-invoice"></i> Pedido / Orçamento</h3>
-<input type="hidden" id="f_id">
-
-<label>Cliente *</label>
-<input type="text" id="f_cliente" placeholder="Nome do cliente" required>
-
-<label id="label_servico">Serviço Principal</label>
-<textarea id="f_servico" rows="3" placeholder="Descreva o serviço ou orçamento..."></textarea>
-
-<div style="display:flex;gap:10px">
-<div style="flex:1"><label>Data</label><input type="date" id="f_data"></div>
-<div style="flex:1"><label>Tipo</label>
-<select id="f_tipo" onchange="ajustarCamposModal()">
-<option value="servico">Serviço/Pedido</option>
-<option value="orcamento">Orçamento</option>
-<option value="compra">Converter p/ Compras</option>
-</select></div>
-</div>
-
-<label>Status</label>
-<select id="f_status"></select>
-
-<div style="display:flex;gap:10px">
-<div style="flex:1"><label>Base (R$)</label><input type="number" id="f_total_base" value="0" oninput="document.getElementById('f_total').value=this.value;document.getElementById('f_multiplicador').value='1'"></div>
-<div style="flex:1"><label>Margem</label>
-<select id="f_multiplicador" onchange="document.getElementById('f_total').value=(parseFloat(document.getElementById('f_total_base').value)*parseFloat(this.value)).toFixed(2)" style="margin:0">
-<option value="1">x1</option><option value="1.5">x1.5</option><option value="2">x2</option><option value="2.5">x2.5</option><option value="3">x3</option>
-</select></div>
-<div style="flex:1"><label>Final (R$)</label><input type="number" id="f_total" value="0" style="color:var(--green);font-weight:bold"></div>
-<input type="hidden" id="f_pago" value="0">
-</div>
-
-<label>Mão de Obra (R$)</label>
-<input type="number" id="f_mao_obra" value="0" oninput="recalcularTotal()">
-
-<div id="f_pagamentos_section">
-<label style="color:var(--gold);font-size:11px;margin-top:15px;margin-bottom:5px"><i class="fas fa-money-bill-wave"></i> Pagamentos</label>
-<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:15px;background:rgba(255,255,255,.02);padding:15px;border-radius:8px;border:1px solid #333">
-<div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:10px">Entrada</label><input type="number" id="f_entrada" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green)"><label style="font-size:10px;margin-top:5px">Data</label><input type="date" id="f_entrada_data" style="margin:0;padding:8px;font-size:12px"></div>
-<div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:10px">Parcela 1</label><input type="number" id="f_parcela1" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green)"><label style="font-size:10px;margin-top:5px">Data</label><input type="date" id="f_parcela1_data" style="margin:0;padding:8px;font-size:12px"></div>
-<div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:10px">Parcela 2</label><input type="number" id="f_parcela2" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green)"><label style="font-size:10px;margin-top:5px">Data</label><input type="date" id="f_parcela2_data" style="margin:0;padding:8px;font-size:12px"></div>
-<div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:10px">Parcela 3</label><input type="number" id="f_parcela3" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green)"><label style="font-size:10px;margin-top:5px">Data</label><input type="date" id="f_parcela3_data" style="margin:0;padding:8px;font-size:12px"></div>
-</div>
-</div>
-
-<label>Endereço</label>
-<input type="text" id="f_endereco">
-<div style="display:flex;gap:10px">
-<div style="flex:1"><label>Nº</label><input type="text" id="f_numero"></div>
-<div style="flex:2"><label>Comp.</label><input type="text" id="f_complemento"></div>
-</div>
-<label>Cidade</label><input type="text" id="f_cidade">
-<label>Lembrete</label><textarea id="f_lembrete" rows="2"></textarea>
-
-<div style="display:flex;gap:10px;margin-bottom:10px">
-<button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1" onclick="abrirSeletorEstoque('pedido')"><i class="fas fa-box"></i> ESTOQUE</button>
-<button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);flex:1" onclick="abrirSeletorServico('pedido')"><i class="fas fa-tools"></i> CATÁLOGO</button>
-</div>
-
-<div id="container_itens_venda"></div>
-
-<button onclick="salvarPedido()" class="btn-success" style="margin-top:15px"><i class="fas fa-save"></i> SALVAR</button>
-
-<label class="label-check" id="container_ocultar_valores" style="display:none;margin-top:15px;border-color:var(--teal);color:var(--teal)">
-<input type="checkbox" id="f_ocultar_valores" class="check-inline"> Ocultar valores na impressão
-</label>
-
-<button id="btn_imprimir_pedido" onclick="imprimirPedidoOuOrcamento()" class="btn-outline" style="color:var(--blue);border-color:var(--blue);margin-top:10px;display:none"><i class="fas fa-print"></i> IMPRIMIR PDF</button>
-<button id="btn_zap_pedido" onclick="enviarWhatsAppPedido()" class="btn-outline" style="color:#25D366;border-color:#25D366;margin-top:10px;display:none"><i class="fab fa-whatsapp"></i> ENVIAR WHATSAPP</button>
-<button id="btn_duplicar_pedido" onclick="duplicarRegistroAtual('pedido')" class="btn-outline" style="color:var(--gold);border-color:var(--gold);margin-top:10px;display:none"><i class="fas fa-copy"></i> DUPLICAR</button>
-<button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer;padding:10px">Cancelar</button>
-</div>
-</div>
-
-<div id="modalAgenda" class="modal"><div class="modal-content" style="border-color:var(--purple)"><h3 style="color:var(--purple);margin-top:0"><i class="fas fa-calendar-alt"></i> Compromisso</h3><input type="hidden" id="a_id"><label>Cliente</label><input type="text" id="a_cliente"><label>Descrição</label><textarea id="a_servico" rows="3"></textarea><div style="display:flex;gap:10px"><div style="flex:1"><label>Data</label><input type="date" id="a_data"></div><div style="flex:1"><label>Status</label><select id="a_status"><option value="pendente">Pendente</option><option value="concluido">Concluído</option><option value="compra">Compras</option></select></div></div><label>Endereço</label><input type="text" id="a_endereco"><div style="display:flex;gap:10px"><div style="flex:1"><label>Nº</label><input type="text" id="a_numero"></div><div style="flex:2"><label>Comp.</label><input type="text" id="a_complemento"></div></div><label>Cidade</label><input type="text" id="a_cidade"><label>Lembrete</label><textarea id="a_lembrete" rows="2"></textarea><div style="display:flex;gap:10px;margin-bottom:10px"><button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1;margin:0" onclick="abrirSeletorEstoque('agenda')"><i class="fas fa-box"></i> ESTOQUE</button><button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);flex:1;margin:0" onclick="abrirSeletorServico('agenda')"><i class="fas fa-tools"></i> CATÁLOGO</button></div><div id="container_itens_agenda"></div><button onclick="salvarAgenda()" class="btn-primary" style="margin-top:15px;background:linear-gradient(135deg,var(--purple),#8a3fb0)">SALVAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer;padding:10px">Cancelar</button></div></div>
-
-<div id="modalEstoque" class="modal"><div class="modal-content"><input type="hidden" id="e_id"><label>Item</label><input type="text" id="e_item"><label>Localização</label><input type="text" id="e_localizacao"><label>Link</label><input type="url" id="e_link"><label>Qtd</label><input type="number" id="e_qtd"><label>Valor Venda</label><input type="number" id="e_venda"><button onclick="salvarEstoque()" class="btn-primary" style="margin-top:15px;background:linear-gradient(135deg,var(--orange),#e88c08)">SALVAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer;padding:10px">Cancelar</button></div></div>
-
-<div id="modalGastos" class="modal"><div class="modal-content"><input type="hidden" id="g_id"><label>Descrição</label><input type="text" id="g_descricao"><label>Valor</label><input type="number" id="g_valor"><label>Data</label><input type="date" id="g_data"><button onclick="salvarGasto()" class="btn-primary" style="margin-top:15px;background:linear-gradient(135deg,var(--red),#cc3830)">SALVAR</button><button id="btn_duplicar_gasto" onclick="duplicarRegistroAtual('gasto')" class="btn-outline" style="color:var(--gold);border-color:var(--gold);margin-top:10px;display:none"><i class="fas fa-copy"></i> DUPLICAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer;padding:10px">Cancelar</button></div></div>
-
-<div id="modalAPagar" class="modal"><div class="modal-content modal-large" style="border-color:var(--red)"><h3 style="color:var(--red);margin-top:0;text-align:center"><i class="fas fa-hand-holding-usd"></i> Conta a Pagar</h3><input type="hidden" id="ap_id"><div style="display:flex;gap:10px"><div style="flex:1"><label>Tipo</label><select id="ap_tipo" onchange="atualizarLabelAPagar()"><option value="funcionario">👷 Funcionário</option><option value="emprestimo">🏦 Empréstimo</option><option value="fornecedor">🏭 Fornecedor</option><option value="aluguel">🏠 Aluguel</option><option value="outro">📋 Outro</option></select></div><div style="flex:1"><label>Criação</label><input type="date" id="ap_data_criacao"></div></div><label id="ap_label_nome">Nome</label><input type="text" id="ap_nome"><label>Descrição</label><textarea id="ap_descricao" rows="2"></textarea><div style="display:flex;gap:10px"><div style="flex:1"><label>Valor Total (R$)</label><input type="number" id="ap_valor_total" value="0" oninput="calcularRestanteAPagar()" style="font-size:18px;font-weight:bold;color:var(--red);text-align:center"></div><div style="flex:1"><label>Vencimento</label><input type="date" id="ap_data_vencimento"></div></div><div class="restante-display" id="ap_restante_box"><span>💰 Restante</span><strong id="ap_restante_valor">R$ 0,00</strong></div><label style="color:var(--green);font-size:12px;margin-top:10px"><i class="fas fa-plus-circle"></i> Pagamento</label><div style="display:flex;gap:10px;align-items:flex-end"><div style="flex:1"><label>Valor (R$)</label><input type="number" id="ap_novo_pagamento" value="0" style="font-size:16px;font-weight:bold;color:var(--green);text-align:center;border-color:var(--green)"></div><div style="flex:1"><label>Data</label><input type="date" id="ap_data_pagamento"></div><div style="flex:0 0 auto"><button onclick="adicionarPagamentoAPagar()" style="padding:12px 20px;background:var(--green);border:none;border-radius:8px;color:#fff;font-weight:bold;cursor:pointer;margin-bottom:12px"><i class="fas fa-plus"></i></button></div></div><label style="color:var(--gold);font-size:11px"><i class="fas fa-history"></i> Histórico</label><div class="pagamento-historico" id="ap_historico_container"><div style="text-align:center;color:#666;font-size:12px;padding:10px">Nenhum pagamento.</div></div><label>Observações</label><textarea id="ap_observacoes" rows="2"></textarea><button onclick="salvarAPagar()" class="btn-primary" style="margin-top:15px;background:linear-gradient(135deg,var(--red),#cc3830)"><i class="fas fa-save"></i> SALVAR</button><button id="btn_imprimir_apagar" onclick="imprimirReciboAPagar()" class="btn-outline" style="color:var(--blue);border-color:var(--blue);margin-top:10px;display:none"><i class="fas fa-file-invoice"></i> IMPRIMIR RECIBO</button><button id="btn_zap_apagar" onclick="enviarWhatsAppAPagar()" class="btn-outline" style="color:#25D366;border-color:#25D366;margin-top:10px;display:none"><i class="fab fa-whatsapp"></i> WHATSAPP</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer;padding:10px">Cancelar</button></div></div>
-
-<div id="modalCompras" class="modal"><div class="modal-content"><input type="hidden" id="c_id"><label>Cliente</label><input type="text" id="c_cliente"><div style="display:flex;gap:10px"><div style="flex:1"><label>Data</label><input type="date" id="c_data"></div><div style="flex:1"><label>Status</label><select id="c_status"><option value="em_compra">Em Compra</option><option value="concluido">Concluída</option><option value="orcamento">Orçamento</option></select></div></div><div style="background:rgba(255,255,255,.05);padding:10px;border-radius:8px;margin-bottom:10px;border:1px solid #444"><label style="color:var(--pink)">Novo Item</label><input type="text" id="c_item_nome"><div style="display:flex;gap:10px"><div style="flex:1"><label>Qtd</label><input type="number" id="c_item_qtd" value="1"></div><div style="flex:1"><label>Valor</label><input type="number" id="c_item_valor"></div></div><div style="display:flex;gap:5px"><button class="btn-outline" style="color:var(--pink);border-color:var(--pink);flex:1;margin:0" onclick="adicionarItemCompraUI()">+ LISTA</button><button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1;margin:0" onclick="adicionarItemCompraAoEstoque()">+ ESTOQUE</button></div><button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);margin-top:10px;width:100%" onclick="abrirSeletorEstoque('compra')">PUXAR DO ESTOQUE</button></div><div id="container_itens_compra" style="max-height:200px;overflow-y:auto;margin-bottom:10px"></div><label>Total (R$)</label><input type="number" id="c_total" value="0"><button onclick="salvarCompra()" class="btn-primary" style="margin-top:10px;background:linear-gradient(135deg,var(--pink),#d4243f)">SALVAR</button><button onclick="imprimirCompra()" class="btn-outline" style="color:var(--blue);border-color:var(--blue);margin-top:10px"><i class="fas fa-print"></i> IMPRIMIR</button><button id="btn_duplicar_compra" onclick="duplicarRegistroAtual('compra')" class="btn-outline" style="color:var(--gold);border-color:var(--gold);margin-top:10px;display:none"><i class="fas fa-copy"></i> DUPLICAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer;padding:10px">Cancelar</button></div></div>
-
-<div id="modalServicosCatalogo" class="modal"><div class="modal-content"><input type="hidden" id="sc_id"><label>Nome</label><input type="text" id="sc_nome"><label>Preço</label><input type="number" id="sc_preco"><button onclick="salvarServicoCatalogo()" class="btn-primary" style="margin-top:15px;background:linear-gradient(135deg,var(--cyan),#3fb0d4)">SALVAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer;padding:10px">Cancelar</button></div></div>
-
-<div id="modalSeletorEstoque" class="modal"><div class="modal-content" style="border-color:var(--orange)"><h3 style="color:var(--orange);margin-top:0"><i class="fas fa-box"></i> Estoque</h3><label>Selecione</label><select id="sel_produto_estoque"></select><label>Qtd</label><input type="number" id="sel_qtd_estoque" value="1"><button onclick="confirmarAdicaoItem()" class="btn-primary" style="margin-top:15px;background:linear-gradient(135deg,var(--orange),#e88c08)">ADICIONAR</button><button onclick="document.getElementById('modalSeletorEstoque').style.display='none'" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer;padding:10px">Cancelar</button></div></div>
-
-<div id="modalSeletorServico" class="modal"><div class="modal-content" style="border-color:var(--cyan)"><h3 style="color:var(--cyan);margin-top:0"><i class="fas fa-tools"></i> Catálogo</h3><label>Selecione</label><select id="sel_servico_catalogo"></select><label>Qtd</label><input type="number" id="sel_qtd_servico" value="1"><button onclick="confirmarAdicaoServico()" class="btn-primary" style="margin-top:15px;background:linear-gradient(135deg,var(--cyan),#3fb0d4)">ADICIONAR</button><button onclick="document.getElementById('modalSeletorServico').style.display='none'" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer;padding:10px">Cancelar</button></div></div>
-
-<div id="modalPlanosSalvos" class="modal"><div class="modal-content" style="border-color:var(--gold)"><h3 style="color:var(--gold);margin-top:0"><i class="fas fa-folder-open"></i> Salvos</h3><div id="lista_modal_planos" style="max-height:400px;overflow-y:auto"></div><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer;padding:10px">Fechar</button></div></div>
-
-<div id="modalMapaFullscreen" class="modal" onclick="this.style.display='none'"><div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;padding:20px;box-sizing:border-box"><img id="imgMapaFullscreen" src="" style="max-width:100%;max-height:100%;background:#fff;border-radius:8px"></div></div>
-
-<div id="modalPendencias" class="modal"><div class="modal-content" style="border-color:var(--gold)"><h3 style="color:var(--gold);margin-top:0"><i class="fas fa-tasks"></i> Nova Lista</h3><input type="hidden" id="p_id"><label>Título</label><input type="text" id="p_titulo"><button onclick="salvarPendencia()" class="btn-primary" style="margin-top:10px;background:linear-gradient(135deg,var(--gold),#b8941f);color:#000">CRIAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer;padding:10px">Cancelar</button></div></div>
-
-<div id="modalTarefaDetalhes" class="modal"><div class="modal-content modal-large" style="border-color:var(--blue);background:#1e1f27;padding:25px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px"><div class="todo-circle" id="modal_tarefa_check" onclick="toggleMainTaskModal()" style="cursor:pointer;margin:0;width:24px;height:24px"></div><input type="text" id="modal_tarefa_titulo" style="flex:1;background:transparent;border:none;color:var(--blue);font-size:22px;font-weight:bold;outline:none;margin-left:15px" onchange="salvarTituloTarefaModal()"><i class="fas fa-trash" style="color:var(--red);cursor:pointer;padding:10px;font-size:18px" onclick="excluirTarefaModal()"></i></div><div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:10px"><div style="display:flex;gap:10px;align-items:center;margin-bottom:15px;border-bottom:1px solid #444;padding-bottom:15px"><i class="fas fa-plus" style="color:var(--blue);font-size:18px"></i><input type="text" id="input_nova_subtarefa" placeholder="Subtarefa" style="background:transparent;border:none;padding:0;margin:0;outline:none;font-size:16px;flex:1;color:#fff" onkeypress="if(event.key==='Enter'){event.preventDefault();adicionarSubtarefaModal()}"></div><div id="lista_subtarefas_modal" style="max-height:60vh;overflow-y:auto;padding-right:10px"></div></div><button onclick="fecharModais();renderizarItensDetalhe()" style="width:100%;background:#333;border:none;border-radius:6px;color:#fff;font-weight:bold;margin-top:15px;padding:15px;font-size:15px;cursor:pointer">FECHAR</button></div></div>
-
-<div id="modalNovoLembrete" class="modal"><div class="modal-content" style="border-color:var(--orange)"><h3 style="color:var(--orange);margin-top:0"><i class="fas fa-bell"></i> Novo Grupo</h3><input type="hidden" id="lem_id"><label>Título</label><input type="text" id="lem_titulo"><button onclick="salvarGrupoLembrete()" class="btn-primary" style="margin-top:10px;background:linear-gradient(135deg,var(--orange),#e88c08)">CRIAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer;padding:10px">Cancelar</button></div></div>
-
-<div id="modalLembreteTarefaDetalhes" class="modal"><div class="modal-content modal-large" style="border-color:var(--orange);background:#1e1f27;padding:25px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px"><div class="todo-circle" id="modal_lem_check" onclick="toggleMainLem()" style="cursor:pointer;margin:0;width:24px;height:24px"></div><input type="text" id="modal_lem_titulo" style="flex:1;background:transparent;border:none;color:var(--orange);font-size:22px;font-weight:bold;outline:none;margin-left:15px" onchange="salvarLembreteData()"><input type="date" id="modal_lem_data" style="width:130px;margin:0 10px;padding:8px;font-size:14px;background:rgba(255,255,255,0.05);color:#fff;border:1px solid #444;border-radius:6px" onchange="salvarLembreteData()"><i class="fas fa-trash" style="color:var(--red);cursor:pointer;padding:10px;font-size:18px" onclick="excluirTarefaLem()"></i></div><div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:10px"><div style="display:flex;gap:10px;align-items:center;margin-bottom:15px;border-bottom:1px solid #444;padding-bottom:15px"><i class="fas fa-plus" style="color:var(--orange);font-size:18px"></i><input type="text" id="input_nova_sub_lem" placeholder="Subtarefa" style="background:transparent;border:none;padding:0;margin:0;outline:none;font-size:16px;flex:1;color:#fff"><input type="date" id="input_nova_sub_lem_data" style="width:130px;margin:0;padding:8px;font-size:13px;background:rgba(255,255,255,0.05);color:#fff;border:1px solid #444;border-radius:6px" onkeypress="if(event.key==='Enter'){event.preventDefault();adicionarSubLembrete()}"><i class="fas fa-save" style="color:var(--green);cursor:pointer;padding:10px;font-size:18px" onclick="adicionarSubLembrete()"></i></div><div id="lista_sub_lem_modal" style="max-height:60vh;overflow-y:auto;padding-right:10px"></div></div><button onclick="fecharModais();renderizarItensLembrete()" style="width:100%;background:#333;border:none;border-radius:6px;color:#fff;font-weight:bold;margin-top:15px;padding:15px;font-size:15px;cursor:pointer">FECHAR</button></div></div>
-
-<div id="fullscreenModeCores" class="modal" style="z-index:9999;background:black" onclick="this.style.display='none'"><div style="width:100%;height:100%;display:flex;flex-direction:column;position:relative"><button onclick="document.getElementById('fullscreenModeCores').style.display='none'" style="position:absolute;top:20px;right:20px;background:rgba(0,0,0,0.7);color:white;border:none;padding:10px 20px;border-radius:25px;cursor:pointer;z-index:10000;font-weight:bold">✕ Fechar</button><div id="fcTargetCores" style="flex:1;display:flex;align-items:center;justify-content:center;font-size:3em;font-weight:bold;color:rgba(255,255,255,0.8);text-shadow:0 2px 8px rgba(0,0,0,0.4);background:#3498db">#3498DB</div></div></div>
-
+<div id="modalPedido" class="modal"><div class="modal-content"><input type="hidden" id="f_id"><label>Cliente *</label><input type="text" id="f_cliente" placeholder="Nome do cliente"><label id="label_servico">Serviço Principal</label><textarea id="f_servico" rows="3" placeholder="Descreva o serviço..."></textarea><div style="display:flex;gap:10px"><div style="flex:1"><label>Data</label><input type="date" id="f_data"></div><div style="flex:1"><label>Tipo</label><select id="f_tipo" onchange="ajustarCamposModal()"><option value="servico">Serviço/Pedido</option><option value="orcamento">Orçamento</option><option value="compra">Converter p/ Compras</option></select></div></div><label>Status</label><select id="f_status"></select><div style="display:flex;gap:10px"><div style="flex:1"><label>Base (R$)</label><input type="number" id="f_total_base" value="0" oninput="document.getElementById('f_total').value=this.value;document.getElementById('f_multiplicador').value='1';"></div><div style="flex:1"><label>Margem</label><select id="f_multiplicador" onchange="document.getElementById('f_total').value=(parseFloat(document.getElementById('f_total_base').value)*parseFloat(this.value)).toFixed(2)" style="margin:0;"><option value="1">x1</option><option value="1.5">x1.5</option><option value="2">x2</option><option value="2.5">x2.5</option><option value="3">x3</option></select></div><div style="flex:1"><label>Final (R$)</label><input type="number" id="f_total" value="0"></div><input type="hidden" id="f_pago" value="0"></div><label>Mão de Obra R$</label><input type="number" id="f_mao_obra" value="0" oninput="recalcularTotal()"><div id="f_pagamentos_section"><label style="color:var(--gold);font-size:11px;margin-top:15px;margin-bottom:5px;"><i class="fas fa-money-bill-wave"></i> Pagamentos</label><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:15px;background:rgba(255,255,255,.02);padding:15px;border-radius:8px;border:1px solid #333;"><div style="display:flex;flex-direction:column;gap:5px;"><label style="font-size:10px;">Entrada</label><input type="number" id="f_entrada" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green);"><label style="font-size:10px;margin-top:5px;">Data</label><input type="date" id="f_entrada_data" style="margin:0;padding:8px;font-size:12px;"></div><div style="display:flex;flex-direction:column;gap:5px;"><label style="font-size:10px;">Parcela 1</label><input type="number" id="f_parcela1" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green);"><label style="font-size:10px;margin-top:5px;">Data</label><input type="date" id="f_parcela1_data" style="margin:0;padding:8px;font-size:12px;"></div><div style="display:flex;flex-direction:column;gap:5px;"><label style="font-size:10px;">Parcela 2</label><input type="number" id="f_parcela2" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green);"><label style="font-size:10px;margin-top:5px;">Data</label><input type="date" id="f_parcela2_data" style="margin:0;padding:8px;font-size:12px;"></div><div style="display:flex;flex-direction:column;gap:5px;"><label style="font-size:10px;">Parcela 3</label><input type="number" id="f_parcela3" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green);"><label style="font-size:10px;margin-top:5px;">Data</label><input type="date" id="f_parcela3_data" style="margin:0;padding:8px;font-size:12px;"></div></div></div><label>Endereço</label><input type="text" id="f_endereco"><div style="display:flex;gap:10px"><div style="flex:1"><label>Nº</label><input type="text" id="f_numero"></div><div style="flex:2"><label>Comp.</label><input type="text" id="f_complemento"></div></div><label>Cidade</label><input type="text" id="f_cidade"><label>Lembrete</label><textarea id="f_lembrete" rows="2"></textarea><div style="display:flex;gap:10px;margin-bottom:10px"><button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1" onclick="abrirSeletorEstoque('pedido')"><i class="fas fa-box"></i> ESTOQUE</button><button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);flex:1" onclick="abrirSeletorServico('pedido')"><i class="fas fa-tools"></i> CATÁLOGO</button></div><div id="container_itens_venda"></div><button onclick="salvarPedido()" style="width:100%;padding:15px;background:var(--green);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR</button><label class="label-check" id="container_ocultar_valores" style="display:none;margin-top:15px;border-color:var(--teal);color:var(--teal);"><input type="checkbox" id="f_ocultar_valores" class="check-inline"> Ocultar valores</label><button id="btn_imprimir_pedido" onclick="imprimirPedidoOuOrcamento()" style="width:100%;padding:12px;background:none;border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-print"></i> IMPRIMIR</button><button id="btn_zap_pedido" onclick="enviarWhatsAppPedido()" style="width:100%;padding:12px;background:none;border:1px solid #25D366;border-radius:8px;color:#25D366;font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fab fa-whatsapp"></i> WHATSAPP</button><button id="btn_duplicar_pedido" onclick="duplicarRegistroAtual('pedido')" style="width:100%;padding:12px;background:none;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-copy"></i> DUPLICAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
+<div id="modalAgenda" class="modal"><div class="modal-content" style="border-color:var(--purple)"><h3 style="color:var(--purple);margin-top:0"><i class="fas fa-calendar-alt"></i> Compromisso</h3><input type="hidden" id="a_id"><label>Cliente</label><input type="text" id="a_cliente"><label>Descrição</label><textarea id="a_servico" rows="3"></textarea><div style="display:flex;gap:10px"><div style="flex:1"><label>Data</label><input type="date" id="a_data"></div><div style="flex:1"><label>Status</label><select id="a_status"><option value="pendente">Pendente</option><option value="concluido">Concluído</option><option value="compra">Compras</option></select></div></div><label>Endereço</label><input type="text" id="a_endereco"><div style="display:flex;gap:10px"><div style="flex:1"><label>Nº</label><input type="text" id="a_numero"></div><div style="flex:2"><label>Comp.</label><input type="text" id="a_complemento"></div></div><label>Cidade</label><input type="text" id="a_cidade"><label>Lembrete</label><textarea id="a_lembrete" rows="2"></textarea><div style="display:flex;gap:10px;margin-bottom:10px"><button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1;margin:0" onclick="abrirSeletorEstoque('agenda')"><i class="fas fa-box"></i> ESTOQUE</button><button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);flex:1;margin:0" onclick="abrirSeletorServico('agenda')"><i class="fas fa-tools"></i> CATÁLOGO</button></div><div id="container_itens_agenda"></div><button onclick="salvarAgenda()" style="width:100%;padding:15px;background:var(--purple);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
+<div id="modalEstoque" class="modal"><div class="modal-content"><input type="hidden" id="e_id"><label>Item</label><input type="text" id="e_item"><label>Localização</label><input type="text" id="e_localizacao"><label>Link</label><input type="url" id="e_link"><label>Qtd</label><input type="number" id="e_qtd"><label>Valor Venda</label><input type="number" id="e_venda"><button onclick="salvarEstoque()" style="width:100%;padding:15px;background:var(--orange);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
+<div id="modalGastos" class="modal"><div class="modal-content"><input type="hidden" id="g_id"><label>Descrição</label><input type="text" id="g_descricao"><label>Valor</label><input type="number" id="g_valor"><label>Data</label><input type="date" id="g_data"><button onclick="salvarGasto()" style="width:100%;padding:15px;background:var(--red);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR</button><button id="btn_duplicar_gasto" onclick="duplicarRegistroAtual('gasto')" style="width:100%;padding:12px;background:none;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-copy"></i> DUPLICAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
+<div id="modalAPagar" class="modal"><div class="modal-content modal-large" style="border-color:var(--red);"><h3 style="color:var(--red);margin-top:0;text-align:center;"><i class="fas fa-hand-holding-usd"></i> Conta a Pagar</h3><input type="hidden" id="ap_id"><div style="display:flex;gap:10px;"><div style="flex:1"><label>Tipo</label><select id="ap_tipo" onchange="atualizarLabelAPagar()"><option value="funcionario">👷 Funcionário</option><option value="emprestimo">🏦 Empréstimo</option><option value="fornecedor">🏭 Fornecedor</option><option value="aluguel">🏠 Aluguel</option><option value="outro">📋 Outro</option></select></div><div style="flex:1"><label>Criação</label><input type="date" id="ap_data_criacao"></div></div><label id="ap_label_nome">Nome</label><input type="text" id="ap_nome"><label>Descrição</label><textarea id="ap_descricao" rows="2"></textarea><div style="display:flex;gap:10px;"><div style="flex:1"><label>Valor Total (R$)</label><input type="number" id="ap_valor_total" value="0" oninput="calcularRestanteAPagar()" style="font-size:18px;font-weight:bold;color:var(--red);text-align:center;"></div><div style="flex:1"><label>Vencimento</label><input type="date" id="ap_data_vencimento"></div></div><div class="restante-display" id="ap_restante_box"><span>💰 Restante</span><strong id="ap_restante_valor">R$ 0,00</strong></div><label style="color:var(--green);font-size:12px;margin-top:10px;"><i class="fas fa-plus-circle"></i> Pagamento</label><div style="display:flex;gap:10px;align-items:flex-end;"><div style="flex:1"><label>Valor (R$)</label><input type="number" id="ap_novo_pagamento" value="0" style="font-size:16px;font-weight:bold;color:var(--green);text-align:center;border-color:var(--green);"></div><div style="flex:1"><label>Data</label><input type="date" id="ap_data_pagamento"></div><div style="flex:0 0 auto;"><button onclick="adicionarPagamentoAPagar()" style="padding:12px 20px;background:var(--green);border:none;border-radius:8px;color:#fff;font-weight:bold;cursor:pointer;margin-bottom:12px;"><i class="fas fa-plus"></i></button></div></div><label style="color:var(--gold);font-size:11px;"><i class="fas fa-history"></i> Histórico</label><div class="pagamento-historico" id="ap_historico_container"><div style="text-align:center;color:#666;font-size:12px;padding:10px;">Nenhum pagamento.</div></div><label>Observações</label><textarea id="ap_observacoes" rows="2"></textarea><button onclick="salvarAPagar()" style="width:100%;padding:15px;background:var(--red);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer;font-size:15px;"><i class="fas fa-save"></i> SALVAR</button><button id="btn_imprimir_apagar" onclick="imprimirReciboAPagar()" style="width:100%;padding:12px;background:none;border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-file-invoice"></i> IMPRIMIR RECIBO</button><button id="btn_zap_apagar" onclick="enviarWhatsAppAPagar()" style="width:100%;padding:12px;background:none;border:1px solid #25D366;border-radius:8px;color:#25D366;font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fab fa-whatsapp"></i> WHATSAPP</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
+<div id="modalCompras" class="modal"><div class="modal-content"><input type="hidden" id="c_id"><label>Cliente</label><input type="text" id="c_cliente"><div style="display:flex;gap:10px"><div style="flex:1"><label>Data</label><input type="date" id="c_data"></div><div style="flex:1"><label>Status</label><select id="c_status"><option value="em_compra">Em Compra</option><option value="concluido">Concluída</option><option value="orcamento">Orçamento</option></select></div></div><div style="background:rgba(255,255,255,.05);padding:10px;border-radius:8px;margin-bottom:10px;border:1px solid #444"><label style="color:var(--pink)">Novo Item</label><input type="text" id="c_item_nome"><div style="display:flex;gap:10px"><div style="flex:1"><label>Qtd</label><input type="number" id="c_item_qtd" value="1"></div><div style="flex:1"><label>Valor</label><input type="number" id="c_item_valor"></div></div><div style="display:flex;gap:5px"><button class="btn-outline" style="color:var(--pink);border-color:var(--pink);flex:1;margin:0" onclick="adicionarItemCompraUI()">+ LISTA</button><button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1;margin:0" onclick="adicionarItemCompraAoEstoque()">+ ESTOQUE</button></div><button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);margin-top:10px;width:100%" onclick="abrirSeletorEstoque('compra')">PUXAR DO ESTOQUE</button></div><div id="container_itens_compra" style="max-height:200px;overflow-y:auto;margin-bottom:10px"></div><label>Total (R$)</label><input type="number" id="c_total" value="0"><button onclick="salvarCompra()" style="width:100%;padding:15px;background:var(--pink);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:10px;cursor:pointer">SALVAR</button><button onclick="imprimirCompra()" style="width:100%;padding:12px;background:none;border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:bold;margin-top:10px;cursor:pointer"><i class="fas fa-print"></i> IMPRIMIR</button><button id="btn_duplicar_compra" onclick="duplicarRegistroAtual('compra')" style="width:100%;padding:12px;background:none;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-copy"></i> DUPLICAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
+<div id="modalServicosCatalogo" class="modal"><div class="modal-content"><input type="hidden" id="sc_id"><label>Nome</label><input type="text" id="sc_nome"><label>Preço</label><input type="number" id="sc_preco"><button onclick="salvarServicoCatalogo()" style="width:100%;padding:15px;background:var(--cyan);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
+<div id="modalSeletorEstoque" class="modal"><div class="modal-content" style="border-color:var(--orange)"><h3 style="color:var(--orange);margin-top:0"><i class="fas fa-box"></i> Estoque</h3><label>Selecione</label><select id="sel_produto_estoque"></select><label>Qtd</label><input type="number" id="sel_qtd_estoque" value="1"><button onclick="confirmarAdicaoItem()" style="width:100%;padding:15px;background:var(--orange);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">ADICIONAR</button><button onclick="document.getElementById('modalSeletorEstoque').style.display='none'" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
+<div id="modalSeletorServico" class="modal"><div class="modal-content" style="border-color:var(--cyan)"><h3 style="color:var(--cyan);margin-top:0"><i class="fas fa-tools"></i> Catálogo</h3><label>Selecione</label><select id="sel_servico_catalogo"></select><label>Qtd</label><input type="number" id="sel_qtd_servico" value="1"><button onclick="confirmarAdicaoServico()" style="width:100%;padding:15px;background:var(--cyan);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">ADICIONAR</button><button onclick="document.getElementById('modalSeletorServico').style.display='none'" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
+<div id="modalPlanosSalvos" class="modal"><div class="modal-content" style="border-color:var(--gold)"><h3 style="color:var(--gold);margin-top:0"><i class="fas fa-folder-open"></i> Salvos</h3><div id="lista_modal_planos" style="max-height:400px;overflow-y:auto"></div><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Fechar</button></div></div>
+<div id="modalMapaFullscreen" class="modal" onclick="this.style.display='none'"><div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;padding:20px;box-sizing:border-box;"><img id="imgMapaFullscreen" src="" style="max-width:100%;max-height:100%;background:#fff;border-radius:8px;"></div></div>
+<div id="modalPendencias" class="modal"><div class="modal-content" style="border-color:var(--gold)"><h3 style="color:var(--gold);margin-top:0"><i class="fas fa-tasks"></i> Nova Lista</h3><input type="hidden" id="p_id"><label>Título</label><input type="text" id="p_titulo"><button onclick="salvarPendencia()" style="width:100%;padding:15px;background:var(--gold);border:none;border-radius:8px;color:black;font-weight:bold;margin-top:10px;cursor:pointer">CRIAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
+<div id="modalTarefaDetalhes" class="modal"><div class="modal-content modal-large" style="border-color:var(--blue);background:#1e1f27;padding:25px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;"><div class="todo-circle" id="modal_tarefa_check" onclick="toggleMainTaskModal()" style="cursor:pointer;margin:0;width:24px;height:24px;"></div><input type="text" id="modal_tarefa_titulo" style="flex:1;background:transparent;border:none;color:var(--blue);font-size:22px;font-weight:bold;outline:none;margin-left:15px;" onchange="salvarTituloTarefaModal()"><i class="fas fa-trash" style="color:var(--red);cursor:pointer;padding:10px;font-size:18px;" onclick="excluirTarefaModal()"></i></div><div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:10px;"><div style="display:flex;gap:10px;align-items:center;margin-bottom:15px;border-bottom:1px solid #444;padding-bottom:15px;"><i class="fas fa-plus" style="color:var(--blue);font-size:18px;"></i><input type="text" id="input_nova_subtarefa" placeholder="Subtarefa" style="background:transparent;border:none;padding:0;margin:0;outline:none;font-size:16px;flex:1;color:#fff;" onkeypress="if(event.key==='Enter'){event.preventDefault();adicionarSubtarefaModal();}"></div><div id="lista_subtarefas_modal" style="max-height:60vh;overflow-y:auto;padding-right:10px;"></div></div><button onclick="fecharModais();renderizarItensDetalhe();" style="width:100%;background:#333;border:none;border-radius:6px;color:#fff;font-weight:bold;margin-top:15px;padding:15px;font-size:15px;cursor:pointer">FECHAR</button></div></div>
+<div id="modalNovoLembrete" class="modal"><div class="modal-content" style="border-color:var(--orange)"><h3 style="color:var(--orange);margin-top:0"><i class="fas fa-bell"></i> Novo Grupo</h3><input type="hidden" id="lem_id"><label>Título</label><input type="text" id="lem_titulo"><button onclick="salvarGrupoLembrete()" style="width:100%;padding:15px;background:var(--orange);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:10px;cursor:pointer">CRIAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
+<div id="modalLembreteTarefaDetalhes" class="modal"><div class="modal-content modal-large" style="border-color:var(--orange);background:#1e1f27;padding:25px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;"><div class="todo-circle" id="modal_lem_check" onclick="toggleMainLem()" style="cursor:pointer;margin:0;width:24px;height:24px;"></div><input type="text" id="modal_lem_titulo" style="flex:1;background:transparent;border:none;color:var(--orange);font-size:22px;font-weight:bold;outline:none;margin-left:15px;" onchange="salvarLembreteData()"><input type="date" id="modal_lem_data" style="width:130px;margin:0 10px;padding:8px;font-size:14px;background:rgba(255,255,255,0.05);color:#fff;border:1px solid #444;border-radius:6px;" onchange="salvarLembreteData()"><i class="fas fa-trash" style="color:var(--red);cursor:pointer;padding:10px;font-size:18px;" onclick="excluirTarefaLem()"></i></div><div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:10px;"><div style="display:flex;gap:10px;align-items:center;margin-bottom:15px;border-bottom:1px solid #444;padding-bottom:15px;"><i class="fas fa-plus" style="color:var(--orange);font-size:18px;"></i><input type="text" id="input_nova_sub_lem" placeholder="Subtarefa" style="background:transparent;border:none;padding:0;margin:0;outline:none;font-size:16px;flex:1;color:#fff;"><input type="date" id="input_nova_sub_lem_data" style="width:130px;margin:0;padding:8px;font-size:13px;background:rgba(255,255,255,0.05);color:#fff;border:1px solid #444;border-radius:6px;" onkeypress="if(event.key==='Enter'){event.preventDefault();adicionarSubLembrete();}"><i class="fas fa-save" style="color:var(--green);cursor:pointer;padding:10px;font-size:18px;" onclick="adicionarSubLembrete()"></i></div><div id="lista_sub_lem_modal" style="max-height:60vh;overflow-y:auto;padding-right:10px;"></div></div><button onclick="fecharModais();renderizarItensLembrete();" style="width:100%;background:#333;border:none;border-radius:6px;color:#fff;font-weight:bold;margin-top:15px;padding:15px;font-size:15px;cursor:pointer">FECHAR</button></div></div>
+<div id="fullscreenModeCores" class="modal" style="z-index:9999;background:black;" onclick="this.style.display='none'"><div style="width:100%;height:100%;display:flex;flex-direction:column;position:relative;"><button onclick="document.getElementById('fullscreenModeCores').style.display='none'" style="position:absolute;top:20px;right:20px;background:rgba(0,0,0,0.7);color:white;border:none;padding:10px 20px;border-radius:25px;cursor:pointer;z-index:10000;font-weight:bold;">✕ Fechar</button><div id="fcTargetCores" style="flex:1;display:flex;align-items:center;justify-content:center;font-size:3em;font-weight:bold;color:rgba(255,255,255,0.8);text-shadow:0 2px 8px rgba(0,0,0,0.4);background:#3498db;">#3498DB</div></div></div>
 <div id="area-impressao"></div>
 </div>
-
 <script>
 const firebaseConfig={apiKey:"AIzaSyB1c4Mir1IEc5DyIHUncWUzoNk7ocYXAcg",authDomain:"alves-pro-system.firebaseapp.com",databaseURL:"https://alves-pro-system-default-rtdb.firebaseio.com",projectId:"alves-pro-system",storageBucket:"alves-pro-system.firebasestorage.app",messagingSenderId:"312807188302",appId:"1:312807188302:web:144aa090283fed7b9da01f"};
 firebase.initializeApp(firebaseConfig);
 const database=firebase.database();
 
-// =================================================================
-// SISTEMA DE SINCRONIZAÇÃO ROBUSTO
-// =================================================================
 let isSaving=false;
 let lastSyncedHash=null;
 let renderDebounceTimer=null;
 let initialLoadDone=false;
-let autoBackupTimer=null;
 
 function updateSyncStatus(status,msg){
   const ind=document.getElementById('sync_indicator');
@@ -423,23 +279,14 @@ window.onload=()=>{
   document.getElementById('filtro_mes').value=m<10?'0'+m:''+m;
   document.getElementById('app_principal').style.display='block';
   initDB();
-  // Backup automático a cada 5 minutos
-  autoBackupTimer=setInterval(()=>{
-    try{
-      const backups=JSON.parse(localStorage.getItem('alvesProBackups')||'[]');
-      backups.unshift({date:new Date().toISOString(),data:JSON.stringify(DB)});
-      if(backups.length>5)backups.pop();
-      localStorage.setItem('alvesProBackups',JSON.stringify(backups));
-    }catch(e){console.warn('Backup auto falhou:',e)}
-  },5*60*1000);
 };
 
 function showToast(m,t='success'){
   const c=document.getElementById('toast_container'),x=document.createElement('div');
   x.className=`toast ${t}`;
-  let i=t==='success'?'fa-check-circle':(t==='error'?'fa-exclamation-circle':(t==='warning'?'fa-exclamation-triangle':'fa-info-circle'));
-  let col=t==='success'?'var(--green)':(t==='error'?'var(--red)':(t==='warning'?'var(--orange)':'var(--blue)'));
-  x.innerHTML=`<i class="fas ${i}" style="color:${col};font-size:18px"></i> <span>${m}</span>`;
+  let i=t==='success'?'fa-check-circle':(t==='error'?'fa-exclamation-circle':'fa-info-circle');
+  let col=t==='success'?'var(--green)':(t==='error'?'var(--red)':'var(--blue)');
+  x.innerHTML=`<i class="fas ${i}" style="color:${col};font-size:18px;"></i> <span>${m}</span>`;
   c.appendChild(x);
   setTimeout(()=>{x.style.opacity='0';setTimeout(()=>x.remove(),300)},3000);
 }
@@ -540,62 +387,17 @@ function saveDB(){
   }else updateSyncStatus('error','Offline - salvo local');
 }
 
-function generateID(){return new Date().getTime()}
-function limparBancoDados(){if(confirm("⚠️ APAGAR TODOS OS DADOS?\n\nEsta ação não pode ser desfeita!")){database.ref('alvesProDB').remove();localStorage.removeItem('alvesProDB');location.reload()}}
+function generateID(){return new Date().getTime()+Math.floor(Math.random()*1000)}
+function limparBancoDados(){if(confirm("⚠️ APAGAR TODOS OS DADOS?")){database.ref('alvesProDB').remove();localStorage.removeItem('alvesProDB');location.reload()}}
 function exportarBackup(){const d=JSON.stringify(DB,null,2);const b=new Blob([d],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='alves_backup_'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(u);showToast("Backup baixado!","success")}
-function importarBackup(e){const f=e.target.files[0];if(!f)return;if(!confirm("Restaurar backup? Dados atuais serão substituídos."))return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);DB=d;preencherPadroesDB();saveDB();carregarConfiguracoes();carregarDados();showToast("Restaurado!","success")}catch(err){showToast("Arquivo inválido!","error")}};r.readAsText(f);e.target.value=''}
+function importarBackup(e){const f=e.target.files[0];if(!f)return;if(!confirm("Restaurar backup?"))return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);DB=d;preencherPadroesDB();saveDB();carregarConfiguracoes();carregarDados();showToast("Restaurado!","success")}catch(err){showToast("Inválido!","error")}};r.readAsText(f);e.target.value=''}
 
-// =================================================================
-// LOGO - URL GITHUB + ARQUIVO
-// =================================================================
-function converterUrlGithub(url){
-  if(!url)return url;
-  url=url.trim();
-  if(url.includes('github.com')&&url.includes('/blob/')){
-    url=url.replace('github.com','raw.githubusercontent.com').replace('/blob/','/');
-  }
-  return url;
-}
+function converterUrlGithub(url){if(!url)return url;url=url.trim();if(url.includes('github.com')&&url.includes('/blob/')){url=url.replace('github.com','raw.githubusercontent.com').replace('/blob/','/')}return url}
 function isUrl(str){return str&&/^https?:\/\/.+/i.test(str.trim())}
-function trocarAbaLogo(tipo,el){
-  document.querySelectorAll('.logo-type-tab').forEach(t=>t.classList.remove('ativo'));
-  el.classList.add('ativo');
-  document.getElementById('box_logo_url').classList.toggle('visivel',tipo==='url');
-  document.getElementById('box_logo_arquivo').classList.toggle('visivel',tipo==='arquivo');
-}
-function previewLogoUrl(){
-  const url=document.getElementById('cfg_logo_url').value.trim();
-  const img=document.getElementById('img_preview');
-  const ph=document.getElementById('img_placeholder');
-  const status=document.getElementById('logo_status_msg');
-  if(!url){img.style.display='none';ph.style.display='block';status.className='logo-status info';status.innerHTML='ℹ️ Digite uma URL';return}
-  const urlFinal=converterUrlGithub(url);
-  status.className='logo-status info';status.innerHTML='🔄 Carregando...';
-  const testImg=new Image();
-  testImg.crossOrigin="anonymous";
-  testImg.onload=function(){img.src=urlFinal;img.style.display='block';ph.style.display='none';status.className='logo-status ok';status.innerHTML='✅ Logo OK!'};
-  testImg.onerror=function(){img.style.display='none';ph.style.display='block';status.className='logo-status erro';status.innerHTML='❌ URL inválida'};
-  testImg.src=urlFinal;
-}
-function testarLogoUrl(){
-  const url=document.getElementById('cfg_logo_url').value.trim();
-  if(!url)return showToast("Digite uma URL!","error");
-  previewLogoUrl();
-  setTimeout(()=>{
-    const status=document.getElementById('logo_status_msg');
-    if(status.classList.contains('ok'))showToast("Logo OK!","success");
-    else if(status.classList.contains('erro'))showToast("URL inválida","error");
-  },1500);
-}
-function limparLogo(){
-  document.getElementById('cfg_logo_url').value='';
-  document.getElementById('img_preview').style.display='none';
-  document.getElementById('img_placeholder').style.display='block';
-  document.getElementById('logo_status_msg').className='logo-status info';
-  document.getElementById('logo_status_msg').innerHTML='ℹ️ Logo removida. Salve.';
-  document.getElementById('logo_display').style.display='none';
-  showToast("Logo removida","info");
-}
+function trocarAbaLogo(tipo,el){document.querySelectorAll('.logo-type-tab').forEach(t=>t.classList.remove('ativo'));el.classList.add('ativo');document.getElementById('box_logo_url').classList.toggle('visivel',tipo==='url');document.getElementById('box_logo_arquivo').classList.toggle('visivel',tipo==='arquivo')}
+function previewLogoUrl(){const url=document.getElementById('cfg_logo_url').value.trim();const img=document.getElementById('img_preview');const ph=document.getElementById('img_placeholder');const status=document.getElementById('logo_status_msg');if(!url){img.style.display='none';ph.style.display='block';status.className='logo-status info';status.innerHTML='ℹ️ Digite uma URL';return}const urlFinal=converterUrlGithub(url);status.className='logo-status info';status.innerHTML='🔄 Carregando...';const testImg=new Image();testImg.crossOrigin="anonymous";testImg.onload=function(){img.src=urlFinal;img.style.display='block';ph.style.display='none';status.className='logo-status ok';status.innerHTML='✅ Logo OK!'};testImg.onerror=function(){img.style.display='none';ph.style.display='block';status.className='logo-status erro';status.innerHTML='❌ URL inválida'};testImg.src=urlFinal}
+function testarLogoUrl(){const url=document.getElementById('cfg_logo_url').value.trim();if(!url)return showToast("Digite uma URL!","error");previewLogoUrl();setTimeout(()=>{const status=document.getElementById('logo_status_msg');if(status.classList.contains('ok'))showToast("Logo OK!","success");else if(status.classList.contains('erro'))showToast("URL inválida","error")},1500)}
+function limparLogo(){document.getElementById('cfg_logo_url').value='';document.getElementById('img_preview').style.display='none';document.getElementById('img_placeholder').style.display='block';document.getElementById('logo_status_msg').className='logo-status info';document.getElementById('logo_status_msg').innerHTML='ℹ️ Logo removida. Salve.';document.getElementById('logo_display').style.display='none';showToast("Logo removida","info")}
 
 let dadosPedidos=[],dadosEstoque=[],dadosGastos=[],dadosOrcamentos=[],dadosCatalogo=[],dadosCompras=[],dadosPendencias=[],dadosLembretes=[],dadosAPagar=[],meuGrafico=null,telaAtiva='tela_home',itensNoPedido=[],itensCompraAtual=[],contextoSeletorEstoque='pedido',pecasVendaM2=[],itensNaAgenda=[],contextoSeletorServico='pedido',idPendenciaAberta=null,idxTarefaEditando=null,idLembreteAberto=null,idxLembreteEditando=null,pecasCorte=[],gruposChapasCalculadas=[],planoAtualId=null,planoAtualNome="",filtroAPagarAtual='todos',pagamentosTempAPagar=[];
 const formatMoeda=v=>parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -612,8 +414,7 @@ function carregarConfiguracoes(){
   let logoSrc=c.logo||'';
   if(logoSrc&&isUrl(logoSrc)){
     const urlFinal=converterUrlGithub(logoSrc);
-    logoDisplay.src=urlFinal;
-    logoDisplay.style.display='block';
+    logoDisplay.src=urlFinal;logoDisplay.style.display='block';
     logoDisplay.onerror=function(){this.style.display='none'};
     if(logoUrlInput)logoUrlInput.value=logoSrc;
     if(imgPreview){imgPreview.src=urlFinal;imgPreview.style.display='block';imgPlaceholder.style.display='none'}
@@ -778,9 +579,6 @@ function renderizarTudo(){
   renderizarGrafico();
 }
 
-// =================================================================
-// A PAGAR
-// =================================================================
 function renderizarAPagar(){
   const dAP=document.getElementById('listaAPagar');
   if(!dAP)return;
@@ -847,9 +645,6 @@ function imprimirReciboAPagar(){const idA=document.getElementById('ap_id').value
 
 function enviarWhatsAppAPagar(){const idA=document.getElementById('ap_id').value;if(!idA)return showToast("Salve primeiro!","error");const a=DB.a_pagar.find(x=>x.id==idA);if(!a)return;const c=DB.config||{};const eN=c.nome||"Minha Empresa";const eT=c.telefone||"";const eP=c.chave_pix||"";let pago=0;if(a.pagamentos&&a.pagamentos.length>0)pago=a.pagamentos.reduce((s,p)=>s+(p.valor||0),0);const rest=Math.max(0,(a.valor_total||0)-pago);let status='🔴 PENDENTE';if(rest<=0)status='✅ QUITADO';else if(pago>0)status='⏳ PARCIAL';let hoje=new Date().toISOString().split('T')[0];if(rest>0&&a.data_vencimento&&a.data_vencimento<hoje)status='⚠️ VENCIDO';let tipoTxt={funcionario:'FUNCIONÁRIO',emprestimo:'EMPRÉSTIMO',fornecedor:'FORNECEDOR',aluguel:'ALUGUEL',outro:'OUTRO'};let tipoLabel=tipoTxt[a.tipo]||'OUTRO';let dHj=formatarDataBR(new Date().toISOString().split('T')[0]);let txt=`*🧾 RECIBO A PAGAR*\n*${eN}*\n`;if(eT)txt+=`📞 ${eT}\n`;txt+=`\n*Nº:* ${String(a.id).slice(-6)}\n*Data:* ${dHj}\n*Tipo:* ${tipoLabel}\n*Status:* ${status}\n\n━━━━━━━━━━━━━━━━━━━━\n*📋 CREDOR*\n━━━━━━━━━━━━━━━━━━━━\n*Nome:* ${a.nome}\n`;if(a.descricao)txt+=`*Desc:* ${a.descricao}\n`;txt+=`*Criação:* ${formatarDataBR(a.data_criacao)||'-'}\n`;if(a.data_vencimento)txt+=`*Venc:* ${formatarDataBR(a.data_vencimento)}\n`;txt+=`\n━━━━━━━━━━━━━━━━━━━━\n*💰 FINANCEIRO*\n━━━━━━━━━━━━━━━━━━━━\n*Total:* R$ ${formatMoeda(a.valor_total)}\n*Pago:* R$ ${formatMoeda(pago)}\n*Restante:* R$ ${formatMoeda(rest)}\n`;if(a.valor_total>0){let pct=Math.min(100,Math.round((pago/a.valor_total)*100));txt+=`*Progresso:* ${pct}%\n`}if(a.pagamentos&&a.pagamentos.length>0){txt+=`\n━━━━━━━━━━━━━━━━━━━━\n*📜 PAGAMENTOS*\n━━━━━━━━━━━━━━━━━━━━\n`;a.pagamentos.forEach((p,i)=>{txt+=`*${i+1}.* R$ ${formatMoeda(p.valor)} - ${formatarDataBR(p.data)||'-'}\n`})}if(a.observacoes)txt+=`\n━━━━━━━━━━━━━━━━━━━━\n*📝 Obs:*\n${a.observacoes}\n`;txt+=`\n━━━━━━━━━━━━━━━━━━━━\n`;if(eP)txt+=`*PIX:* ${eP}\n\n`;txt+=`_Emitido em ${dHj}_`;window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank')}
 
-// =================================================================
-// GRÁFICO E NAVEGAÇÃO
-// =================================================================
 function renderizarGrafico(){if(typeof Chart==='undefined'){setTimeout(renderizarGrafico,300);return}let tH=document.getElementById('tela_home');if(!tH.classList.contains('ativa'))return;requestAnimationFrame(()=>{setTimeout(()=>{const c=document.getElementById('graficoFinanceiro');if(!c||c.offsetParent===null)return;const ctx=c.getContext('2d');const mA=document.getElementById('filtro_mes').value;const yA=new Date().getFullYear().toString();let totalVendidoMes=0,totalRecebidoMes=0,totalGastosMes=0,aReceberGeral=0;const gM=dadosGastos.filter(g=>g.data&&g.data.split('-')[1]===mA&&g.data.split('-')[0]===yA);totalGastosMes=gM.reduce((a,b)=>a+(b.valor||0),0);dadosPedidos.forEach(p=>{if(p.tipo!=='servico')return;let dataPedido=p.data||'';let mesPedido=dataPedido.split('-')[1];let anoPedido=dataPedido.split('-')[0];if(mesPedido===mA&&anoPedido===yA)totalVendidoMes+=(p.total||0);let falta=(p.total||0)-(p.pago||0);if(falta>0)aReceberGeral+=falta;const checkPgto=(val,dt)=>{if(!val||val<=0)return;let d=dt||dataPedido;if(d.split('-')[1]===mA&&d.split('-')[0]===yA)totalRecebidoMes+=val};checkPgto(p.pago_entrada,p.data_entrada);checkPgto(p.pago_parcela1,p.data_parcela1);checkPgto(p.pago_parcela2,p.data_parcela2);checkPgto(p.pago_parcela3,p.data_parcela3)});let caixaLiquido=totalRecebidoMes-totalGastosMes;document.getElementById('h_recebido').innerText="R$ "+formatMoeda(totalRecebidoMes);document.getElementById('h_areceber').innerText="R$ "+formatMoeda(aReceberGeral);document.getElementById('h_gastos').innerText="R$ "+formatMoeda(totalGastosMes);document.getElementById('h_lucro').innerText="R$ "+formatMoeda(caixaLiquido);document.getElementById('h_bruto').innerText="R$ "+formatMoeda(totalVendidoMes);document.getElementById('h_lucro').style.color=caixaLiquido<0?'var(--red)':'var(--blue)';if(meuGrafico)meuGrafico.destroy();let diasComMovimento=new Set();gM.forEach(g=>diasComMovimento.add(g.data.split('-')[2]));dadosPedidos.forEach(p=>{if(p.tipo!=='servico')return;const addDia=(v,dt)=>{let dFull=dt||p.data;if(v>0&&dFull.split('-')[1]===mA&&dFull.split('-')[0]===yA)diasComMovimento.add(dFull.split('-')[2])};addDia(p.pago_entrada,p.data_entrada);addDia(p.pago_parcela1,p.data_parcela1);addDia(p.pago_parcela2,p.data_parcela2);addDia(p.pago_parcela3,p.data_parcela3)});let d=[...diasComMovimento].sort();if(d.length===0){let dA=new Date().toISOString().split('T')[0].split('-')[2];d=['01',dA]}else if(d.length===1){if(d[0]!=='01')d.unshift('01');else d.push('30')}const dR=d.map(di=>{let soma=0;dadosPedidos.forEach(p=>{if(p.tipo!=='servico')return;const ck=(v,dt)=>{let dFull=dt||p.data;if(v>0&&dFull.split('-')[1]===mA&&dFull.split('-')[0]===yA&&dFull.split('-')[2]===di)soma+=v};ck(p.pago_entrada,p.data_entrada);ck(p.pago_parcela1,p.data_parcela1);ck(p.pago_parcela2,p.data_parcela2);ck(p.pago_parcela3,p.data_parcela3)});return soma});const dGA=d.map(di=>gM.filter(g=>g.data.split('-')[2]===di).reduce((a,b)=>a+(b.valor||0),0));meuGrafico=new Chart(ctx,{type:'line',data:{labels:d.map(di=>di+'/'+mA),datasets:[{label:'Entradas',data:dR,borderColor:'#30d158',backgroundColor:'rgba(48,209,88,0.1)',fill:true,tension:.3,pointRadius:4},{label:'Saídas',data:dGA,borderColor:'#ff453a',backgroundColor:'transparent',fill:false,tension:.3,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#ccc'}}},scales:{y:{ticks:{color:'#888',callback:v=>'R$ '+v}},x:{ticks:{color:'#888'}}}}});},300);})}
 
 function mudarTela(id){telaAtiva=id;document.querySelectorAll('.tela').forEach(t=>t.classList.remove('ativa'));document.getElementById(id).classList.add('ativa');document.getElementById('barra_busca').classList.toggle('visivel',id!=='tela_home'&&id!=='tela_corte'&&id!=='tela_config'&&id!=='tela_pendencias_detalhes'&&id!=='tela_venda_m2'&&id!=='tela_lembretes_detalhes'&&id!=='tela_cores');if(id==='tela_home')setTimeout(renderizarGrafico,450);if(id==='tela_venda_m2')renderizarPecasVendaM2();if(id==='tela_cores')initCoresTab();if(id==='tela_a_pagar')renderizarAPagar()}
@@ -858,7 +653,7 @@ function somarPagamentos(){let e=parseFloat(document.getElementById('f_entrada')
 function fecharModais(){document.querySelectorAll('.modal').forEach(m=>m.style.display='none')}
 
 // =================================================================
-// ✅ AJUSTAR CAMPOS MODAL - CORRIGIDO
+// ✅ AJUSTAR CAMPOS MODAL - SEMPRE POPULA STATUS
 // =================================================================
 function ajustarCamposModal(){
   try{
@@ -868,28 +663,32 @@ function ajustarCamposModal(){
     const pg=document.getElementById('f_pagamentos_section');
     const lbl=document.getElementById('label_servico');
     
-    if(!s)return;
+    if(!s){console.error('f_status não encontrado');return}
+    
+    // SEMPRE limpa e popula o status
     s.innerHTML='';
     
     if(t==='orcamento'){
       if(lbl)lbl.innerText="Descrição do Orçamento";
       s.innerHTML='<option value="aguardando">Aguardando</option><option value="aprovado">Aprovado (Mover p/ Pedido)</option>';
+      s.value='aguardando';
       if(cv)cv.style.display='flex';
       if(pg)pg.style.display='none';
     }else if(t==='compra'){
       if(lbl)lbl.innerText="Observação / Descrição";
       s.innerHTML='<option value="em_compra">Mover para Compras</option>';
+      s.value='em_compra';
       if(cv)cv.style.display='none';
       if(pg)pg.style.display='none';
     }else{
       if(lbl)lbl.innerText="Serviço Principal";
       s.innerHTML='<option value="pendente">Pendente</option><option value="andamento">Em Andamento</option><option value="concluido">Concluído</option>';
+      s.value='pendente';
       if(cv)cv.style.display='none';
       if(pg)pg.style.display='block';
     }
   }catch(e){
     console.error('Erro em ajustarCamposModal:',e);
-    showToast("Erro ao configurar campos","error");
   }
 }
 
@@ -900,7 +699,6 @@ function duplicarRegistroAtual(t){if(t==='pedido'){document.getElementById('f_id
 // =================================================================
 function abrirModalPorTela(){
   try{
-    // Reset de todos os botões de ação
     ['btn_duplicar_pedido','btn_imprimir_pedido','btn_zap_pedido','btn_duplicar_compra','btn_duplicar_gasto','btn_imprimir_apagar','btn_zap_apagar'].forEach(id=>{
       const el=document.getElementById(id);
       if(el)el.style.display='none';
@@ -960,9 +758,9 @@ function abrirModalPorTela(){
       document.querySelectorAll('#modalServicosCatalogo input').forEach(i=>i.value='');
       document.getElementById('modalServicosCatalogo').style.display='flex';
     }
-    // ✅ CORREÇÃO CRÍTICA: Modal Pedido
+    // ✅ CORREÇÃO CRÍTICA DO MODAL PEDIDO
     else if(telaAtiva==='tela_pedidos'||telaAtiva==='tela_orcamentos'){
-      // Limpa todos os campos
+      // Limpa TODOS os campos
       document.getElementById('f_id').value="";
       document.getElementById('f_cliente').value="";
       document.getElementById('f_servico').value="";
@@ -979,30 +777,22 @@ function abrirModalPorTela(){
       document.getElementById('f_parcela2_data').value="";
       document.getElementById('f_parcela3').value="0";
       document.getElementById('f_parcela3_data').value="";
-      document.getElementById('f_data').value=new Date().toISOString().split('T')[0];
       document.getElementById('f_endereco').value="";
       document.getElementById('f_numero').value="";
       document.getElementById('f_complemento').value="";
       document.getElementById('f_cidade').value="";
       document.getElementById('f_lembrete').value="";
+      document.getElementById('f_data').value=new Date().toISOString().split('T')[0];
       
-      // Define o tipo correto
+      // Define o tipo CORRETO
       if(telaAtiva==='tela_orcamentos'){
         document.getElementById('f_tipo').value='orcamento';
       }else{
         document.getElementById('f_tipo').value='servico';
       }
       
-      // Ajusta os campos baseado no tipo
+      // ✅ IMPORTANTE: ajustarCamposModal SEMPRE popula o status
       ajustarCamposModal();
-      
-      // Define o status padrão após ajustarCamposModal ter populado as opções
-      setTimeout(()=>{
-        const statusSelect=document.getElementById('f_status');
-        if(statusSelect&&statusSelect.options.length>0){
-          statusSelect.value=statusSelect.options[0].value;
-        }
-      },10);
       
       // Limpa itens
       itensNoPedido=[];
@@ -1010,6 +800,8 @@ function abrirModalPorTela(){
       
       // Abre o modal
       document.getElementById('modalPedido').style.display='flex';
+      
+      console.log('✅ Modal Pedido aberto com sucesso. Status:',document.getElementById('f_status').value);
     }
     else if(telaAtiva==='tela_agenda'){
       document.getElementById('a_id').value="";
@@ -1038,34 +830,48 @@ function abrirModalPorTela(){
     }
   }catch(e){
     console.error('Erro em abrirModalPorTela:',e);
-    showToast("Erro ao abrir modal","error");
+    showToast("Erro ao abrir: "+e.message,"error");
   }
 }
 
 function excluirRegistro(t,id){if(confirm("Excluir?")){const i=DB[t].findIndex(x=>x.id==id);if(i>-1)DB[t].splice(i,1);saveDB();if(t==='pendencias'&&telaAtiva==='tela_pendencias_detalhes'){mudarTela('tela_pendencias');renderizarTudo()}else if(t==='lembretes'&&telaAtiva==='tela_lembretes_detalhes'){mudarTela('tela_lembretes');renderizarTudo()}else renderizarTudo()}}
 
 // =================================================================
-// ✅ SALVAR PEDIDO - ROBUSTO
+// ✅ SALVAR PEDIDO - ROBUSTO COM VALIDAÇÃO
 // =================================================================
 function salvarPedido(){
   try{
+    console.log('🔵 Iniciando salvarPedido...');
+    
+    // Validação do cliente
     const cliente=document.getElementById('f_cliente').value.trim();
     if(!cliente){
-      showToast("Cliente é obrigatório!","error");
+      showToast("⚠️ Cliente é obrigatório!","error");
       document.getElementById('f_cliente').focus();
+      document.getElementById('f_cliente').style.borderColor='var(--red)';
+      setTimeout(()=>{document.getElementById('f_cliente').style.borderColor=''},2000);
       return;
     }
     
     let tA=document.getElementById('f_tipo').value;
     let sA=document.getElementById('f_status').value;
     
-    // Se status vazio, define padrão
-    if(!sA){
-      sA=tA==='orcamento'?'aguardando':'pendente';
-      document.getElementById('f_status').value=sA;
+    // ✅ SE STATUS ESTIVER VAZIO, DEFINE PADRÃO
+    if(!sA||sA===''){
+      if(tA==='orcamento')sA='aguardando';
+      else if(tA==='compra')sA='em_compra';
+      else sA='pendente';
+      console.log('⚠️ Status vazio, definindo padrão:',sA);
     }
     
-    if(tA==='orcamento'&&sA==='aprovado'){tA='servico';sA='pendente';showToast("Aprovado!","success")}
+    // Conversão orçamento aprovado
+    if(tA==='orcamento'&&sA==='aprovado'){
+      tA='servico';
+      sA='pendente';
+      showToast("✅ Orçamento Aprovado!","success");
+    }
+    
+    // Quitação automática se concluído
     if(tA==='servico'&&sA==='concluido'){
       let tot=parseFloat(document.getElementById('f_total').value)||0;
       let pag=parseFloat(document.getElementById('f_pago').value)||0;
@@ -1081,49 +887,91 @@ function salvarPedido(){
         somarPagamentos();
       }
     }
+    
+    // Conversão para compras
     if(tA==='compra'){
       const idAtual=document.getElementById('f_id').value;
       let itensC=itensNoPedido.map(i=>({item:i.item,qtd:i.qtd,valor:i.valor,id_referencia:i.id_referencia||""}));
-      DB.compras.push({id:generateID(),cliente:cliente,itens:itensC,total:parseFloat(document.getElementById('f_total').value)||0,data:document.getElementById('f_data').value,status:'em_compra'});
+      DB.compras.push({
+        id:generateID(),
+        cliente:cliente,
+        itens:itensC,
+        total:parseFloat(document.getElementById('f_total').value)||0,
+        data:document.getElementById('f_data').value,
+        status:'em_compra'
+      });
       if(idAtual)DB.servicos=DB.servicos.filter(x=>x.id!=idAtual);
-      saveDB();fecharModais();renderizarTudo();showToast("Convertido!","success");return;
+      saveDB();
+      fecharModais();
+      renderizarTudo();
+      showToast("✅ Convertido para Compras!","success");
+      return;
     }
-    const o={
+    
+    // ✅ CONSTRUIR OBJETO DO PEDIDO
+    const novoPedido={
       id:document.getElementById('f_id').value||generateID(),
       cliente:cliente,
-      servico:document.getElementById('f_servico').value,
-      itens_usados:itensNoPedido,
+      servico:document.getElementById('f_servico').value||'',
+      itens_usados:itensNoPedido||[],
       total_base:parseFloat(document.getElementById('f_total_base').value)||0,
       multiplicador:parseFloat(document.getElementById('f_multiplicador').value)||1,
       total:parseFloat(document.getElementById('f_total').value)||0,
       pago:parseFloat(document.getElementById('f_pago').value)||0,
       pago_entrada:parseFloat(document.getElementById('f_entrada').value)||0,
-      data_entrada:document.getElementById('f_entrada_data').value,
+      data_entrada:document.getElementById('f_entrada_data').value||'',
       pago_parcela1:parseFloat(document.getElementById('f_parcela1').value)||0,
-      data_parcela1:document.getElementById('f_parcela1_data').value,
+      data_parcela1:document.getElementById('f_parcela1_data').value||'',
       pago_parcela2:parseFloat(document.getElementById('f_parcela2').value)||0,
-      data_parcela2:document.getElementById('f_parcela2_data').value,
+      data_parcela2:document.getElementById('f_parcela2_data').value||'',
       pago_parcela3:parseFloat(document.getElementById('f_parcela3').value)||0,
-      data_parcela3:document.getElementById('f_parcela3_data').value,
-      data:document.getElementById('f_data').value,
+      data_parcela3:document.getElementById('f_parcela3_data').value||'',
+      data:document.getElementById('f_data').value||new Date().toISOString().split('T')[0],
       tipo:tA,
       status:sA,
-      endereco:document.getElementById('f_endereco').value,
-      numero:document.getElementById('f_numero').value,
-      complemento:document.getElementById('f_complemento').value,
-      cidade:document.getElementById('f_cidade').value,
-      lembrete:document.getElementById('f_lembrete').value,
+      endereco:document.getElementById('f_endereco').value||'',
+      numero:document.getElementById('f_numero').value||'',
+      complemento:document.getElementById('f_complemento').value||'',
+      cidade:document.getElementById('f_cidade').value||'',
+      lembrete:document.getElementById('f_lembrete').value||'',
       mao_obra:parseFloat(document.getElementById('f_mao_obra').value)||0
     };
-    if(document.getElementById('f_id').value){
-      const i=DB.servicos.findIndex(x=>x.id==o.id);
-      if(i>-1)DB.servicos[i]=o;
-      else DB.servicos.push(o);
-    }else DB.servicos.push(o);
-    saveDB();fecharModais();renderizarTudo();showToast("Salvo!","success");
+    
+    console.log('📦 Pedido a salvar:',novoPedido);
+    
+    // ✅ SALVAR OU ATUALIZAR
+    const idExistente=document.getElementById('f_id').value;
+    if(idExistente){
+      const idx=DB.servicos.findIndex(x=>x.id==idExistente);
+      if(idx>-1){
+        DB.servicos[idx]=novoPedido;
+        console.log('✅ Atualizado no índice:',idx);
+      }else{
+        DB.servicos.push(novoPedido);
+        console.log('✅ ID não encontrado, adicionado como novo');
+      }
+    }else{
+      DB.servicos.push(novoPedido);
+      console.log('✅ Novo pedido adicionado. Total:',DB.servicos.length);
+    }
+    
+    // ✅ SALVAR NO BANCO
+    saveDB();
+    
+    // ✅ FECHAR MODAL E ATUALIZAR TELA
+    fecharModais();
+    
+    // Pequeno delay para garantir que o modal fechou antes de renderizar
+    setTimeout(()=>{
+      renderizarTudo();
+      showToast("✅ Pedido salvo com sucesso!","success");
+    },100);
+    
+    console.log('✅ salvarPedido concluído com sucesso!');
+    
   }catch(e){
-    console.error('Erro em salvarPedido:',e);
-    showToast("Erro ao salvar: "+e.message,"error");
+    console.error('❌ ERRO CRÍTICO em salvarPedido:',e);
+    showToast("❌ Erro ao salvar: "+e.message,"error");
   }
 }
 
@@ -1133,9 +981,13 @@ function salvarPedido(){
 function editarPedido(id){
   try{
     const p=DB.servicos.find(x=>x.id==id);
-    if(!p)return showToast("Não encontrado!","error");
+    if(!p){
+      showToast("Pedido não encontrado!","error");
+      return;
+    }
     
-    // Preenche todos os campos com segurança
+    console.log('🔵 Editando pedido:',p.id);
+    
     document.getElementById('f_id').value=p.id||"";
     document.getElementById('f_cliente').value=p.cliente||"";
     document.getElementById('f_servico').value=p.servico||"";
@@ -1161,23 +1013,18 @@ function editarPedido(id){
     document.getElementById('f_lembrete').value=p.lembrete||'';
     document.getElementById('f_mao_obra').value=p.mao_obra||0;
     
-    // Ajusta campos baseado no tipo
+    // ✅ AJUSTA CAMPOS (popula status)
     ajustarCamposModal();
     
-    // Define status DEPOIS de ajustarCamposModal ter populado as opções
+    // ✅ AGORA define o status (após as opções estarem populadas)
     if(p.status){
-      setTimeout(()=>{
-        const statusSelect=document.getElementById('f_status');
-        if(statusSelect){
-          // Verifica se a opção existe
-          const opcoes=Array.from(statusSelect.options).map(o=>o.value);
-          if(opcoes.includes(p.status)){
-            statusSelect.value=p.status;
-          }else{
-            statusSelect.value=statusSelect.options[0].value;
-          }
-        }
-      },10);
+      const statusSelect=document.getElementById('f_status');
+      const opcoes=Array.from(statusSelect.options).map(o=>o.value);
+      if(opcoes.includes(p.status)){
+        statusSelect.value=p.status;
+      }else{
+        statusSelect.value=opcoes[0];
+      }
     }
     
     itensNoPedido=p.itens_usados||[];
@@ -1195,9 +1042,12 @@ function editarPedido(id){
     }
     
     document.getElementById('modalPedido').style.display='flex';
+    
+    console.log('✅ Modal de edição aberto. Status atual:',document.getElementById('f_status').value);
+    
   }catch(e){
-    console.error('Erro em editarPedido:',e);
-    showToast("Erro ao abrir pedido: "+e.message,"error");
+    console.error('❌ Erro em editarPedido:',e);
+    showToast("Erro ao abrir: "+e.message,"error");
   }
 }
 
@@ -1242,9 +1092,6 @@ function confirmarAdicaoServico(){const id=document.getElementById('sel_servico_
 
 function gerarRelatorio(tipo){const mA=document.getElementById('filtro_mes').value;const yA=new Date().getFullYear().toString();const eN=DB.config.nome||"Minha Empresa";let pF=[],gF=[];let totalVendidoMes=0,totalRecebidoMes=0;if(tipo==='mensal'){gF=dadosGastos.filter(g=>g.data&&g.data.split('-')[1]===mA&&g.data.split('-')[0]===yA);dadosPedidos.forEach(p=>{if(p.tipo!=='servico')return;let d=p.data||'';if(d.split('-')[1]===mA&&d.split('-')[0]===yA)totalVendidoMes+=(p.total||0);const ck=(v,dt)=>{let df=dt||d;if(v>0&&df.split('-')[1]===mA&&df.split('-')[0]===yA)totalRecebidoMes+=v};ck(p.pago_entrada,p.data_entrada);ck(p.pago_parcela1,p.data_parcela1);ck(p.pago_parcela2,p.data_parcela2);ck(p.pago_parcela3,p.data_parcela3)})}else{gF=dadosGastos.filter(g=>g.data&&g.data.split('-')[0]===yA);dadosPedidos.forEach(p=>{if(p.tipo!=='servico')return;let d=p.data||'';if(d.split('-')[0]===yA)totalVendidoMes+=(p.total||0);const ck=(v,dt)=>{let df=dt||d;if(v>0&&df.split('-')[0]===yA)totalRecebidoMes+=v};ck(p.pago_entrada,p.data_entrada);ck(p.pago_parcela1,p.data_parcela1);ck(p.pago_parcela2,p.data_parcela2);ck(p.pago_parcela3,p.data_parcela3)})}const tG=gF.reduce((a,b)=>a+(b.valor||0),0);const sC=totalRecebidoMes-tG;document.getElementById('area-impressao').innerHTML=`<div style="font-family:'Segoe UI',sans-serif;color:#000;padding:20px"><h1 style="text-align:center;border-bottom:2px solid #000;padding-bottom:10px">${eN}<br><small style="font-size:16px">Relatório ${tipo==='mensal'?mA+'/'+yA:yA}</small></h1><div style="display:flex;justify-content:space-between;margin-bottom:25px;background:#f8f9fa;padding:15px;border-radius:8px"><div><strong>Bruto:</strong> R$ ${formatMoeda(totalVendidoMes)}<br><strong style="color:green">Recebido:</strong> R$ ${formatMoeda(totalRecebidoMes)}</div><div style="text-align:right"><strong style="color:red">Gastos:</strong> R$ ${formatMoeda(tG)}<br><strong style="color:${sC<0?'red':'green'}">Caixa:</strong> R$ ${formatMoeda(sC)}</div></div></div>`;setTimeout(()=>window.print(),400)}
 
-// =================================================================
-// PLANO CORTE
-// =================================================================
 function novoPlanoCorte(){if(pecasCorte.length>0&&!confirm("Limpar?"))return;planoAtualId=null;planoAtualNome="";pecasCorte=[];gruposChapasCalculadas=[];document.getElementById('corte_cliente_nome').value="";document.getElementById('container_mapas_visuais').innerHTML="";document.getElementById('resultado_chapas').innerText="-";document.getElementById('resultado_area').innerText="Área: -";document.getElementById('resultado_fita').innerText="Fita: -";renderizarPecasCorte();showToast("Limpo!","info")}
 function adicionarPecaCorte(){const d=document.getElementById('corte_desc_peca').value,c=parseFloat(document.getElementById('corte_comp_peca').value),l=parseFloat(document.getElementById('corte_larg_peca').value),q=parseInt(document.getElementById('corte_qtd_peca').value),m=document.getElementById('corte_material').value||"Padrão",e=document.getElementById('corte_espessura').value||"15mm",cc=parseFloat(document.getElementById('corte_chapa_comp').value)||2750,cl=parseFloat(document.getElementById('corte_chapa_larg').value)||1850,cf=document.getElementById('corte_cor_fita_peca').value||"",fc1=document.getElementById('corte_fita_c1').checked,fc2=document.getElementById('corte_fita_c2').checked,fl1=document.getElementById('corte_fita_l1').checked,fl2=document.getElementById('corte_fita_l2').checked;if(!d||!c||!l||isNaN(q)||q<=0)return showToast("Preencha tudo!","error");let fT=[];if(fc1||fc2)fT.push((fc1&&fc2?"2":"1")+" C");if(fl1||fl2)fT.push((fl1&&fl2?"2":"1")+" L");let fR=fT.length>0?fT.join('/'):"-";pecasCorte.push({id_peca:Date.now()+Math.random(),desc:d,comp:c,larg:l,qtd:q,fitaResumo:fR,fitaEdges:{c1:fc1,c2:fc2,l1:fl1,l2:fl2},cor_fita:cf,material:m,espessura:e,chapa_comp:cc,chapa_larg:cl});document.getElementById('corte_desc_peca').value='';document.getElementById('corte_comp_peca').value='';document.getElementById('corte_larg_peca').value='';document.getElementById('corte_qtd_peca').value='1';document.getElementById('corte_cor_fita_peca').value='';document.getElementById('corte_fita_c1').checked=false;document.getElementById('corte_fita_c2').checked=false;document.getElementById('corte_fita_l1').checked=false;document.getElementById('corte_fita_l2').checked=false;renderizarPecasCorte();showToast("Add!")}
 function editarPecaCorte(i){let p=pecasCorte[i];document.getElementById('corte_desc_peca').value=p.desc;document.getElementById('corte_comp_peca').value=p.comp;document.getElementById('corte_larg_peca').value=p.larg;document.getElementById('corte_qtd_peca').value=p.qtd;document.getElementById('corte_material').value=p.material;document.getElementById('corte_espessura').value=p.espessura;document.getElementById('corte_cor_fita_peca').value=p.cor_fita;document.getElementById('corte_fita_c1').checked=p.fitaEdges.c1;document.getElementById('corte_fita_c2').checked=p.fitaEdges.c2;document.getElementById('corte_fita_l1').checked=p.fitaEdges.l1;document.getElementById('corte_fita_l2').checked=p.fitaEdges.l2;pecasCorte.splice(i,1);renderizarPecasCorte()}
@@ -1310,9 +1157,6 @@ function removerSubrotinaLem(idx,sridx){const p=DB.lembretes.find(x=>x.id==idLem
 function renderizarSubLembretesModal(){const p=DB.lembretes.find(x=>x.id==idLembreteAberto);const t=p.itens[idxLembreteEditando];const c=document.getElementById('lista_sub_lem_modal');if(!t.subitens||t.subitens.length===0){c.innerHTML='<div style="color:#666;text-align:center;padding:10px">Vazio</div>';return}c.innerHTML=t.subitens.map((s,idx)=>{let subR=s.subrotinas||[];let subR_html=subR.map((sr,sridx)=>`<div style="display:flex;align-items:center;padding:10px 0 10px 25px;border-bottom:1px dashed #333"><div class="todo-circle ${sr.concluido?'done':''}" style="width:18px;height:18px;margin-right:8px;cursor:pointer" onclick="toggleSubrotinaLem(${idx},${sridx})">${sr.concluido?'<i class="fas fa-check" style="font-size:10px"></i>':''}</div><div style="flex:1;font-size:15px;cursor:pointer;${sr.concluido?'text-decoration:line-through;color:#666':'color:#ccc'}" onclick="toggleSubrotinaLem(${idx},${sridx})">${sr.nome}</div><i class="fas fa-times" style="color:#666;cursor:pointer;padding:5px" onclick="removerSubrotinaLem(${idx},${sridx})"></i></div>`).join('');return`<div style="margin-bottom:10px;background:rgba(0,0,0,0.2);padding:12px;border-radius:6px;border:1px solid #333"><div style="display:flex;align-items:center;margin-bottom:5px"><div class="todo-circle ${s.concluido?'done':''}" style="width:22px;height:22px;margin-right:10px;cursor:pointer" onclick="toggleSubLem(${idx})">${s.concluido?'<i class="fas fa-check" style="font-size:12px"></i>':''}</div><div style="flex:1;font-size:17px;font-weight:bold;cursor:pointer;${s.concluido?'text-decoration:line-through;color:#666':'color:#fff'}" onclick="toggleSubLem(${idx})">${s.nome}</div><i class="fas fa-times" style="color:#666;cursor:pointer;padding:5px" onclick="removerSubLem(${idx})"></i></div>${subR_html}<div style="display:flex;align-items:center;padding-left:25px;margin-top:5px;gap:5px"><i class="fas fa-level-up-alt fa-rotate-90" style="color:#666"></i><input type="text" placeholder="Sub-rotina" id="n_sr_nome_${idx}" style="background:transparent;border:none;padding:0;margin:0;outline:none;font-size:15px;flex:1;color:#aaa"><input type="date" id="n_sr_data_${idx}" style="width:110px;margin:0;padding:5px;border-radius:4px;background:rgba(255,255,255,0.05);color:#fff;border:1px solid #444;font-size:12px"><i class="fas fa-save" style="color:var(--green);cursor:pointer;font-size:18px;padding:3px" onclick="adicionarSubrotinaLem(${idx})"></i></div></div>`}).join('')}
 function imprimirLembrete(){if(!idLembreteAberto)return showToast("Abra um grupo!","error");const p=DB.lembretes.find(x=>x.id==idLembreteAberto);if(!p)return;const c=DB.config||{},eN=c.nome||"Minha Empresa",dHj=formatarDataBR(new Date().toISOString().split('T')[0]);let lT="";if(p.itens)p.itens.forEach(t=>{let status=t.concluido?'<span style="color:green">Concluído</span>':'A Fazer';lT+=`<tr><td style="padding:10px;border-bottom:1px solid #ccc"><b>${t.nome}</b></td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:center">${formatarDataBR(t.data)||'-'}</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:center">${status}</td></tr>`});document.getElementById('area-impressao').innerHTML=`<div style="font-family:'Segoe UI',sans-serif;color:#000;padding:20px;max-width:800px;margin:0 auto"><h2 style="text-align:center;border-bottom:2px solid #000;padding-bottom:10px">${eN}<br><small>Relatório de Lembretes</small></h2><div style="background:#f9f9f9;padding:15px;border-left:4px solid var(--orange);margin-bottom:20px"><strong>Grupo:</strong> ${p.titulo}<br><small>Gerado em: ${dHj}</small></div><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr style="background:#e0e0e0;border-bottom:2px solid #000"><th style="padding:10px;text-align:left">Descrição</th><th style="padding:10px;text-align:center">Data</th><th style="padding:10px;text-align:center">Status</th></tr></thead><tbody>${lT}</tbody></table></div>`;setTimeout(()=>window.print(),300)}
 
-// =================================================================
-// CORES
-// =================================================================
 function initCoresTab(){if(!DB.cores_corantes||DB.cores_corantes.length===0){DB.cores_corantes=[{id:1,name:"Amarelo",hex:"#FFD700"},{id:2,name:"Azul",hex:"#0000FF"},{id:3,name:"Vermelho",hex:"#FF0000"}];saveDB()}renderColorantsCores();renderHistoryCores();const slider=document.getElementById('brightnessSlider');if(slider){slider.removeEventListener('input',updateBrightnessCores);slider.addEventListener('input',updateBrightnessCores)}const colorInput=document.getElementById('targetColor');if(colorInput){colorInput.removeEventListener('input',updateTargetColorInputCores);colorInput.addEventListener('input',updateTargetColorInputCores)}}
 function updateTargetColorInputCores(){const hex=document.getElementById('targetColor').value;baseColorCores={r:parseInt(hex.substr(1,2),16),g:parseInt(hex.substr(3,2),16),b:parseInt(hex.substr(5,2),16)};updateTargetColorCores()}
 function updateBrightnessCores(){const slider=document.getElementById('brightnessSlider');brightnessAdjustCores=parseInt(slider.value);document.getElementById('brightnessValue').textContent=brightnessAdjustCores>0?`+${brightnessAdjustCores}`:brightnessAdjustCores;updateTargetColorCores()}
