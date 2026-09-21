@@ -51,7 +51,6 @@ input:not([type="checkbox"]),select,textarea{width:100%;padding:12px;margin:5px 
 .todo-input-row{display:flex;align-items:center;background:#25252b;margin-bottom:20px;padding:14px 15px;border-radius:4px;border:1px solid #444;box-shadow:0 4px 10px rgba(0,0,0,.3)}.todo-input{background:transparent;border:none;color:white;flex:1;outline:none;font-size:15px;margin-left:10px;padding:0}.todo-input::placeholder{color:#888}
 .todo-title{display:flex;justify-content:space-between;align-items:center;font-size:22px;color:var(--gold);font-weight:bold;margin-bottom:25px}
 .subtask-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px dashed #444}
-/* --- ESTILOS DA ABA CORES --- */
 .comparison-area { background: var(--card); border: 1px solid #333; border-radius: 12px; overflow: hidden; margin-bottom: 15px; }
 .comparison-header { background: rgba(255,255,255,0.05); color: var(--gold); padding: 12px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
 .comparison-display { height: 200px; width: 100%; }
@@ -63,7 +62,6 @@ input:not([type="checkbox"]),select,textarea{width:100%;padding:12px;margin:5px 
 input[type="range"] { flex: 1; height: 6px; border-radius: 5px; background: linear-gradient(to right, #000 0%, #808080 50%, #fff 100%); outline: none; -webkit-appearance: none; }
 input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--blue); cursor: pointer; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
 input[type="color"] { height: 50px; padding: 2px; cursor: pointer; background: var(--card); border: 1px solid #444; }
-/* --- ESTILOS DA ABA A PAGAR --- */
 .apagar-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:15px}
 .apagar-box{background:var(--card);padding:12px;border-radius:10px;text-align:center;border:1px solid #333}
 .apagar-box span{display:block;font-size:9px;color:#888;text-transform:uppercase;font-weight:bold;margin-bottom:4px}
@@ -79,19 +77,29 @@ input[type="color"] { height: 50px; padding: 2px; cursor: pointer; background: v
 .restante-display span{display:block;font-size:10px;color:#888;text-transform:uppercase;font-weight:bold}
 .restante-display strong{font-size:22px;color:var(--red)}
 .restante-display.quitado strong{color:var(--green)}
+/* Indicador de sincronização */
+.sync-indicator{position:fixed;top:10px;right:10px;z-index:9999;display:flex;align-items:center;gap:6px;background:var(--card);padding:6px 12px;border-radius:20px;font-size:10px;font-weight:bold;border:1px solid #333;transition:all .3s;opacity:0;pointer-events:none}
+.sync-indicator.visible{opacity:1}
+.sync-indicator.saving{border-color:var(--orange);color:var(--orange)}
+.sync-indicator.synced{border-color:var(--green);color:var(--green)}
+.sync-indicator.error{border-color:var(--red);color:var(--red)}
+.sync-indicator i{font-size:12px}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.sync-indicator.saving i{animation:spin 1s linear infinite}
 @media print{
 @page { margin: 0; }
 body{background:#fff!important;margin:0;padding:0}
 body *{visibility:hidden}
 #area-impressao,#area-impressao *{visibility:visible}
 #area-impressao{display:block;position:absolute;left:0;top:0;width:100%;background:#fff;color:#000;box-sizing:border-box;min-height:100vh}
-.btn-flutuante,.menu-grid,.busca-container,.empresa-header,.toast-container{display:none!important}
+.btn-flutuante,.menu-grid,.busca-container,.empresa-header,.toast-container,.sync-indicator{display:none!important}
 }
 </style>
 </head>
 <body>
 <div id="app_principal">
 <div id="toast_container" class="toast-container"></div>
+<div id="sync_indicator" class="sync-indicator"><i class="fas fa-circle-notch"></i><span id="sync_text">Sincronizando...</span></div>
 <div class="empresa-header">
 <img id="logo_display" src="icone.png" alt="Logo" class="empresa-logo" onerror="this.src='icone.png'">
 <div class="empresa-info"><h3 id="nome_display">Minha Empresa</h3><p id="contato_display">Configure seus dados na aba Ajustes</p></div>
@@ -145,9 +153,6 @@ body *{visibility:hidden}
 <div id="tela_estoque" class="tela"><div id="listaEstoque"></div></div>
 <div id="tela_servicos" class="tela"><div id="listaServicosCatalogo"></div></div>
 <div id="tela_gastos" class="tela"><div id="listaGastos"></div></div>
-<!-- ========================================================== -->
-<!-- NOVA ABA: A PAGAR -->
-<!-- ========================================================== -->
 <div id="tela_a_pagar" class="tela">
 <div class="apagar-summary">
 <div class="apagar-box" style="border-color:rgba(255,69,58,0.3);"><span><i class="fas fa-file-invoice"></i> Total Dívidas</span><strong id="ap_total_dividas" style="color:var(--red);">R$ 0,00</strong></div>
@@ -164,7 +169,6 @@ body *{visibility:hidden}
 </div>
 <div id="listaAPagar"></div>
 </div>
-<!-- ========================================================== -->
 <div id="tela_pendencias" class="tela"><div style="margin-bottom: 15px; font-size: 12px; color: #aaa;"><i class="fas fa-info-circle"></i> Selecione uma Lista de Tarefas ou adicione uma nova no <b>+</b></div><div id="listaPendencias"></div></div>
 <div id="tela_pendencias_detalhes" class="tela"><div class="todo-title"><div style="display:flex; align-items:center; gap:15px;"><i class="fas fa-arrow-left" style="cursor:pointer; color:#888;" onclick="mudarTela('tela_pendencias'); renderizarTudo();"></i><span id="todo_list_title">Nome da Lista</span></div><i class="fab fa-whatsapp" style="color:#25D366; cursor:pointer; font-size:26px;" onclick="enviarWhatsAppPendencia()"></i></div><div class="todo-input-row"><div class="todo-circle" style="border-color:var(--blue); cursor:pointer;" onclick="adicionarTarefaRapida()"><i class="fas fa-plus" style="color:var(--blue);"></i></div><input type="text" id="todo_new_task" class="todo-input" placeholder="Adicionar uma tarefa..." onkeypress="if(event.key === 'Enter') { event.preventDefault(); adicionarTarefaRapida(); }"></div><div id="todo_tasks_container"></div></div>
 <div id="tela_lembretes" class="tela"><div style="margin-bottom:15px;font-size:12px;color:#aaa;"><i class="fas fa-info-circle"></i> Crie grupos de lembretes no <b>+</b></div><div id="listaLembretes"></div></div>
@@ -181,9 +185,6 @@ body *{visibility:hidden}
 <div class="item-card" style="border-left-color: var(--blue);"><h4 style="color:var(--blue); margin-top:0;"><i class="fas fa-plus"></i> Adicionar Peças</h4><div style="display:flex; gap:10px;"><div style="flex:1"><label>Qtd</label><input type="number" id="vm2_qtd_peca" value="1"></div><div style="flex:1"><label>Comp. (C) (mm)</label><input type="number" id="vm2_comp_peca"></div><div style="flex:1"><label>Larg. (L) (mm)</label><input type="number" id="vm2_larg_peca"></div></div><div style="margin-top: 10px;"><label style="color:var(--gold)"><i class="fas fa-tape"></i> Fita de Borda (Posição):</label><div style="display:flex; gap:10px; margin-top:5px;"><div style="flex:1; display:flex; flex-direction:column; gap:5px;"><label class="label-check"><input type="checkbox" id="vm2_fita_c1" class="check-inline"> Comp. 1 (C)</label><label class="label-check"><input type="checkbox" id="vm2_fita_c2" class="check-inline"> Comp. 2 (C)</label></div><div style="flex:1; display:flex; flex-direction:column; gap:5px;"><label class="label-check"><input type="checkbox" id="vm2_fita_l1" class="check-inline"> Larg. 1 (L)</label><label class="label-check"><input type="checkbox" id="vm2_fita_l2" class="check-inline"> Larg. 2 (L)</label></div></div></div><button class="btn-outline" style="color:var(--blue); border-color:var(--blue); margin-top:15px;" onclick="adicionarPecaVendaM2()">+ INCLUIR PEÇA</button></div>
 <div class="item-card" style="border-left-color: var(--gold);"><h4 style="color:var(--gold); margin-top:0;"><i class="fas fa-list"></i> Lista de Peças Calculadas</h4><div id="lista_pecas_venda_m2" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px;"></div><div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; text-align:center; border:1px solid #444; margin-bottom:15px;"><span style="font-size:12px; color:#aaa; font-weight:bold;">VALOR FINAL DE VENDA (Com Margem):</span><br><strong id="vm2_valor_total" style="color:var(--gold); font-size:24px;">R$ 0,00</strong><p style="margin:5px 0 0 0; font-size:12px; color:#888;">Área Total das Peças: <span id="vm2_total_area_pecas">0.00 m²</span> | Total de Fita: <span id="vm2_total_fita">0.00 m</span></p></div><div style="border-top:1px dashed #444; padding-top:15px;"><h4 style="color:var(--purple); margin:0 0 10px 0; font-size:13px;"><i class="fas fa-save"></i> Salvar como Orçamento</h4><label>Nome do Cliente / Projeto</label><input type="text" id="vm2_cliente" placeholder="Ex: Orçamento Peças Avulsas"><button onclick="salvarVendaM2ComoOrcamento()" style="width:100%; padding:15px; background:var(--purple); border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer;"><i class="fas fa-file-invoice-dollar"></i> SALVAR ORÇAMENTO</button></div></div>
 </div>
-<!-- ========================================================== -->
-<!-- NOVA ABA: CORES -->
-<!-- ========================================================== -->
 <div id="tela_cores" class="tela">
 <div class="comparison-area">
 <div class="comparison-header">
@@ -219,14 +220,8 @@ body *{visibility:hidden}
 <div class="item-card" style="border-left-color: var(--green);">
 <h4 style="color: var(--green); margin-top: 0;"><i class="fas fa-flask"></i> Quantidade e Potência</h4>
 <div style="display: flex; gap: 10px;">
-<div style="flex: 1;">
-<label>Qtd. Silicone (ml):</label>
-<input type="number" id="baseAmount" value="100" min="10" step="10">
-</div>
-<div style="flex: 1;">
-<label>Potência do Corante:</label>
-<input type="number" id="calibration" value="1.0" min="0.1" step="0.1">
-</div>
+<div style="flex: 1;"><label>Qtd. Silicone (ml):</label><input type="number" id="baseAmount" value="100" min="10" step="10"></div>
+<div style="flex: 1;"><label>Potência do Corante:</label><input type="number" id="calibration" value="1.0" min="0.1" step="0.1"></div>
 </div>
 <small style="color: #888; display: block; margin-top: 5px;">1.0 = Padrão | 0.5 = Fraco/diluído | 1.5 = Forte/concentrado</small>
 </div>
@@ -240,51 +235,26 @@ body *{visibility:hidden}
 <div id="colorantList" style="display: grid; gap: 8px;"></div>
 <p id="emptyListMsg" style="text-align: center; color: #666; padding: 15px; display: none;">Nenhum corante cadastrado. Adicione acima!</p>
 </div>
-<button onclick="calcularMisturaCores()" style="width: 100%; padding: 15px; background: var(--blue); border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 1.1em; cursor: pointer; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(10, 132, 255, 0.3);">
-<i class="fas fa-calculator"></i> CALCULAR RECEITA EXATA
-</button>
+<button onclick="calcularMisturaCores()" style="width: 100%; padding: 15px; background: var(--blue); border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 1.1em; cursor: pointer; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(10, 132, 255, 0.3);"><i class="fas fa-calculator"></i> CALCULAR RECEITA EXATA</button>
 <div id="resultBox" style="background: rgba(48, 209, 88, 0.1); border: 1px solid var(--green); border-radius: 12px; padding: 20px; margin-bottom: 15px; display: none; color: var(--text);">
 <h2 style="text-align: center; margin-bottom: 15px; color: var(--green);">✨ Receita Pronta</h2>
 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
-<div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; text-align: center;">
-<span style="font-size: 1.5em; font-weight: bold; display: block;" id="resTotalDrops">0</span>
-<span style="font-size: 0.8em; color: #888;">Gotas Totais</span>
+<div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; text-align: center;"><span style="font-size: 1.5em; font-weight: bold; display: block;" id="resTotalDrops">0</span><span style="font-size: 0.8em; color: #888;">Gotas Totais</span></div>
+<div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; text-align: center;"><span style="font-size: 1.5em; font-weight: bold; display: block;" id="resMl">0.0</span><span style="font-size: 0.8em; color: #888;">ml Corante</span></div>
+<div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; text-align: center;"><span style="font-size: 1.5em; font-weight: bold; display: block;" id="resBase">0</span><span style="font-size: 0.8em; color: #888;">ml Silicone</span></div>
 </div>
-<div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; text-align: center;">
-<span style="font-size: 1.5em; font-weight: bold; display: block;" id="resMl">0.0</span>
-<span style="font-size: 0.8em; color: #888;">ml Corante</span>
+<div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px;"><h4 style="margin-bottom: 10px; color: var(--gold);">📋 Instruções de Mistura:</h4><div id="recipeSteps"></div></div>
+<button onclick="salvarReceitaCores()" style="width: 100%; margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; cursor: pointer; font-weight: bold;"><i class="fas fa-save"></i> Salvar esta Receita</button>
 </div>
-<div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; text-align: center;">
-<span style="font-size: 1.5em; font-weight: bold; display: block;" id="resBase">0</span>
-<span style="font-size: 0.8em; color: #888;">ml Silicone</span>
+<div class="item-card" style="border-left-color: var(--gold);"><h4 style="color: var(--gold); margin-top: 0;"><i class="fas fa-history"></i> Receitas Salvas</h4><div id="historyList"></div></div>
 </div>
-</div>
-<div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px;">
-<h4 style="margin-bottom: 10px; color: var(--gold);">📋 Instruções de Mistura:</h4>
-<div id="recipeSteps"></div>
-</div>
-<button onclick="salvarReceitaCores()" style="width: 100%; margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; cursor: pointer; font-weight: bold;">
-<i class="fas fa-save"></i> Salvar esta Receita
-</button>
-</div>
-<div class="item-card" style="border-left-color: var(--gold);">
-<h4 style="color: var(--gold); margin-top: 0;"><i class="fas fa-history"></i> Receitas Salvas</h4>
-<div id="historyList"></div>
-</div>
-</div>
-<!-- ========================================================== -->
-<div id="tela_config" class="tela"><div class="item-card" style="border-left-color: var(--green); margin-bottom:20px;"><h4 style="color:var(--green); margin-top:0; text-align:center;"><i class="fas fa-cloud"></i> Nuvem</h4><div style="text-align:center; font-size:12px; color:#aaa; margin-bottom: 10px;">Dados salvos automaticamente e offline.</div><button class="btn-outline" style="color:var(--green); border-color:var(--green);" onclick="exportarBackup()"><i class="fas fa-download"></i> BACKUP MANUAL</button><button class="btn-outline" style="color:var(--blue); border-color:var(--blue);" onclick="document.getElementById('import_file').click()"><i class="fas fa-upload"></i> RESTAURAR BACKUP</button><input type="file" id="import_file" style="display:none" accept=".json" onchange="importarBackup(event)"></div><div class="item-card" style="border-left-color: #aaa;"><h4 style="color:var(--gold); margin-top:0; text-align:center;"><i class="fas fa-building"></i> Empresa</h4><div style="text-align:center; margin-bottom:15px;"><label style="text-align:center;">Logo</label><div id="preview_logo" style="margin:10px auto; width:100px; height:100px; border:1px dashed #444; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center;"><img id="img_preview" src="icone.png" style="max-width:100%; max-height:100%; display:none;"><span id="img_placeholder" style="color:#666; font-size:10px;">Sem Logo</span></div><input type="file" id="cfg_logo_file" accept="image/*" style="background:none; border:none; padding:0; text-align:center; display:block; width:100%;"></div><label>Nome</label><input type="text" id="cfg_nome"><label>Telefone</label><input type="text" id="cfg_telefone"><label>Endereço</label><input type="text" id="cfg_endereco"><label>Chave PIX</label><input type="text" id="cfg_chave_pix"><label>Msg Rodapé</label><input type="text" id="cfg_msg"><button onclick="salvarConfig()" style="width:100%; padding:15px; background:var(--blue); border:none; border-radius:8px; color:white; font-weight:bold; margin-top:20px; cursor:pointer;">SALVAR AJUSTES</button><button onclick="limparBancoDados()" style="width:100%; padding:15px; background:transparent; border:1px solid var(--red); border-radius:8px; color:var(--red); font-weight:bold; margin-top:10px; cursor:pointer;"><i class="fas fa-trash"></i> APAGAR DADOS NUVEM</button></div></div>
+<div id="tela_config" class="tela"><div class="item-card" style="border-left-color: var(--green); margin-bottom:20px;"><h4 style="color:var(--green); margin-top:0; text-align:center;"><i class="fas fa-cloud"></i> Nuvem</h4><div style="text-align:center; font-size:12px; color:#aaa; margin-bottom: 10px;">Dados salvos automaticamente e offline.</div><div id="sync_status_config" style="margin:10px 0; padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; font-size:11px; color:#888;">Status: Verificando...</div><button class="btn-outline" style="color:var(--green); border-color:var(--green);" onclick="exportarBackup()"><i class="fas fa-download"></i> BACKUP MANUAL</button><button class="btn-outline" style="color:var(--blue); border-color:var(--blue);" onclick="document.getElementById('import_file').click()"><i class="fas fa-upload"></i> RESTAURAR BACKUP</button><input type="file" id="import_file" style="display:none" accept=".json" onchange="importarBackup(event)"></div><div class="item-card" style="border-left-color: #aaa;"><h4 style="color:var(--gold); margin-top:0; text-align:center;"><i class="fas fa-building"></i> Empresa</h4><div style="text-align:center; margin-bottom:15px;"><label style="text-align:center;">Logo</label><div id="preview_logo" style="margin:10px auto; width:100px; height:100px; border:1px dashed #444; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center;"><img id="img_preview" src="icone.png" style="max-width:100%; max-height:100%; display:none;"><span id="img_placeholder" style="color:#666; font-size:10px;">Sem Logo</span></div><input type="file" id="cfg_logo_file" accept="image/*" style="background:none; border:none; padding:0; text-align:center; display:block; width:100%;"></div><label>Nome</label><input type="text" id="cfg_nome"><label>Telefone</label><input type="text" id="cfg_telefone"><label>Endereço</label><input type="text" id="cfg_endereco"><label>Chave PIX</label><input type="text" id="cfg_chave_pix"><label>Msg Rodapé</label><input type="text" id="cfg_msg"><button onclick="salvarConfig()" style="width:100%; padding:15px; background:var(--blue); border:none; border-radius:8px; color:white; font-weight:bold; margin-top:20px; cursor:pointer;">SALVAR AJUSTES</button><button onclick="limparBancoDados()" style="width:100%; padding:15px; background:transparent; border:1px solid var(--red); border-radius:8px; color:var(--red); font-weight:bold; margin-top:10px; cursor:pointer;"><i class="fas fa-trash"></i> APAGAR DADOS NUVEM</button></div></div>
 <button class="btn-flutuante" onclick="abrirModalPorTela()">+</button>
-<!-- Modais (mantidos os originais do sistema) -->
 <div id="modalPedido" class="modal"><div class="modal-content"><input type="hidden" id="f_id"><label>Cliente</label><input type="text" id="f_cliente"><label id="label_servico">Serviço Principal</label><textarea id="f_servico" rows="3" placeholder="Descreva o serviço ou orçamento principal..."></textarea><div style="display:flex;gap:10px"><div style="flex:1"><label>Data</label><input type="date" id="f_data"></div><div style="flex:1"><label>Tipo</label><select id="f_tipo" onchange="ajustarCamposModal()"><option value="servico">Serviço/Pedido</option><option value="orcamento">Orçamento</option><option value="compra">Converter p/ Compras</option></select></div></div><label>Status</label><select id="f_status"></select><div style="display:flex;gap:10px"><div style="flex:1"><label>Soma Base (R$)</label><input type="number" id="f_total_base" value="0" oninput="document.getElementById('f_total').value=this.value; document.getElementById('f_multiplicador').value='1';"></div><div style="flex:1"><label>Margem</label><select id="f_multiplicador" onchange="document.getElementById('f_total').value=(parseFloat(document.getElementById('f_total_base').value)*parseFloat(this.value)).toFixed(2)" style="margin:0;"><option value="1">x1</option><option value="1.5">x1.5</option><option value="2">x2</option><option value="2.5">x2.5</option><option value="3">x3</option><option value="4">x4</option><option value="5">x5</option></select></div><div style="flex:1"><label>Final (R$)</label><input type="number" id="f_total" value="0"></div><input type="hidden" id="f_pago" value="0"></div><label>Valor de Serviço R$</label><input type="number" id="f_mao_obra" value="0" oninput="recalcularTotal()"><div id="f_pagamentos_section"><label style="color:var(--gold);font-size:11px;margin-top:15px; margin-bottom:5px;"><i class="fas fa-money-bill-wave"></i> Pagamentos</label><div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-bottom:15px; background:rgba(255,255,255,.02); padding:15px; border-radius:8px; border:1px solid #333;"><div style="display:flex; flex-direction:column; gap:5px;"><label style="font-size:10px;">Entrada (R$)</label><input type="number" id="f_entrada" value="0" oninput="somarPagamentos()" style="margin:0; text-align:center; font-size:18px; font-weight:bold; padding:12px; color:var(--green); border:1px solid var(--green); background:rgba(48,209,88,0.05);"><label style="font-size:10px; margin-top:5px;">Data</label><input type="date" id="f_entrada_data" style="margin:0; padding:10px; font-size:12px;"></div><div style="display:flex; flex-direction:column; gap:5px;"><label style="font-size:10px;">Parcela 1 (R$)</label><input type="number" id="f_parcela1" value="0" oninput="somarPagamentos()" style="margin:0; text-align:center; font-size:18px; font-weight:bold; padding:12px; color:var(--green); border:1px solid var(--green); background:rgba(48,209,88,0.05);"><label style="font-size:10px; margin-top:5px;">Data</label><input type="date" id="f_parcela1_data" style="margin:0; padding:10px; font-size:12px;"></div><div style="display:flex; flex-direction:column; gap:5px;"><label style="font-size:10px;">Parcela 2 (R$)</label><input type="number" id="f_parcela2" value="0" oninput="somarPagamentos()" style="margin:0; text-align:center; font-size:18px; font-weight:bold; padding:12px; color:var(--green); border:1px solid var(--green); background:rgba(48,209,88,0.05);"><label style="font-size:10px; margin-top:5px;">Data</label><input type="date" id="f_parcela2_data" style="margin:0; padding:10px; font-size:12px;"></div><div style="display:flex; flex-direction:column; gap:5px;"><label style="font-size:10px;">Parcela 3 (R$)</label><input type="number" id="f_parcela3" value="0" oninput="somarPagamentos()" style="margin:0; text-align:center; font-size:18px; font-weight:bold; padding:12px; color:var(--green); border:1px solid var(--green); background:rgba(48,209,88,0.05);"><label style="font-size:10px; margin-top:5px;">Data</label><input type="date" id="f_parcela3_data" style="margin:0; padding:10px; font-size:12px;"></div></div></div><label>Endereço</label><input type="text" id="f_endereco"><div style="display:flex;gap:10px"><div style="flex:1"><label>Nº</label><input type="text" id="f_numero"></div><div style="flex:2"><label>Comp.</label><input type="text" id="f_complemento"></div></div><label>Cidade</label><input type="text" id="f_cidade"><label>Lembrete</label><textarea id="f_lembrete" rows="2"></textarea><div style="display:flex;gap:10px;margin-bottom:10px"><button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1" onclick="abrirSeletorEstoque('pedido')"><i class="fas fa-box"></i> ADD ESTOQUE</button><button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);flex:1" onclick="abrirSeletorServico('pedido')"><i class="fas fa-tools"></i> ADD CATÁLOGO</button></div><div id="container_itens_venda"></div><button onclick="salvarPedido()" style="width:100%;padding:15px;background:var(--green);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR</button><label class="label-check" id="container_ocultar_valores" style="display:none; margin-top:15px; border-color:var(--teal); color:var(--teal);"><input type="checkbox" id="f_ocultar_valores" class="check-inline"> Ocultar valores dos itens na impressão</label><button id="btn_imprimir_pedido" onclick="imprimirPedidoOuOrcamento()" style="width:100%;padding:12px;background:none;border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-print"></i> IMPRIMIR RECIBO (PDF)</button><button id="btn_zap_pedido" onclick="enviarWhatsAppPedido()" style="width:100%;padding:12px;background:none;border:1px solid #25D366;border-radius:8px;color:#25D366;font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fab fa-whatsapp"></i> ENVIAR WHATSAPP</button><button id="btn_duplicar_pedido" onclick="duplicarRegistroAtual('pedido')" style="width:100%;padding:12px;background:none;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-copy"></i> DUPLICAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
 <div id="modalAgenda" class="modal"><div class="modal-content" style="border-color:var(--purple)"><h3 style="color:var(--purple);margin-top:0"><i class="fas fa-calendar-alt"></i> Compromisso / Agenda</h3><input type="hidden" id="a_id"><label>Cliente / Título</label><input type="text" id="a_cliente"><label>Descrição / Assunto</label><textarea id="a_servico" rows="3"></textarea><div style="display:flex;gap:10px"><div style="flex:1"><label>Data</label><input type="date" id="a_data"></div><div style="flex:1"><label>Status</label><select id="a_status"><option value="pendente">Pendente</option><option value="concluido">Concluído (Mover p/ Pedido)</option><option value="compra">Converter p/ Compras</option></select></div></div><label>Endereço</label><input type="text" id="a_endereco"><div style="display:flex;gap:10px"><div style="flex:1"><label>Nº</label><input type="text" id="a_numero"></div><div style="flex:2"><label>Comp.</label><input type="text" id="a_complemento"></div></div><label>Cidade</label><input type="text" id="a_cidade"><label>Lembrete Extra</label><textarea id="a_lembrete" rows="2"></textarea><label style="color:var(--gold);font-size:11px;margin-top:15px; margin-bottom:5px;"><i class="fas fa-list-ul"></i> Itens (Opcional)</label><div style="display:flex;gap:10px;margin-bottom:10px"><button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1; margin:0;" onclick="abrirSeletorEstoque('agenda')"><i class="fas fa-box"></i> ESTOQUE</button><button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);flex:1; margin:0;" onclick="abrirSeletorServico('agenda')"><i class="fas fa-tools"></i> CATÁLOGO</button></div><div id="container_itens_agenda" style="margin-bottom: 15px;"></div><button onclick="salvarAgenda()" style="width:100%;padding:15px;background:var(--purple);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR COMPROMISSO</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
 <div id="modalEstoque" class="modal"><div class="modal-content"><input type="hidden" id="e_id"><label>Item/Produto</label><input type="text" id="e_item"><label>Localização</label><input type="text" id="e_localizacao"><label>Link do Produto (URL)</label><input type="url" id="e_link" placeholder="https://..."><label>Quantidade</label><input type="number" id="e_qtd"><label>Valor Venda (R$)</label><input type="number" id="e_venda"><button onclick="salvarEstoque()" style="width:100%;padding:15px;background:var(--orange);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
 <div id="modalGastos" class="modal"><div class="modal-content"><input type="hidden" id="g_id"><label>Descrição do Gasto</label><input type="text" id="g_descricao"><label>Valor (R$)</label><input type="number" id="g_valor"><label>Data</label><input type="date" id="g_data"><button onclick="salvarGasto()" style="width:100%;padding:15px;background:var(--red);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR GASTO</button><button id="btn_duplicar_gasto" onclick="duplicarRegistroAtual('gasto')" style="width:100%;padding:12px;background:none;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-copy"></i> DUPLICAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
-<!-- ========================================================== -->
-<!-- MODAL: A PAGAR -->
-<!-- ========================================================== -->
 <div id="modalAPagar" class="modal"><div class="modal-content modal-large" style="border-color:var(--red);"><h3 style="color:var(--red);margin-top:0;text-align:center;"><i class="fas fa-hand-holding-usd"></i> Conta a Pagar</h3><input type="hidden" id="ap_id"><div style="display:flex;gap:10px;"><div style="flex:1"><label>Tipo</label><select id="ap_tipo" onchange="atualizarLabelAPagar()"><option value="funcionario">👷 Funcionário</option><option value="emprestimo">🏦 Empréstimo</option><option value="fornecedor">🏭 Fornecedor</option><option value="aluguel">🏠 Aluguel</option><option value="outro">📋 Outro</option></select></div><div style="flex:1"><label>Data de Criação</label><input type="date" id="ap_data_criacao"></div></div><label id="ap_label_nome">Nome do Funcionário</label><input type="text" id="ap_nome" placeholder="Ex: João da Silva"><label>Descrição / Motivo</label><textarea id="ap_descricao" rows="2" placeholder="Ex: Salário de Setembro, Empréstimo pessoal..."></textarea><div style="display:flex;gap:10px;"><div style="flex:1"><label>Valor Total (R$)</label><input type="number" id="ap_valor_total" value="0" oninput="calcularRestanteAPagar()" style="font-size:18px;font-weight:bold;color:var(--red);text-align:center;"></div><div style="flex:1"><label>Data de Vencimento</label><input type="date" id="ap_data_vencimento"></div></div><div class="restante-display" id="ap_restante_box"><span>💰 Restante a Pagar</span><strong id="ap_restante_valor">R$ 0,00</strong></div><label style="color:var(--green);font-size:12px;margin-top:10px;"><i class="fas fa-plus-circle"></i> Registrar Pagamento / Adiantamento</label><div style="display:flex;gap:10px;align-items:flex-end;"><div style="flex:1"><label>Valor Pago (R$)</label><input type="number" id="ap_novo_pagamento" value="0" style="font-size:16px;font-weight:bold;color:var(--green);text-align:center;border-color:var(--green);"></div><div style="flex:1"><label>Data do Pagamento</label><input type="date" id="ap_data_pagamento"></div><div style="flex:0 0 auto;"><button onclick="adicionarPagamentoAPagar()" style="padding:12px 20px;background:var(--green);border:none;border-radius:8px;color:#fff;font-weight:bold;cursor:pointer;font-size:14px;margin-bottom:12px;"><i class="fas fa-plus"></i></button></div></div><label style="color:var(--gold);font-size:11px;"><i class="fas fa-history"></i> Histórico de Pagamentos</label><div class="pagamento-historico" id="ap_historico_container"><div style="text-align:center;color:#666;font-size:12px;padding:10px;">Nenhum pagamento registrado.</div></div><label>Observações</label><textarea id="ap_observacoes" rows="2" placeholder="Anotações extras..."></textarea><button onclick="salvarAPagar()" style="width:100%;padding:15px;background:var(--red);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer;font-size:15px;"><i class="fas fa-save"></i> SALVAR CONTA A PAGAR</button><button id="btn_imprimir_apagar" onclick="imprimirReciboAPagar()" style="width:100%;padding:12px;background:none;border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-file-invoice"></i> IMPRIMIR RECIBO (PDF)</button><button id="btn_zap_apagar" onclick="enviarWhatsAppAPagar()" style="width:100%;padding:12px;background:none;border:1px solid #25D366;border-radius:8px;color:#25D366;font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fab fa-whatsapp"></i> ENVIAR RECIBO (WhatsApp)</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
-<!-- ========================================================== -->
 <div id="modalCompras" class="modal"><div class="modal-content"><input type="hidden" id="c_id"><label>Cliente/Referência</label><input type="text" id="c_cliente" placeholder="Ex: Projeto Cozinha"><div style="display:flex;gap:10px"><div style="flex:1"><label>Data</label><input type="date" id="c_data"></div><div style="flex:1"><label>Status</label><select id="c_status"><option value="em_compra">Em Compra</option><option value="concluido">Concluída (Gera Gasto)</option><option value="orcamento">Converter em Orçamento</option></select></div></div><div style="background:rgba(255,255,255,.05);padding:10px;border-radius:8px;margin-bottom:10px;border:1px solid #444"><label style="color:var(--pink)"><i class="fas fa-plus-circle"></i> Novo Item</label><input type="text" id="c_item_nome" placeholder="Nome do item"><div style="display:flex;gap:10px"><div style="flex:1"><label>Qtd</label><input type="number" id="c_item_qtd" value="1"></div><div style="flex:1"><label>Valor Un.(R$)</label><input type="number" id="c_item_valor" placeholder="0.00"></div></div><div style="display:flex;gap:5px"><button class="btn-outline" style="color:var(--pink);border-color:var(--pink);flex:1;margin:0" onclick="adicionarItemCompraUI()"><i class="fas fa-plus"></i> NA LISTA</button><button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1;margin:0" onclick="adicionarItemCompraAoEstoque()"><i class="fas fa-box"></i> NO ESTOQUE</button></div><button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);margin-top:10px;width:100%" onclick="abrirSeletorEstoque('compra')"><i class="fas fa-search"></i> PUXAR DO ESTOQUE</button></div><div id="container_itens_compra" style="max-height:200px;overflow-y:auto;margin-bottom:10px"></div><label>Total da Compra (R$)</label><input type="number" id="c_total" value="0"><button onclick="salvarCompra()" style="width:100%;padding:15px;background:var(--pink);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:10px;cursor:pointer">SALVAR LISTA</button><button onclick="imprimirCompra()" style="width:100%;padding:12px;background:none;border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:bold;margin-top:10px;cursor:pointer"><i class="fas fa-print"></i> IMPRIMIR LISTA</button><button id="btn_duplicar_compra" onclick="duplicarRegistroAtual('compra')" style="width:100%;padding:12px;background:none;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-copy"></i> DUPLICAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
 <div id="modalServicosCatalogo" class="modal"><div class="modal-content"><input type="hidden" id="sc_id"><label>Nome do Serviço</label><input type="text" id="sc_nome"><label>Preço Base (R$)</label><input type="number" id="sc_preco"><button onclick="salvarServicoCatalogo()" style="width:100%;padding:15px;background:var(--cyan);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
 <div id="modalSeletorEstoque" class="modal"><div class="modal-content" style="border-color:var(--orange)"><h3 style="color:var(--orange);margin-top:0"><i class="fas fa-box"></i> Estoque</h3><label>Selecione</label><select id="sel_produto_estoque"></select><label>Qtd</label><input type="number" id="sel_qtd_estoque" value="1"><button onclick="confirmarAdicaoItem()" style="width:100%;padding:15px;background:var(--orange);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">ADICIONAR</button><button onclick="document.getElementById('modalSeletorEstoque').style.display='none'" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
@@ -295,7 +265,6 @@ body *{visibility:hidden}
 <div id="modalTarefaDetalhes" class="modal"><div class="modal-content modal-large" style="border-color:var(--blue); background:#1e1f27; padding:25px;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><div class="todo-circle" id="modal_tarefa_check" onclick="toggleMainTaskModal()" style="cursor:pointer; margin:0; width:24px; height:24px;"></div><input type="text" id="modal_tarefa_titulo" style="flex:1; background:transparent; border:none; color:var(--blue); font-size:22px; font-weight:bold; outline:none; margin-left:15px;" onchange="salvarTituloTarefaModal()"><i class="fas fa-trash" style="color:var(--red); cursor:pointer; padding:10px; font-size:18px;" onclick="excluirTarefaModal()"></i></div><div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:10px;"><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:15px;"><i class="fas fa-plus" style="color:var(--blue); font-size:18px;"></i><input type="text" id="input_nova_subtarefa" placeholder="Adicionar Rotina / Subtarefa" style="background:transparent; border:none; padding:0; margin:0; outline:none; font-size:16px; flex:1; color:#fff;" onkeypress="if(event.key==='Enter') { event.preventDefault(); adicionarSubtarefaModal(); }"></div><div id="lista_subtarefas_modal" style="max-height:60vh; overflow-y:auto; padding-right:10px;"></div></div><button onclick="fecharModais(); renderizarItensDetalhe();" style="width:100%;background:#333;border:none;border-radius:6px;color:#fff;font-weight:bold;margin-top:15px;padding:15px; font-size:15px; cursor:pointer">FECHAR E SALVAR</button></div></div>
 <div id="modalNovoLembrete" class="modal"><div class="modal-content" style="border-color:var(--orange)"><h3 style="color:var(--orange);margin-top:0"><i class="fas fa-bell"></i> Novo Grupo de Lembretes</h3><input type="hidden" id="lem_id"><label>Título do Grupo</label><input type="text" id="lem_titulo" placeholder="Ex: Metas da Semana"><button onclick="salvarGrupoLembrete()" style="width:100%;padding:15px;background:var(--orange);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:10px;cursor:pointer">CRIAR GRUPO</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
 <div id="modalLembreteTarefaDetalhes" class="modal"><div class="modal-content modal-large" style="border-color:var(--orange); background:#1e1f27; padding:25px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;"><div class="todo-circle" id="modal_lem_check" onclick="toggleMainLem()" style="cursor:pointer;margin:0; width:24px; height:24px;"></div><input type="text" id="modal_lem_titulo" style="flex:1;background:transparent;border:none;color:var(--orange);font-size:22px;font-weight:bold;outline:none;margin-left:15px;" onchange="salvarLembreteData()"><input type="date" id="modal_lem_data" style="width:130px;margin:0 10px;padding:8px;font-size:14px; background:rgba(255,255,255,0.05); color:#fff; border:1px solid #444; border-radius:6px;" onchange="salvarLembreteData()"><i class="fas fa-trash" style="color:var(--red);cursor:pointer;padding:10px; font-size:18px;" onclick="excluirTarefaLem()"></i></div><div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:10px;"><div style="display:flex;gap:10px;align-items:center;margin-bottom:15px;border-bottom:1px solid #444;padding-bottom:15px;"><i class="fas fa-plus" style="color:var(--orange); font-size:18px;"></i><input type="text" id="input_nova_sub_lem" placeholder="Adicionar Subtarefa..." style="background:transparent;border:none;padding:0;margin:0;outline:none;font-size:16px;flex:1;color:#fff;"><input type="date" id="input_nova_sub_lem_data" style="width:130px;margin:0;padding:8px;font-size:13px; background:rgba(255,255,255,0.05); color:#fff; border:1px solid #444; border-radius:6px;" onkeypress="if(event.key==='Enter') {event.preventDefault();adicionarSubLembrete();}"><i class="fas fa-save" style="color:var(--green);cursor:pointer;padding:10px; font-size:18px;" onclick="adicionarSubLembrete()"></i></div><div id="lista_sub_lem_modal" style="max-height:60vh;overflow-y:auto;padding-right:10px;"></div></div><button onclick="fecharModais();renderizarItensLembrete();" style="width:100%;background:#333;border:none;border-radius:6px;color:#fff;font-weight:bold;margin-top:15px;padding:15px; font-size:15px; cursor:pointer">FECHAR E SALVAR</button></div></div>
-<!-- Modal Tela Cheia Cores -->
 <div id="fullscreenModeCores" class="modal" style="z-index: 9999; background: black;" onclick="this.style.display='none'">
 <div style="width: 100%; height: 100%; display: flex; flex-direction: column; position: relative;">
 <button onclick="document.getElementById('fullscreenModeCores').style.display='none'" style="position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.7); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; z-index: 10000; font-weight: bold;">✕ Fechar Comparação</button>
@@ -306,20 +275,242 @@ body *{visibility:hidden}
 </div>
 <script>
 const firebaseConfig={apiKey:"AIzaSyB1c4Mir1IEc5DyIHUncWUzoNk7ocYXAcg",authDomain:"alves-pro-system.firebaseapp.com",databaseURL:"https://alves-pro-system-default-rtdb.firebaseio.com",projectId:"alves-pro-system",storageBucket:"alves-pro-system.firebasestorage.app",messagingSenderId:"312807188302",appId:"1:312807188302:web:144aa090283fed7b9da01f"};firebase.initializeApp(firebaseConfig);const database=firebase.database();
-window.onload=()=>{const m=new Date().getMonth()+1;document.getElementById('filtro_mes').value=m<10?'0'+m:''+m;document.getElementById('app_principal').style.display='block';initDB()};
-function showToast(m,t='success'){const c=document.getElementById('toast_container'),x=document.createElement('div');x.className=`toast ${t}`;let i=t==='success'?'fa-check-circle':(t==='error'?'fa-exclamation-circle':'fa-info-circle');let col=t==='success'?'var(--green)':(t==='error'?'var(--red)':'var(--blue)');x.innerHTML=`<i class="fas ${i}" style="color:${col}; font-size:18px;"></i> <span>${m}</span>`;c.appendChild(x);setTimeout(()=>{x.style.opacity='0';setTimeout(()=>x.remove(),300)},3000)}
-let DB={servicos:[],estoque:[],catalogo_servicos:[],gastos:[],orcamentos:[],compras:[],planos_corte:[],pendencias:[],lembretes:[],cores_corantes:[],cores_receitas:[],a_pagar:[],config:{}};let isInitialLoad=true;
+
+// =================================================================
+// SISTEMA DE SINCRONIZAÇÃO OTIMIZADO (NÃO APAGA DADOS)
+// =================================================================
+let isSaving=false;           // Flag para evitar loop de sincronização
+let lastSyncedHash=null;      // Hash do último dado sincronizado
+let renderDebounceTimer=null; // Timer de debounce para re-renderização
+let initialLoadDone=false;    // Controle de carga inicial
+let syncQueue=[];             // Fila de salvamentos pendentes
+let isProcessingQueue=false;  // Controle de processamento da fila
+
+function updateSyncStatus(status,msg){
+  const ind=document.getElementById('sync_indicator');
+  const txt=document.getElementById('sync_text');
+  const cfg=document.getElementById('sync_status_config');
+  if(!ind)return;
+  ind.classList.remove('saving','synced','error');
+  ind.classList.add('visible',status);
+  if(status==='saving'){ind.querySelector('i').className='fas fa-circle-notch';txt.textContent=msg||'Salvando...'}
+  else if(status==='synced'){ind.querySelector('i').className='fas fa-check-circle';txt.textContent=msg||'Sincronizado'}
+  else if(status==='error'){ind.querySelector('i').className='fas fa-exclamation-circle';txt.textContent=msg||'Erro na nuvem'}
+  setTimeout(()=>{if(status==='synced')ind.classList.remove('visible')},2500);
+  if(cfg){
+    const cores={saving:'var(--orange)',synced:'var(--green)',error:'var(--red)'};
+    const icons={saving:'🔄',synced:'✅',error:'❌'};
+    cfg.innerHTML=`<span style="color:${cores[status]}">${icons[status]} ${msg||status}</span>`;
+  }
+}
+
+// Gera um hash simples do objeto para comparar mudanças
+function generateHash(obj){
+  try{
+    const str=JSON.stringify(obj,(k,v)=>k==='last_updated'?undefined:v);
+    let h=0;
+    for(let i=0;i<str.length;i++){h=((h<<5)-h)+str.charCodeAt(i);h|=0}
+    return h.toString();
+  }catch(e){return null}
+}
+
+window.onload=()=>{
+  const m=new Date().getMonth()+1;
+  document.getElementById('filtro_mes').value=m<10?'0'+m:''+m;
+  document.getElementById('app_principal').style.display='block';
+  initDB();
+};
+
+function showToast(m,t='success'){
+  const c=document.getElementById('toast_container'),x=document.createElement('div');
+  x.className=`toast ${t}`;
+  let i=t==='success'?'fa-check-circle':(t==='error'?'fa-exclamation-circle':'fa-info-circle');
+  let col=t==='success'?'var(--green)':(t==='error'?'var(--red)':'var(--blue)');
+  x.innerHTML=`<i class="fas ${i}" style="color:${col}; font-size:18px;"></i> <span>${m}</span>`;
+  c.appendChild(x);
+  setTimeout(()=>{x.style.opacity='0';setTimeout(()=>x.remove(),300)},3000);
+}
+
+let DB={servicos:[],estoque:[],catalogo_servicos:[],gastos:[],orcamentos:[],compras:[],planos_corte:[],pendencias:[],lembretes:[],cores_corantes:[],cores_receitas:[],a_pagar:[],config:{}};
 let baseColorCores = { r: 52, g: 152, b: 219 };
 let brightnessAdjustCores = 0;
 let currentRecipeCores = null;
-function initDB(){const l=localStorage.getItem('alvesProDB');let localDB=l?JSON.parse(l):null;window.addEventListener('online',syncOfflineData);database.ref('alvesProDB').on('value',s=>{const cloudDB=s.val();if(cloudDB&&localDB){if((cloudDB.last_updated||0)>(localDB.last_updated||0)){DB=cloudDB;localStorage.setItem('alvesProDB',JSON.stringify(DB))}else if((localDB.last_updated||0)>(cloudDB.last_updated||0)){DB=localDB;if(navigator.onLine)database.ref('alvesProDB').set(DB)}else{DB=cloudDB}}else if(cloudDB){DB=cloudDB;localStorage.setItem('alvesProDB',JSON.stringify(DB))}else if(localDB){DB=localDB;if(navigator.onLine)database.ref('alvesProDB').set(DB)}preencherPadroesDB();if(isInitialLoad){carregarConfiguracoes();carregarDados();isInitialLoad=false}else carregarDados()});if(!navigator.onLine&&localDB){DB=localDB;preencherPadroesDB();carregarConfiguracoes();carregarDados();isInitialLoad=false}}
-function preencherPadroesDB(){DB.servicos=DB.servicos||[];DB.estoque=DB.estoque||[];DB.catalogo_servicos=DB.catalogo_servicos||[];DB.gastos=DB.gastos||[];DB.orcamentos=DB.orcamentos||[];DB.compras=DB.compras||[];DB.planos_corte=DB.planos_corte||[];DB.pendencias=DB.pendencias||[];DB.lembretes=DB.lembretes||[];DB.cores_corantes=DB.cores_corantes||[];DB.cores_receitas=DB.cores_receitas||[];DB.a_pagar=DB.a_pagar||[];DB.config=DB.config||{}}
-function syncOfflineData(){const l=localStorage.getItem('alvesProDB');if(l){let localDB=JSON.parse(l);database.ref('alvesProDB').once('value').then(s=>{const cloudDB=s.val();let cT=cloudDB?(cloudDB.last_updated||0):0;let lT=localDB.last_updated||0;if(lT>cT){database.ref('alvesProDB').set(localDB);showToast("Sincronizado com nuvem!","success")}})}}
-function saveDB(){DB.last_updated=Date.now();localStorage.setItem('alvesProDB',JSON.stringify(DB));if(navigator.onLine){database.ref('alvesProDB').set(DB).catch(e=>console.log(e))}}
+
+function initDB(){
+  const l=localStorage.getItem('alvesProDB');
+  let localDB=l?JSON.parse(l):null;
+  
+  // Carrega dados locais imediatamente para não travar a UI
+  if(localDB){
+    DB=localDB;
+    preencherPadroesDB();
+    carregarConfiguracoes();
+    carregarDados();
+    initialLoadDone=true;
+    lastSyncedHash=generateHash(DB);
+    updateSyncStatus('synced','Offline - Carregado localmente');
+  }
+  
+  window.addEventListener('online',()=>{
+    updateSyncStatus('saving','Reconectando...');
+    syncOfflineData();
+  });
+  window.addEventListener('offline',()=>{
+    updateSyncStatus('error','Sem conexão - Modo offline');
+  });
+  
+  // Listener da nuvem com proteção contra loop
+  database.ref('alvesProDB').on('value',s=>{
+    // Ignora se estamos salvando (evita loop)
+    if(isSaving){return}
+    
+    const cloudDB=s.val();
+    
+    // Primeiro carregamento - mescla com dados locais
+    if(!initialLoadDone){
+      if(cloudDB&&localDB){
+        const cT=cloudDB.last_updated||0;
+        const lT=localDB.last_updated||0;
+        if(cT>=lT){
+          DB=cloudDB;
+          localStorage.setItem('alvesProDB',JSON.stringify(DB));
+        }else{
+          DB=localDB;
+          // Envia local para nuvem sem bloquear
+          isSaving=true;
+          database.ref('alvesProDB').set(DB).then(()=>{
+            isSaving=false;
+            updateSyncStatus('synced','Sincronizado');
+          }).catch(e=>{
+            isSaving=false;
+            updateSyncStatus('error','Erro ao enviar');
+          });
+        }
+      }else if(cloudDB){
+        DB=cloudDB;
+        localStorage.setItem('alvesProDB',JSON.stringify(DB));
+      }else if(localDB){
+        DB=localDB;
+        isSaving=true;
+        database.ref('alvesProDB').set(DB).then(()=>{
+          isSaving=false;
+        }).catch(e=>{isSaving=false});
+      }
+      preencherPadroesDB();
+      carregarConfiguracoes();
+      carregarDados();
+      initialLoadDone=true;
+      lastSyncedHash=generateHash(DB);
+      updateSyncStatus('synced','Sincronizado');
+      return;
+    }
+    
+    // Atualizações subsequentes - só re-renderiza se os dados realmente mudaram
+    if(cloudDB){
+      const cloudHash=generateHash(cloudDB);
+      if(cloudHash!==lastSyncedHash){
+        DB=cloudDB;
+        localStorage.setItem('alvesProDB',JSON.stringify(DB));
+        preencherPadroesDB();
+        lastSyncedHash=cloudHash;
+        // Debounce para evitar re-renderizações múltiplas
+        clearTimeout(renderDebounceTimer);
+        renderDebounceTimer=setTimeout(()=>{
+          carregarDados();
+        },250);
+      }
+    }
+  },{onlyOnce:false});
+  
+  // Se estiver offline, já carregou acima
+  if(!navigator.onLine){
+    updateSyncStatus('error','Sem conexão - Modo offline');
+  }
+}
+
+function preencherPadroesDB(){
+  DB.servicos=DB.servicos||[];
+  DB.estoque=DB.estoque||[];
+  DB.catalogo_servicos=DB.catalogo_servicos||[];
+  DB.gastos=DB.gastos||[];
+  DB.orcamentos=DB.orcamentos||[];
+  DB.compras=DB.compras||[];
+  DB.planos_corte=DB.planos_corte||[];
+  DB.pendencias=DB.pendencias||[];
+  DB.lembretes=DB.lembretes||[];
+  DB.cores_corantes=DB.cores_corantes||[];
+  DB.cores_receitas=DB.cores_receitas||[];
+  DB.a_pagar=DB.a_pagar||[];
+  DB.config=DB.config||{};
+}
+
+function syncOfflineData(){
+  const l=localStorage.getItem('alvesProDB');
+  if(!l||!navigator.onLine)return;
+  let localDB=JSON.parse(l);
+  updateSyncStatus('saving','Sincronizando...');
+  database.ref('alvesProDB').once('value').then(s=>{
+    const cloudDB=s.val();
+    let cT=cloudDB?(cloudDB.last_updated||0):0;
+    let lT=localDB.last_updated||0;
+    if(lT>cT){
+      isSaving=true;
+      database.ref('alvesProDB').set(localDB).then(()=>{
+        isSaving=false;
+        lastSyncedHash=generateHash(localDB);
+        updateSyncStatus('synced','Sincronizado com nuvem!');
+        showToast("Sincronizado com nuvem!","success");
+      }).catch(e=>{
+        isSaving=false;
+        updateSyncStatus('error','Erro ao sincronizar');
+      });
+    }else{
+      updateSyncStatus('synced','Já está sincronizado');
+    }
+  }).catch(e=>{
+    updateSyncStatus('error','Erro de conexão');
+  });
+}
+
+// Função saveDB otimizada - usa fila para evitar múltiplas gravações
+function saveDB(){
+  DB.last_updated=Date.now();
+  // Salva localmente primeiro (instantâneo)
+  try{
+    localStorage.setItem('alvesProDB',JSON.stringify(DB));
+  }catch(e){
+    console.warn('Erro ao salvar local:',e);
+  }
+  lastSyncedHash=generateHash(DB);
+  
+  // Envia para nuvem
+  if(navigator.onLine){
+    updateSyncStatus('saving','Salvando na nuvem...');
+    isSaving=true;
+    database.ref('alvesProDB').set(DB).then(()=>{
+      isSaving=false;
+      updateSyncStatus('synced','Salvo na nuvem');
+    }).catch(e=>{
+      isSaving=false;
+      console.warn('Erro ao salvar na nuvem:',e);
+      updateSyncStatus('error','Erro - dados salvos localmente');
+      // Tenta novamente em 3 segundos
+      setTimeout(()=>{
+        if(navigator.onLine){
+          database.ref('alvesProDB').set(DB).catch(()=>{});
+        }
+      },3000);
+    });
+  }else{
+    updateSyncStatus('error','Offline - salvo localmente');
+  }
+}
+
 function generateID(){return new Date().getTime()}
 function limparBancoDados(){if(confirm("APAGAR TODOS OS DADOS DA NUVEM?")){database.ref('alvesProDB').remove();localStorage.removeItem('alvesProDB');location.reload()}}
 function exportarBackup(){const d=JSON.stringify(DB,null,2);const b=new Blob([d],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='alves_pro_backup_'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(u);showToast("Backup baixado!","success")}
 function importarBackup(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);DB=d;preencherPadroesDB();saveDB();carregarConfiguracoes();carregarDados();showToast("Backup restaurado!","success")}catch(err){showToast("Arquivo inválido!","error")}};r.readAsText(f);e.target.value=''}
+
 let dadosPedidos=[],dadosEstoque=[],dadosGastos=[],dadosOrcamentos=[],dadosCatalogo=[],dadosCompras=[],dadosPendencias=[],dadosLembretes=[],dadosAPagar=[],meuGrafico=null,telaAtiva='tela_home',itensNoPedido=[],itensCompraAtual=[],contextoSeletorEstoque='pedido',pecasVendaM2=[],itensNaAgenda=[],contextoSeletorServico='pedido',idPendenciaAberta=null,idxTarefaEditando=null,idLembreteAberto=null,idxLembreteEditando=null,pecasCorte=[],gruposChapasCalculadas=[],planoAtualId=null,planoAtualNome="",filtroAPagarAtual='todos',pagamentosTempAPagar=[];
 const formatMoeda=v=>parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),formatarDataBR=d=>{if(!d)return'';const p=d.split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d};
 function carregarConfiguracoes(){const c=DB.config||{};document.getElementById('nome_display').innerText=c.nome||"Minha Empresa";if(c.logo){document.getElementById('logo_display').src=c.logo;document.getElementById('img_preview').src=c.logo;document.getElementById('img_preview').style.display='block'}document.getElementById('cfg_nome').value=c.nome||"";document.getElementById('cfg_telefone').value=c.telefone||"";document.getElementById('cfg_endereco').value=c.endereco||"";document.getElementById('cfg_chave_pix').value=c.chave_pix||"";document.getElementById('cfg_msg').value=c.mensagem||""}
@@ -337,9 +528,6 @@ dadosPendencias.forEach(p=>{if((p.titulo||'').toLowerCase().includes(t)){let tot
 dadosLembretes.forEach(l=>{if((l.titulo||'').toLowerCase().includes(t)){let cTotal=l.itens?l.itens.length:0;let cFeitos=l.itens?l.itens.filter(i=>i.concluido).length:0;let status=(cTotal>0&&cTotal===cFeitos)?'Tudo Concluído':`${cFeitos} de ${cTotal} concluídos`;let color=(cTotal>0&&cTotal===cFeitos)?'var(--green)':'var(--orange)';if(dL)dL.innerHTML+=`<div class="item-card" style="border-left-color:${color}; cursor:pointer;" onclick="abrirDetalhesLembrete(${l.id})"><div class="card-header" style="margin-bottom:0;"><h4 style="width:85%;"><i class="fas fa-bell" style="margin-right:8px; color:${color};"></i> ${l.titulo}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red); font-size:16px;" onclick="event.stopPropagation(); excluirRegistro('lembretes', ${l.id})"></i></div><div style="font-size:11px; color:${(cTotal>0&&cTotal===cFeitos)?'var(--green)':'#888'}; font-weight:${(cTotal>0&&cTotal===cFeitos)?'bold':'normal'}; margin-top:8px;">${status}</div></div>`;}});
 renderizarAPagar();
 renderizarGrafico()}
-// =================================================================
-// FUNÇÕES DA ABA A PAGAR
-// =================================================================
 function renderizarAPagar(){
 const dAP=document.getElementById('listaAPagar');
 if(!dAP)return;
@@ -370,7 +558,7 @@ if(rest<=0)status='quitado';
 else if(pago>0)status='parcial';
 let hoje=new Date().toISOString().split('T')[0];
 if(status!=='quitado'&&a.data_vencimento&&a.data_vencimento<hoje)status='vencido';
-let tipoIcon='📋';let tipoLabel=a.tipo||'outro';
+let tipoIcon='📋';
 if(a.tipo==='funcionario')tipoIcon='👷';
 else if(a.tipo==='emprestimo')tipoIcon='🏦';
 else if(a.tipo==='fornecedor')tipoIcon='🏭';
@@ -406,324 +594,16 @@ dAP.innerHTML+=`<div class="item-card" style="border-left-color:${status==='quit
 </div>`;
 });
 }
-function filtrarAPagar(tipo,btn){
-filtroAPagarAtual=tipo;
-document.querySelectorAll('.apagar-filtro button').forEach(b=>b.classList.remove('ativo'));
-if(btn)btn.classList.add('ativo');
-renderizarAPagar();
-}
-function atualizarLabelAPagar(){
-const tipo=document.getElementById('ap_tipo').value;
-const label=document.getElementById('ap_label_nome');
-if(tipo==='funcionario')label.innerText='Nome do Funcionário';
-else if(tipo==='emprestimo')label.innerText='Credor / Instituição';
-else if(tipo==='fornecedor')label.innerText='Nome do Fornecedor';
-else if(tipo==='aluguel')label.innerText='Proprietário / Imobiliária';
-else label.innerText='Credor / Responsável';
-}
-function calcularRestanteAPagar(){
-const total=parseFloat(document.getElementById('ap_valor_total').value)||0;
-let pago=0;
-pagamentosTempAPagar.forEach(p=>{pago+=(p.valor||0)});
-const novoPgto=parseFloat(document.getElementById('ap_novo_pagamento').value)||0;
-const rest=Math.max(0,total-pago-novoPgto);
-const box=document.getElementById('ap_restante_box');
-const val=document.getElementById('ap_restante_valor');
-val.innerText="R$ "+formatMoeda(rest);
-if(rest<=0&&total>0){box.classList.add('quitado')}else{box.classList.remove('quitado')}
-}
-function adicionarPagamentoAPagar(){
-const val=parseFloat(document.getElementById('ap_novo_pagamento').value)||0;
-const dt=document.getElementById('ap_data_pagamento').value;
-if(val<=0)return showToast("Digite um valor maior que zero!","error");
-if(!dt)return showToast("Selecione a data do pagamento!","error");
-const total=parseFloat(document.getElementById('ap_valor_total').value)||0;
-let pagoAtual=0;
-pagamentosTempAPagar.forEach(p=>{pagoAtual+=(p.valor||0)});
-if(pagoAtual+val>total+0.01)return showToast("Valor excede o total da dívida!","error");
-pagamentosTempAPagar.push({valor:val,data:dt,id:generateID()});
-document.getElementById('ap_novo_pagamento').value="0";
-document.getElementById('ap_data_pagamento').value="";
-renderizarHistoricoTempAPagar();
-calcularRestanteAPagar();
-showToast("Pagamento registrado!","success");
-}
-function removerPagamentoTempAPagar(idx){
-pagamentosTempAPagar.splice(idx,1);
-renderizarHistoricoTempAPagar();
-calcularRestanteAPagar();
-}
-function renderizarHistoricoTempAPagar(){
-const c=document.getElementById('ap_historico_container');
-if(pagamentosTempAPagar.length===0){c.innerHTML='<div style="text-align:center;color:#666;font-size:12px;padding:10px;">Nenhum pagamento registrado.</div>';return}
-let totalPago=0;
-c.innerHTML=pagamentosTempAPagar.map((p,i)=>{
-totalPago+=p.valor;
-return`<div class="pagamento-row">
-<div><span style="color:var(--green);font-weight:bold;">R$ ${formatMoeda(p.valor)}</span><br><span style="color:#888;font-size:10px;">${formatarDataBR(p.data)}</span></div>
-<i class="fas fa-trash" style="color:var(--red);cursor:pointer;padding:5px;" onclick="removerPagamentoTempAPagar(${i})"></i>
-</div>`;
-}).join('')+`<div style="border-top:1px solid #444;margin-top:8px;padding-top:8px;text-align:right;font-size:12px;"><span style="color:#888;">Total Pago:</span> <strong style="color:var(--green);">R$ ${formatMoeda(totalPago)}</strong></div>`;
-}
-function salvarAPagar(){
-const nome=document.getElementById('ap_nome').value.trim();
-if(!nome)return showToast("Digite o nome!","error");
-const total=parseFloat(document.getElementById('ap_valor_total').value)||0;
-if(total<=0)return showToast("Valor total deve ser maior que zero!","error");
-const o={
-id:document.getElementById('ap_id').value||generateID(),
-tipo:document.getElementById('ap_tipo').value,
-nome:nome,
-descricao:document.getElementById('ap_descricao').value,
-valor_total:total,
-data_criacao:document.getElementById('ap_data_criacao').value,
-data_vencimento:document.getElementById('ap_data_vencimento').value,
-pagamentos:pagamentosTempAPagar,
-observacoes:document.getElementById('ap_observacoes').value
-};
-if(document.getElementById('ap_id').value){
-const i=DB.a_pagar.findIndex(x=>x.id==o.id);
-if(i>-1)DB.a_pagar[i]=o;
-}else{
-DB.a_pagar.push(o);
-}
-saveDB();fecharModais();renderizarTudo();showToast("Conta salva!","success");
-}
-function editarAPagar(id){
-const a=DB.a_pagar.find(x=>x.id==id);
-if(!a)return showToast("Registro não encontrado!","error");
-document.getElementById('ap_id').value=a.id;
-document.getElementById('ap_tipo').value=a.tipo||'funcionario';
-atualizarLabelAPagar();
-document.getElementById('ap_nome').value=a.nome;
-document.getElementById('ap_descricao').value=a.descricao||'';
-document.getElementById('ap_valor_total').value=a.valor_total;
-document.getElementById('ap_data_criacao').value=a.data_criacao||'';
-document.getElementById('ap_data_vencimento').value=a.data_vencimento||'';
-document.getElementById('ap_observacoes').value=a.observacoes||'';
-pagamentosTempAPagar=a.pagamentos?JSON.parse(JSON.stringify(a.pagamentos)):[];
-document.getElementById('ap_novo_pagamento').value="0";
-document.getElementById('ap_data_pagamento').value="";
-renderizarHistoricoTempAPagar();
-calcularRestanteAPagar();
-document.getElementById('btn_imprimir_apagar').style.display='block';
-document.getElementById('btn_zap_apagar').style.display='block';
-document.getElementById('modalAPagar').style.display='flex';
-}
-// =================================================================
-// IMPRIMIR RECIBO A PAGAR
-// =================================================================
-function imprimirReciboAPagar(){
-const idA=document.getElementById('ap_id').value;
-if(!idA)return showToast("Salve o registro antes de imprimir!","error");
-const a=DB.a_pagar.find(x=>x.id==idA);
-if(!a)return;
-const c=DB.config||{};
-const eN=c.nome||"Minha Empresa";
-const eD=c.endereco||"";
-const eT=c.telefone||"";
-const eP=c.chave_pix||"";
-const dHj=formatarDataBR(new Date().toISOString().split('T')[0]);
-const hHj=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-const numRecibo=String(a.id).slice(-6);
-let pago=0;
-if(a.pagamentos&&a.pagamentos.length>0){pago=a.pagamentos.reduce((s,p)=>s+(p.valor||0),0)}
-const rest=Math.max(0,(a.valor_total||0)-pago);
-let status='PENDENTE';
-let statusColor='#ff453a';
-if(rest<=0){status='QUITADO';statusColor='#30d158'}
-else if(pago>0){status='PARCIAL';statusColor='#ff9f0a'}
-let hoje=new Date().toISOString().split('T')[0];
-if(rest>0&&a.data_vencimento&&a.data_vencimento<hoje){status='VENCIDO';statusColor='#ff453a'}
-let tipoTxt={funcionario:'FUNCIONÁRIO',emprestimo:'EMPRÉSTIMO',fornecedor:'FORNECEDOR',aluguel:'ALUGUEL',outro:'OUTRO'};
-let tipoIcon={funcionario:'👷',emprestimo:'🏦',fornecedor:'🏭',aluguel:'🏠',outro:'📋'};
-let tipoLabel=tipoTxt[a.tipo]||'OUTRO';
-let tipoIco=tipoIcon[a.tipo]||'📋';
-let logoH=c.logo?`<img src="${c.logo}" style="max-height:100px; max-width:180px; object-fit:contain;">`:'';
-let histH='';
-if(a.pagamentos&&a.pagamentos.length>0){
-histH=`<table style="width:100%; border-collapse:collapse; margin-top:10px; font-size:13px;">
-<thead><tr style="background:#e9ecef; border-bottom:2px solid #333;">
-<th style="padding:10px; text-align:left; width:10%;">#</th>
-<th style="padding:10px; text-align:left;">Descrição</th>
-<th style="padding:10px; text-align:center; width:25%;">Data</th>
-<th style="padding:10px; text-align:right; width:25%;">Valor</th>
-</tr></thead><tbody>`;
-a.pagamentos.forEach((p,i)=>{
-histH+=`<tr style="border-bottom:1px solid #ddd;">
-<td style="padding:10px; text-align:center; color:#888;">${i+1}</td>
-<td style="padding:10px;">Pagamento / Adiantamento</td>
-<td style="padding:10px; text-align:center;">${formatarDataBR(p.data)||'-'}</td>
-<td style="padding:10px; text-align:right; color:green; font-weight:bold;">R$ ${formatMoeda(p.valor)}</td>
-</tr>`;
-});
-histH+=`<tr style="background:#f1f8f1; border-top:2px solid #30d158;">
-<td colspan="3" style="padding:12px; text-align:right; font-weight:bold; font-size:14px;">TOTAL PAGO:</td>
-<td style="padding:12px; text-align:right; color:green; font-weight:bold; font-size:16px;">R$ ${formatMoeda(pago)}</td>
-</tr></tbody></table>`;
-}else{
-histH='<p style="text-align:center; color:#888; padding:15px; font-style:italic;">Nenhum pagamento registrado até o momento.</p>';
-}
-const aI=document.getElementById('area-impressao');
-aI.innerHTML=`
-<div style="font-family:'Segoe UI',Arial,sans-serif; color:#000; padding:25px; max-width:800px; margin:0 auto; box-sizing:border-box;">
-<div style="border:3px double #000; padding:25px;">
-<!-- CABEÇALHO -->
-<table style="width:100%; border-bottom:2px solid #000; padding-bottom:15px; margin-bottom:20px;">
-<tr>
-<td style="width:25%; text-align:left; vertical-align:middle;">${logoH}</td>
-<td style="width:50%; text-align:center; vertical-align:middle;">
-<h2 style="margin:0; font-size:22px; text-transform:uppercase;">${eN}</h2>
-<p style="margin:5px 0 0 0; font-size:12px; color:#444;">${eD}${eT?'<br>📞 '+eT:''}</p>
-</td>
-<td style="width:25%; text-align:right; vertical-align:middle; font-size:12px;">
-<strong style="font-size:14px; display:block;">RECIBO A PAGAR</strong>
-<span style="color:#555;">Nº ${numRecibo}</span><br>
-<span style="color:#555;">Emissão: ${dHj}</span><br>
-<span style="color:#555;">Hora: ${hHj}</span>
-</td>
-</tr>
-</table>
-<!-- STATUS DESTAQUE -->
-<div style="background:${statusColor}15; border:2px solid ${statusColor}; border-radius:8px; padding:15px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
-<div>
-<span style="font-size:11px; color:#555; text-transform:uppercase; font-weight:bold;">Status da Conta</span><br>
-<strong style="font-size:22px; color:${statusColor};">${tipoIco} ${status}</strong>
-</div>
-<div style="text-align:right;">
-<span style="font-size:11px; color:#555; text-transform:uppercase; font-weight:bold;">Tipo</span><br>
-<strong style="font-size:16px; color:#000;">${tipoLabel}</strong>
-</div>
-</div>
-<!-- DADOS DO CREDOR -->
-<div style="background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:15px; margin-bottom:20px;">
-<h3 style="margin:0 0 10px 0; font-size:14px; color:#333; text-transform:uppercase; border-bottom:1px solid #ccc; padding-bottom:5px;">📋 Dados do Credor / Beneficiário</h3>
-<table style="width:100%; font-size:13px; line-height:1.8;">
-<tr><td style="width:30%; color:#555; font-weight:bold;">Nome:</td><td style="font-size:16px; font-weight:bold; color:#000;">${a.nome||'-'}</td></tr>
-<tr><td style="color:#555; font-weight:bold;">Descrição:</td><td>${a.descricao||'-'}</td></tr>
-<tr><td style="color:#555; font-weight:bold;">Data de Criação:</td><td>${formatarDataBR(a.data_criacao)||'-'}</td></tr>
-<tr><td style="color:#555; font-weight:bold;">Data de Vencimento:</td><td style="font-weight:bold; color:${status==='VENCIDO'?'#ff453a':'#000'};">${formatarDataBR(a.data_vencimento)||'Sem vencimento'} ${status==='VENCIDO'?' ⚠️ VENCIDO':''}</td></tr>
-</table>
-</div>
-<!-- RESUMO FINANCEIRO -->
-<div style="background:#fff; border:2px solid #000; border-radius:8px; padding:20px; margin-bottom:20px;">
-<h3 style="margin:0 0 15px 0; font-size:14px; color:#333; text-transform:uppercase; text-align:center; border-bottom:1px solid #ccc; padding-bottom:8px;">💰 Resumo Financeiro</h3>
-<table style="width:100%; font-size:14px;">
-<tr style="border-bottom:1px dashed #ccc;">
-<td style="padding:10px; color:#555;">Valor Total da Conta:</td>
-<td style="padding:10px; text-align:right; font-weight:bold; font-size:16px;">R$ ${formatMoeda(a.valor_total)}</td>
-</tr>
-<tr style="border-bottom:1px dashed #ccc; background:#f1f8f1;">
-<td style="padding:10px; color:green; font-weight:bold;">(-) Total Pago:</td>
-<td style="padding:10px; text-align:right; font-weight:bold; font-size:16px; color:green;">R$ ${formatMoeda(pago)}</td>
-</tr>
-<tr style="background:${rest>0?'#fff5f5':'#f1f8f1'};">
-<td style="padding:12px; color:${rest>0?'#ff453a':'#30d158'}; font-weight:bold; font-size:15px;">${rest>0?'RESTANTE A PAGAR:':'✅ TOTALMENTE QUITADO'}</td>
-<td style="padding:12px; text-align:right; font-weight:bold; font-size:20px; color:${rest>0?'#ff453a':'#30d158'};">R$ ${formatMoeda(rest)}</td>
-</tr>
-</table>
-${a.valor_total>0?`<div style="margin-top:10px; background:#eee; height:10px; border-radius:5px; overflow:hidden;"><div style="width:${Math.min(100,Math.round((pago/a.valor_total)*100))}%; height:100%; background:${status==='QUITADO'?'#30d158':'#0a84ff'};"></div></div><div style="text-align:center; font-size:11px; color:#555; margin-top:5px;">Progresso: ${Math.min(100,Math.round((pago/a.valor_total)*100))}% quitado</div>`:''}
-</div>
-<!-- HISTÓRICO DE PAGAMENTOS -->
-<div style="margin-bottom:20px;">
-<h3 style="font-size:14px; color:#333; text-transform:uppercase; border-bottom:2px solid #000; padding-bottom:5px; margin-bottom:10px;">📜 Histórico de Pagamentos / Adiantamentos</h3>
-${histH}
-</div>
-<!-- OBSERVAÇÕES -->
-${a.observacoes?`<div style="background:#fffbe6; border-left:4px solid #ff9f0a; padding:12px; border-radius:4px; margin-bottom:20px;">
-<strong style="font-size:12px; color:#b45309; text-transform:uppercase;">📝 Observações:</strong>
-<p style="margin:5px 0 0 0; font-size:13px; color:#333; line-height:1.5;">${a.observacoes.replace(/\n/g,'<br>')}</p>
-</div>`:''}
-<!-- ASSINATURAS -->
-<div style="margin-top:40px; display:flex; justify-content:space-around; gap:20px;">
-<div style="flex:1; text-align:center;">
-<div style="border-top:1px solid #000; padding-top:8px; font-size:12px; color:#333;">
-<strong>${eN}</strong><br>
-<span style="font-size:10px; color:#555;">Emitente</span>
-</div>
-</div>
-<div style="flex:1; text-align:center;">
-<div style="border-top:1px solid #000; padding-top:8px; font-size:12px; color:#333;">
-<strong>${a.nome}</strong><br>
-<span style="font-size:10px; color:#555;">Beneficiário / Credor</span>
-</div>
-</div>
-</div>
-<!-- RODAPÉ -->
-<div style="margin-top:30px; padding-top:15px; border-top:1px dashed #999; text-align:center; font-size:10px; color:#666;">
-${eP?'<strong>Chave PIX:</strong> '+eP+'<br>':''}
-Documento gerado automaticamente pelo sistema <strong>${eN}</strong> em ${dHj} às ${hHj}.<br>
-Este recibo é válido como comprovante de dívida/acordo entre as partes.
-</div>
-</div>
-</div>`;
-setTimeout(()=>window.print(),300);
-}
-// =================================================================
-// ENVIAR WHATSAPP A PAGAR
-// =================================================================
-function enviarWhatsAppAPagar(){
-const idA=document.getElementById('ap_id').value;
-if(!idA)return showToast("Salve o registro antes de enviar!","error");
-const a=DB.a_pagar.find(x=>x.id==idA);
-if(!a)return;
-const c=DB.config||{};
-const eN=c.nome||"Minha Empresa";
-const eT=c.telefone||"";
-const eP=c.chave_pix||"";
-let pago=0;
-if(a.pagamentos&&a.pagamentos.length>0){pago=a.pagamentos.reduce((s,p)=>s+(p.valor||0),0)}
-const rest=Math.max(0,(a.valor_total||0)-pago);
-let status='🔴 PENDENTE';
-if(rest<=0)status='✅ QUITADO';
-else if(pago>0)status='⏳ PARCIAL';
-let hoje=new Date().toISOString().split('T')[0];
-if(rest>0&&a.data_vencimento&&a.data_vencimento<hoje)status='⚠️ VENCIDO';
-let tipoTxt={funcionario:'FUNCIONÁRIO',emprestimo:'EMPRÉSTIMO',fornecedor:'FORNECEDOR',aluguel:'ALUGUEL',outro:'OUTRO'};
-let tipoLabel=tipoTxt[a.tipo]||'OUTRO';
-let dHj=formatarDataBR(new Date().toISOString().split('T')[0]);
-let txt=`*🧾 RECIBO A PAGAR*\n`;
-txt+=`*${eN}*\n`;
-if(eT)txt+=`📞 ${eT}\n`;
-txt+=`\n*Recibo Nº:* ${String(a.id).slice(-6)}\n`;
-txt+=`*Data Emissão:* ${dHj}\n`;
-txt+=`*Tipo:* ${tipoLabel}\n`;
-txt+=`*Status:* ${status}\n`;
-txt+=`\n━━━━━━━━━━━━━━━━━━━━\n`;
-txt+=`*📋 DADOS DO CREDOR*\n`;
-txt+=`━━━━━━━━━━━━━━━━━━━━\n`;
-txt+=`*Nome:* ${a.nome}\n`;
-if(a.descricao)txt+=`*Descrição:* ${a.descricao}\n`;
-txt+=`*Criação:* ${formatarDataBR(a.data_criacao)||'-'}\n`;
-if(a.data_vencimento)txt+=`*Vencimento:* ${formatarDataBR(a.data_vencimento)}\n`;
-txt+=`\n━━━━━━━━━━━━━━━━━━━━\n`;
-txt+=`*💰 RESUMO FINANCEIRO*\n`;
-txt+=`━━━━━━━━━━━━━━━━━━━━\n`;
-txt+=`*Valor Total:* R$ ${formatMoeda(a.valor_total)}\n`;
-txt+=`*Total Pago:* R$ ${formatMoeda(pago)}\n`;
-txt+=`*Restante:* R$ ${formatMoeda(rest)}\n`;
-if(a.valor_total>0){
-let pct=Math.min(100,Math.round((pago/a.valor_total)*100));
-txt+=`*Progresso:* ${pct}% quitado\n`;
-}
-if(a.pagamentos&&a.pagamentos.length>0){
-txt+=`\n━━━━━━━━━━━━━━━━━━━━\n`;
-txt+=`*📜 HISTÓRICO DE PAGAMENTOS*\n`;
-txt+=`━━━━━━━━━━━━━━━━━━━━\n`;
-a.pagamentos.forEach((p,i)=>{
-txt+=`*${i+1}.* R$ ${formatMoeda(p.valor)} - ${formatarDataBR(p.data)||'-'}\n`;
-});
-}
-if(a.observacoes){
-txt+=`\n━━━━━━━━━━━━━━━━━━━━\n`;
-txt+=`*📝 Observações:*\n${a.observacoes}\n`;
-}
-txt+=`\n━━━━━━━━━━━━━━━━━━━━\n`;
-if(eP)txt+=`*Chave PIX:* ${eP}\n\n`;
-txt+=`_Recibo emitido em ${dHj} via ${eN}_`;
-window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank');
-}
-// =================================================================
+function filtrarAPagar(tipo,btn){filtroAPagarAtual=tipo;document.querySelectorAll('.apagar-filtro button').forEach(b=>b.classList.remove('ativo'));if(btn)btn.classList.add('ativo');renderizarAPagar();}
+function atualizarLabelAPagar(){const tipo=document.getElementById('ap_tipo').value;const label=document.getElementById('ap_label_nome');if(tipo==='funcionario')label.innerText='Nome do Funcionário';else if(tipo==='emprestimo')label.innerText='Credor / Instituição';else if(tipo==='fornecedor')label.innerText='Nome do Fornecedor';else if(tipo==='aluguel')label.innerText='Proprietário / Imobiliária';else label.innerText='Credor / Responsável';}
+function calcularRestanteAPagar(){const total=parseFloat(document.getElementById('ap_valor_total').value)||0;let pago=0;pagamentosTempAPagar.forEach(p=>{pago+=(p.valor||0)});const novoPgto=parseFloat(document.getElementById('ap_novo_pagamento').value)||0;const rest=Math.max(0,total-pago-novoPgto);const box=document.getElementById('ap_restante_box');const val=document.getElementById('ap_restante_valor');val.innerText="R$ "+formatMoeda(rest);if(rest<=0&&total>0){box.classList.add('quitado')}else{box.classList.remove('quitado')}}
+function adicionarPagamentoAPagar(){const val=parseFloat(document.getElementById('ap_novo_pagamento').value)||0;const dt=document.getElementById('ap_data_pagamento').value;if(val<=0)return showToast("Digite um valor maior que zero!","error");if(!dt)return showToast("Selecione a data do pagamento!","error");const total=parseFloat(document.getElementById('ap_valor_total').value)||0;let pagoAtual=0;pagamentosTempAPagar.forEach(p=>{pagoAtual+=(p.valor||0)});if(pagoAtual+val>total+0.01)return showToast("Valor excede o total da dívida!","error");pagamentosTempAPagar.push({valor:val,data:dt,id:generateID()});document.getElementById('ap_novo_pagamento').value="0";document.getElementById('ap_data_pagamento').value="";renderizarHistoricoTempAPagar();calcularRestanteAPagar();showToast("Pagamento registrado!","success");}
+function removerPagamentoTempAPagar(idx){pagamentosTempAPagar.splice(idx,1);renderizarHistoricoTempAPagar();calcularRestanteAPagar();}
+function renderizarHistoricoTempAPagar(){const c=document.getElementById('ap_historico_container');if(pagamentosTempAPagar.length===0){c.innerHTML='<div style="text-align:center;color:#666;font-size:12px;padding:10px;">Nenhum pagamento registrado.</div>';return}let totalPago=0;c.innerHTML=pagamentosTempAPagar.map((p,i)=>{totalPago+=p.valor;return`<div class="pagamento-row"><div><span style="color:var(--green);font-weight:bold;">R$ ${formatMoeda(p.valor)}</span><br><span style="color:#888;font-size:10px;">${formatarDataBR(p.data)}</span></div><i class="fas fa-trash" style="color:var(--red);cursor:pointer;padding:5px;" onclick="removerPagamentoTempAPagar(${i})"></i></div>`}).join('')+`<div style="border-top:1px solid #444;margin-top:8px;padding-top:8px;text-align:right;font-size:12px;"><span style="color:#888;">Total Pago:</span> <strong style="color:var(--green);">R$ ${formatMoeda(totalPago)}</strong></div>`}
+function salvarAPagar(){const nome=document.getElementById('ap_nome').value.trim();if(!nome)return showToast("Digite o nome!","error");const total=parseFloat(document.getElementById('ap_valor_total').value)||0;if(total<=0)return showToast("Valor total deve ser maior que zero!","error");const o={id:document.getElementById('ap_id').value||generateID(),tipo:document.getElementById('ap_tipo').value,nome:nome,descricao:document.getElementById('ap_descricao').value,valor_total:total,data_criacao:document.getElementById('ap_data_criacao').value,data_vencimento:document.getElementById('ap_data_vencimento').value,pagamentos:pagamentosTempAPagar,observacoes:document.getElementById('ap_observacoes').value};if(document.getElementById('ap_id').value){const i=DB.a_pagar.findIndex(x=>x.id==o.id);if(i>-1)DB.a_pagar[i]=o}else{DB.a_pagar.push(o)}saveDB();fecharModais();renderizarTudo();showToast("Conta salva!","success");}
+function editarAPagar(id){const a=DB.a_pagar.find(x=>x.id==id);if(!a)return showToast("Registro não encontrado!","error");document.getElementById('ap_id').value=a.id;document.getElementById('ap_tipo').value=a.tipo||'funcionario';atualizarLabelAPagar();document.getElementById('ap_nome').value=a.nome;document.getElementById('ap_descricao').value=a.descricao||'';document.getElementById('ap_valor_total').value=a.valor_total;document.getElementById('ap_data_criacao').value=a.data_criacao||'';document.getElementById('ap_data_vencimento').value=a.data_vencimento||'';document.getElementById('ap_observacoes').value=a.observacoes||'';pagamentosTempAPagar=a.pagamentos?JSON.parse(JSON.stringify(a.pagamentos)):[];document.getElementById('ap_novo_pagamento').value="0";document.getElementById('ap_data_pagamento').value="";renderizarHistoricoTempAPagar();calcularRestanteAPagar();document.getElementById('btn_imprimir_apagar').style.display='block';document.getElementById('btn_zap_apagar').style.display='block';document.getElementById('modalAPagar').style.display='flex';}
+function imprimirReciboAPagar(){const idA=document.getElementById('ap_id').value;if(!idA)return showToast("Salve o registro antes de imprimir!","error");const a=DB.a_pagar.find(x=>x.id==idA);if(!a)return;const c=DB.config||{};const eN=c.nome||"Minha Empresa";const eD=c.endereco||"";const eT=c.telefone||"";const eP=c.chave_pix||"";const dHj=formatarDataBR(new Date().toISOString().split('T')[0]);const hHj=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});const numRecibo=String(a.id).slice(-6);let pago=0;if(a.pagamentos&&a.pagamentos.length>0){pago=a.pagamentos.reduce((s,p)=>s+(p.valor||0),0)}const rest=Math.max(0,(a.valor_total||0)-pago);let status='PENDENTE';let statusColor='#ff453a';if(rest<=0){status='QUITADO';statusColor='#30d158'}else if(pago>0){status='PARCIAL';statusColor='#ff9f0a'}let hoje=new Date().toISOString().split('T')[0];if(rest>0&&a.data_vencimento&&a.data_vencimento<hoje){status='VENCIDO';statusColor='#ff453a'}let tipoTxt={funcionario:'FUNCIONÁRIO',emprestimo:'EMPRÉSTIMO',fornecedor:'FORNECEDOR',aluguel:'ALUGUEL',outro:'OUTRO'};let tipoIcon={funcionario:'👷',emprestimo:'🏦',fornecedor:'🏭',aluguel:'🏠',outro:'📋'};let tipoLabel=tipoTxt[a.tipo]||'OUTRO';let tipoIco=tipoIcon[a.tipo]||'📋';let logoH=c.logo?`<img src="${c.logo}" style="max-height:100px; max-width:180px; object-fit:contain;">`:'';let histH='';if(a.pagamentos&&a.pagamentos.length>0){histH=`<table style="width:100%; border-collapse:collapse; margin-top:10px; font-size:13px;"><thead><tr style="background:#e9ecef; border-bottom:2px solid #333;"><th style="padding:10px; text-align:left; width:10%;">#</th><th style="padding:10px; text-align:left;">Descrição</th><th style="padding:10px; text-align:center; width:25%;">Data</th><th style="padding:10px; text-align:right; width:25%;">Valor</th></tr></thead><tbody>`;a.pagamentos.forEach((p,i)=>{histH+=`<tr style="border-bottom:1px solid #ddd;"><td style="padding:10px; text-align:center; color:#888;">${i+1}</td><td style="padding:10px;">Pagamento / Adiantamento</td><td style="padding:10px; text-align:center;">${formatarDataBR(p.data)||'-'}</td><td style="padding:10px; text-align:right; color:green; font-weight:bold;">R$ ${formatMoeda(p.valor)}</td></tr>`});histH+=`<tr style="background:#f1f8f1; border-top:2px solid #30d158;"><td colspan="3" style="padding:12px; text-align:right; font-weight:bold; font-size:14px;">TOTAL PAGO:</td><td style="padding:12px; text-align:right; color:green; font-weight:bold; font-size:16px;">R$ ${formatMoeda(pago)}</td></tr></tbody></table>`}else{histH='<p style="text-align:center; color:#888; padding:15px; font-style:italic;">Nenhum pagamento registrado até o momento.</p>'}const aI=document.getElementById('area-impressao');aI.innerHTML=`<div style="font-family:'Segoe UI',Arial,sans-serif; color:#000; padding:25px; max-width:800px; margin:0 auto; box-sizing:border-box;"><div style="border:3px double #000; padding:25px;"><table style="width:100%; border-bottom:2px solid #000; padding-bottom:15px; margin-bottom:20px;"><tr><td style="width:25%; text-align:left; vertical-align:middle;">${logoH}</td><td style="width:50%; text-align:center; vertical-align:middle;"><h2 style="margin:0; font-size:22px; text-transform:uppercase;">${eN}</h2><p style="margin:5px 0 0 0; font-size:12px; color:#444;">${eD}${eT?'<br>📞 '+eT:''}</p></td><td style="width:25%; text-align:right; vertical-align:middle; font-size:12px;"><strong style="font-size:14px; display:block;">RECIBO A PAGAR</strong><span style="color:#555;">Nº ${numRecibo}</span><br><span style="color:#555;">Emissão: ${dHj}</span><br><span style="color:#555;">Hora: ${hHj}</span></td></tr></table><div style="background:${statusColor}15; border:2px solid ${statusColor}; border-radius:8px; padding:15px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;"><div><span style="font-size:11px; color:#555; text-transform:uppercase; font-weight:bold;">Status da Conta</span><br><strong style="font-size:22px; color:${statusColor};">${tipoIco} ${status}</strong></div><div style="text-align:right;"><span style="font-size:11px; color:#555; text-transform:uppercase; font-weight:bold;">Tipo</span><br><strong style="font-size:16px; color:#000;">${tipoLabel}</strong></div></div><div style="background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:15px; margin-bottom:20px;"><h3 style="margin:0 0 10px 0; font-size:14px; color:#333; text-transform:uppercase; border-bottom:1px solid #ccc; padding-bottom:5px;">📋 Dados do Credor / Beneficiário</h3><table style="width:100%; font-size:13px; line-height:1.8;"><tr><td style="width:30%; color:#555; font-weight:bold;">Nome:</td><td style="font-size:16px; font-weight:bold; color:#000;">${a.nome||'-'}</td></tr><tr><td style="color:#555; font-weight:bold;">Descrição:</td><td>${a.descricao||'-'}</td></tr><tr><td style="color:#555; font-weight:bold;">Data de Criação:</td><td>${formatarDataBR(a.data_criacao)||'-'}</td></tr><tr><td style="color:#555; font-weight:bold;">Data de Vencimento:</td><td style="font-weight:bold; color:${status==='VENCIDO'?'#ff453a':'#000'};">${formatarDataBR(a.data_vencimento)||'Sem vencimento'} ${status==='VENCIDO'?' ⚠️ VENCIDO':''}</td></tr></table></div><div style="background:#fff; border:2px solid #000; border-radius:8px; padding:20px; margin-bottom:20px;"><h3 style="margin:0 0 15px 0; font-size:14px; color:#333; text-transform:uppercase; text-align:center; border-bottom:1px solid #ccc; padding-bottom:8px;">💰 Resumo Financeiro</h3><table style="width:100%; font-size:14px;"><tr style="border-bottom:1px dashed #ccc;"><td style="padding:10px; color:#555;">Valor Total da Conta:</td><td style="padding:10px; text-align:right; font-weight:bold; font-size:16px;">R$ ${formatMoeda(a.valor_total)}</td></tr><tr style="border-bottom:1px dashed #ccc; background:#f1f8f1;"><td style="padding:10px; color:green; font-weight:bold;">(-) Total Pago:</td><td style="padding:10px; text-align:right; font-weight:bold; font-size:16px; color:green;">R$ ${formatMoeda(pago)}</td></tr><tr style="background:${rest>0?'#fff5f5':'#f1f8f1'};"><td style="padding:12px; color:${rest>0?'#ff453a':'#30d158'}; font-weight:bold; font-size:15px;">${rest>0?'RESTANTE A PAGAR:':'✅ TOTALMENTE QUITADO'}</td><td style="padding:12px; text-align:right; font-weight:bold; font-size:20px; color:${rest>0?'#ff453a':'#30d158'};">R$ ${formatMoeda(rest)}</td></tr></table>${a.valor_total>0?`<div style="margin-top:10px; background:#eee; height:10px; border-radius:5px; overflow:hidden;"><div style="width:${Math.min(100,Math.round((pago/a.valor_total)*100))}%; height:100%; background:${status==='QUITADO'?'#30d158':'#0a84ff'};"></div></div><div style="text-align:center; font-size:11px; color:#555; margin-top:5px;">Progresso: ${Math.min(100,Math.round((pago/a.valor_total)*100))}% quitado</div>`:''}</div><div style="margin-bottom:20px;"><h3 style="font-size:14px; color:#333; text-transform:uppercase; border-bottom:2px solid #000; padding-bottom:5px; margin-bottom:10px;">📜 Histórico de Pagamentos / Adiantamentos</h3>${histH}</div>${a.observacoes?`<div style="background:#fffbe6; border-left:4px solid #ff9f0a; padding:12px; border-radius:4px; margin-bottom:20px;"><strong style="font-size:12px; color:#b45309; text-transform:uppercase;">📝 Observações:</strong><p style="margin:5px 0 0 0; font-size:13px; color:#333; line-height:1.5;">${a.observacoes.replace(/\n/g,'<br>')}</p></div>`:''}<div style="margin-top:40px; display:flex; justify-content:space-around; gap:20px;"><div style="flex:1; text-align:center;"><div style="border-top:1px solid #000; padding-top:8px; font-size:12px; color:#333;"><strong>${eN}</strong><br><span style="font-size:10px; color:#555;">Emitente</span></div></div><div style="flex:1; text-align:center;"><div style="border-top:1px solid #000; padding-top:8px; font-size:12px; color:#333;"><strong>${a.nome}</strong><br><span style="font-size:10px; color:#555;">Beneficiário / Credor</span></div></div></div><div style="margin-top:30px; padding-top:15px; border-top:1px dashed #999; text-align:center; font-size:10px; color:#666;">${eP?'<strong>Chave PIX:</strong> '+eP+'<br>':''}Documento gerado automaticamente pelo sistema <strong>${eN}</strong> em ${dHj} às ${hHj}.<br>Este recibo é válido como comprovante de dívida/acordo entre as partes.</div></div></div>`;setTimeout(()=>window.print(),300)}
+function enviarWhatsAppAPagar(){const idA=document.getElementById('ap_id').value;if(!idA)return showToast("Salve o registro antes de enviar!","error");const a=DB.a_pagar.find(x=>x.id==idA);if(!a)return;const c=DB.config||{};const eN=c.nome||"Minha Empresa";const eT=c.telefone||"";const eP=c.chave_pix||"";let pago=0;if(a.pagamentos&&a.pagamentos.length>0){pago=a.pagamentos.reduce((s,p)=>s+(p.valor||0),0)}const rest=Math.max(0,(a.valor_total||0)-pago);let status='🔴 PENDENTE';if(rest<=0)status='✅ QUITADO';else if(pago>0)status='⏳ PARCIAL';let hoje=new Date().toISOString().split('T')[0];if(rest>0&&a.data_vencimento&&a.data_vencimento<hoje)status='⚠️ VENCIDO';let tipoTxt={funcionario:'FUNCIONÁRIO',emprestimo:'EMPRÉSTIMO',fornecedor:'FORNECEDOR',aluguel:'ALUGUEL',outro:'OUTRO'};let tipoLabel=tipoTxt[a.tipo]||'OUTRO';let dHj=formatarDataBR(new Date().toISOString().split('T')[0]);let txt=`*🧾 RECIBO A PAGAR*\n*${eN}*\n`;if(eT)txt+=`📞 ${eT}\n`;txt+=`\n*Recibo Nº:* ${String(a.id).slice(-6)}\n*Data Emissão:* ${dHj}\n*Tipo:* ${tipoLabel}\n*Status:* ${status}\n\n━━━━━━━━━━━━━━━━━━━━\n*📋 DADOS DO CREDOR*\n━━━━━━━━━━━━━━━━━━━━\n*Nome:* ${a.nome}\n`;if(a.descricao)txt+=`*Descrição:* ${a.descricao}\n`;txt+=`*Criação:* ${formatarDataBR(a.data_criacao)||'-'}\n`;if(a.data_vencimento)txt+=`*Vencimento:* ${formatarDataBR(a.data_vencimento)}\n`;txt+=`\n━━━━━━━━━━━━━━━━━━━━\n*💰 RESUMO FINANCEIRO*\n━━━━━━━━━━━━━━━━━━━━\n*Valor Total:* R$ ${formatMoeda(a.valor_total)}\n*Total Pago:* R$ ${formatMoeda(pago)}\n*Restante:* R$ ${formatMoeda(rest)}\n`;if(a.valor_total>0){let pct=Math.min(100,Math.round((pago/a.valor_total)*100));txt+=`*Progresso:* ${pct}% quitado\n`}if(a.pagamentos&&a.pagamentos.length>0){txt+=`\n━━━━━━━━━━━━━━━━━━━━\n*📜 HISTÓRICO DE PAGAMENTOS*\n━━━━━━━━━━━━━━━━━━━━\n`;a.pagamentos.forEach((p,i)=>{txt+=`*${i+1}.* R$ ${formatMoeda(p.valor)} - ${formatarDataBR(p.data)||'-'}\n`})}if(a.observacoes){txt+=`\n━━━━━━━━━━━━━━━━━━━━\n*📝 Observações:*\n${a.observacoes}\n`}txt+=`\n━━━━━━━━━━━━━━━━━━━━\n`;if(eP)txt+=`*Chave PIX:* ${eP}\n\n`;txt+=`_Recibo emitido em ${dHj} via ${eN}_`;window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank')}
 function renderizarGrafico(){if(typeof Chart==='undefined'){setTimeout(renderizarGrafico,300);return}let tH=document.getElementById('tela_home');if(!tH.classList.contains('ativa'))return;requestAnimationFrame(()=>{setTimeout(()=>{const c=document.getElementById('graficoFinanceiro');if(!c||c.offsetParent===null)return;const ctx=c.getContext('2d');const mA=document.getElementById('filtro_mes').value;const yA=new Date().getFullYear().toString();let totalVendidoMes=0;let totalRecebidoMes=0;let totalGastosMes=0;let aReceberGeral=0;const gM=dadosGastos.filter(g=>g.data&&g.data.split('-')[1]===mA&&g.data.split('-')[0]===yA);totalGastosMes=gM.reduce((a,b)=>a+(b.valor||0),0);dadosPedidos.forEach(p=>{if(p.tipo!=='servico')return;let dataPedido=p.data||'';let mesPedido=dataPedido.split('-')[1];let anoPedido=dataPedido.split('-')[0];if(mesPedido===mA&&anoPedido===yA){totalVendidoMes+=(p.total||0)}let falta=(p.total||0)-(p.pago||0);if(falta>0)aReceberGeral+=falta;const checkPgto=(val,dt)=>{if(!val||val<=0)return;let d=dt||dataPedido;if(d.split('-')[1]===mA&&d.split('-')[0]===yA){totalRecebidoMes+=val}};checkPgto(p.pago_entrada,p.data_entrada);checkPgto(p.pago_parcela1,p.data_parcela1);checkPgto(p.pago_parcela2,p.data_parcela2);checkPgto(p.pago_parcela3,p.data_parcela3)});let caixaLiquido=totalRecebidoMes-totalGastosMes;document.getElementById('h_recebido').innerText="R$ "+formatMoeda(totalRecebidoMes);document.getElementById('h_areceber').innerText="R$ "+formatMoeda(aReceberGeral);document.querySelector('#h_areceber').previousElementSibling.innerHTML=`<i class="fas fa-clock"></i> A Receber (Geral)`;document.getElementById('h_gastos').innerText="R$ "+formatMoeda(totalGastosMes);document.getElementById('h_lucro').innerText="R$ "+formatMoeda(caixaLiquido);document.getElementById('h_bruto').innerText="R$ "+formatMoeda(totalVendidoMes);document.getElementById('h_lucro').style.color=caixaLiquido<0?'var(--red)':'var(--blue)';if(meuGrafico)meuGrafico.destroy();let diasComMovimento=new Set();gM.forEach(g=>diasComMovimento.add(g.data.split('-')[2]));dadosPedidos.forEach(p=>{if(p.tipo!=='servico')return;const addDia=(v,dt)=>{let dFull=dt||p.data;if(v>0&&dFull.split('-')[1]===mA&&dFull.split('-')[0]===yA){diasComMovimento.add(dFull.split('-')[2])}};addDia(p.pago_entrada,p.data_entrada);addDia(p.pago_parcela1,p.data_parcela1);addDia(p.pago_parcela2,p.data_parcela2);addDia(p.pago_parcela3,p.data_parcela3)});let d=[...diasComMovimento].sort();if(d.length===0){let dA=new Date().toISOString().split('T')[0].split('-')[2];d=['01',dA]}else if(d.length===1){if(d[0]!=='01')d.unshift('01');else d.push('30')}const dR=d.map(di=>{let somaDia=0;dadosPedidos.forEach(p=>{if(p.tipo!=='servico')return;const ck=(v,dt)=>{let dFull=dt||p.data;if(v>0&&dFull.split('-')[1]===mA&&dFull.split('-')[0]===yA&&dFull.split('-')[2]===di)somaDia+=v};ck(p.pago_entrada,p.data_entrada);ck(p.pago_parcela1,p.data_parcela1);ck(p.pago_parcela2,p.data_parcela2);ck(p.pago_parcela3,p.data_parcela3)});return somaDia});const dGA=d.map(di=>gM.filter(g=>g.data.split('-')[2]===di).reduce((a,b)=>a+(b.valor||0),0));meuGrafico=new Chart(ctx,{type:'line',data:{labels:d.map(di=>di+'/'+mA),datasets:[{label:'Entradas',data:dR,borderColor:'#30d158',backgroundColor:'rgba(48,209,88,0.1)',fill:true,tension:.3,pointRadius:4,pointHitRadius:20},{label:'Saídas',data:dGA,borderColor:'#ff453a',backgroundColor:'transparent',fill:false,tension:.3,pointRadius:4,pointHitRadius:20}]},options:{responsive:true,maintainAspectRatio:false,devicePixelRatio:window.devicePixelRatio||1,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'top',labels:{color:'#ccc',font:{size:10},boxWidth:12,padding:10}},tooltip:{callbacks:{label:function(c){let l=c.dataset.label||'';if(l)l+=': ';if(c.parsed.y!==null)l+='R$ '+parseFloat(c.parsed.y).toLocaleString('pt-BR',{minimumFractionDigits:2});return l}}}},scales:{y:{display:true,beginAtZero:true,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#888',font:{size:9},callback:function(v){return 'R$ '+v}}},x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#888',maxRotation:45,minRotation:45,font:{size:10}}}}}})},300)})}
 function mudarTela(id){telaAtiva=id;document.querySelectorAll('.tela').forEach(t=>t.classList.remove('ativa'));document.getElementById(id).classList.add('ativa');document.getElementById('barra_busca').classList.toggle('visivel',id!=='tela_home'&&id!=='tela_corte'&&id!=='tela_config'&&id!=='tela_pendencias_detalhes'&&id!=='tela_venda_m2'&&id!=='tela_lembretes_detalhes'&&id!=='tela_cores');if(id==='tela_home')setTimeout(renderizarGrafico,450);if(id==='tela_venda_m2')renderizarPecasVendaM2();if(id==='tela_cores')initCoresTab();if(id==='tela_a_pagar')renderizarAPagar();}
 function somarPagamentos(){let e=parseFloat(document.getElementById('f_entrada').value)||0,p1=parseFloat(document.getElementById('f_parcela1').value)||0,p2=parseFloat(document.getElementById('f_parcela2').value)||0,p3=parseFloat(document.getElementById('f_parcela3').value)||0;document.getElementById('f_pago').value=(e+p1+p2+p3).toFixed(2)}
@@ -744,7 +624,7 @@ function renderizarItensAgenda(){document.getElementById('container_itens_agenda
 function editarItemAgenda(idx){let i=itensNaAgenda[idx];let novaQtd=prompt(`Editar Quantidade de "${i.item}":`,i.qtd);if(novaQtd===null)return;let novoValor=prompt(`Editar Valor Unitário de "${i.item}":`,i.valor);if(novoValor===null)return;i.qtd=parseInt(novaQtd)||1;i.valor=parseFloat(novoValor)||0;renderizarItensAgenda()}
 function removerItemAgenda(idx){itensNaAgenda.splice(idx,1);renderizarItensAgenda()}
 function imprimirPedidoOuOrcamento(){const idA=document.getElementById('f_id').value;if(!idA)return showToast("Salve antes de imprimir!","error");const p=DB.servicos.find(x=>x.id==idA);if(!p)return;const c=DB.config||{},eN=c.nome||"Minha Empresa",eD=c.endereco||"",eT=c.telefone||"",eP=c.chave_pix||"Não",dHj=formatarDataBR(new Date().toISOString().split('T')[0]),tD=p.tipo==='orcamento'?`Orçamento Nº ${String(p.id).slice(-4)}`:`Pedido/Fatura Nº ${String(p.id).slice(-4)}`;let eC=[p.endereco,p.numero,p.complemento,p.cidade].filter(Boolean).join(', '),lT="";const ocultarValores=document.getElementById('f_ocultar_valores')&&document.getElementById('f_ocultar_valores').checked&&p.tipo==='orcamento';const colSpan=ocultarValores?2:4;if(p.servico){lT+=`<tr><td style="padding:10px;border-bottom:1px solid #ccc;font-weight:bold;">${p.servico.replace(/\n/g,'<br>')}</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:center;">1</td>`;if(!ocultarValores)lT+=`<td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">-</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">-</td>`;lT+=`</tr>`}if(p.mao_obra>0){lT+=`<tr><td style="padding:10px;border-bottom:1px solid #ccc;">Valor de Serviço / Mão de Obra</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:center;">1</td>`;if(!ocultarValores)lT+=`<td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">R$ ${formatMoeda(p.mao_obra)}</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">R$ ${formatMoeda(p.mao_obra)}</td>`;lT+=`</tr>`}if(p.itens_usados&&p.itens_usados.length>0){p.itens_usados.forEach(i=>{lT+=`<tr><td style="padding:10px;border-bottom:1px solid #ccc;">${i.item}</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:center;">${i.qtd}</td>`;if(!ocultarValores)lT+=`<td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">R$ ${formatMoeda(i.valor)}</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">R$ ${formatMoeda(i.valor*i.qtd)}</td>`;lT+=`</tr>`})}if(lT==="")lT=`<tr><td colspan="${colSpan}" style="text-align:center;padding:15px;border-bottom:1px solid #ccc;">Nenhum item detalhado.</td></tr>`;let tHead=`<th style="padding:10px; text-align:left;">Descrição / Serviço</th><th style="padding:10px; text-align:center; width:10%;">Qtd</th>`;if(!ocultarValores){tHead+=`<th style="padding:10px; text-align:right; width:20%;">Val. Unit.</th><th style="padding:10px; text-align:right; width:20%;">Subtotal</th>`}let iP="";let obsFooter="";if(p.tipo==='orcamento'){iP=``;obsFooter=`<div style="margin-top:20px; padding:15px; background:#f9f9f9; border-left:4px solid #5ac8fa; border-radius:4px; font-size:13px; color:#333; line-height:1.6;"><strong style="font-size:14px; color:#000;">Observações Importantes:</strong><br>• Neste valor estão inclusos: todos os materiais descritos, fabricação sob medida, frete e mão de obra de montagem no local.<br>• Limpeza pós-obra e regulagem fina das portas e gavetas já contempladas.<br>• Validade deste orçamento: 15 dias.<br><br><em>Fico à inteira disposição para esclarecer qualquer dúvida ou ajustarmos os detalhes.</em></div>`}else{let vD=p.total-p.pago;if(vD<=0)iP=`<strong style="color:green;font-size:16px;">TOTALMENTE PAGO</strong>`;else iP=`Meios de Pagamento: Dinheiro ou Pix.<br><strong>Chave PIX:</strong> ${eP}<br><strong>Resta Pagar:</strong> R$ ${formatMoeda(vD)}`;let dPg='';if(p.pago_entrada>0)dPg+=`• Entrada: R$ ${formatMoeda(p.pago_entrada)} (Venc: ${formatarDataBR(p.data_entrada)||'-'})<br>`;if(p.pago_parcela1>0)dPg+=`• Parcela 1: R$ ${formatMoeda(p.pago_parcela1)} (Venc: ${formatarDataBR(p.data_parcela1)||'-'})<br>`;if(p.pago_parcela2>0)dPg+=`• Parcela 2: R$ ${formatMoeda(p.pago_parcela2)} (Venc: ${formatarDataBR(p.data_parcela2)||'-'})<br>`;if(p.pago_parcela3>0)dPg+=`• Parcela 3: R$ ${formatMoeda(p.pago_parcela3)} (Venc: ${formatarDataBR(p.data_parcela3)||'-'})<br>`;if(dPg!=='')iP+=`<br><br><strong>Desdobramento:</strong><br>${dPg}`;obsFooter=""}let logoH=c.logo?`<img src="${c.logo}" style="max-height:110px; max-width:200px; object-fit:contain;">`:'';const aI=document.getElementById('area-impressao');aI.innerHTML=`<div style="font-family:'Segoe UI',Arial,sans-serif; color:#000; padding:20px; border:1px solid #000; max-width:800px; margin:0 auto; box-sizing:border-box;"><table style="width:100%; border-bottom:2px solid #000; padding-bottom:15px; margin-bottom:20px;"><tr><td style="width:25%; text-align:left; vertical-align:middle;">${logoH}</td><td style="width:50%; text-align:center; vertical-align:middle;"><h2 style="margin:0; font-size:22px;">${eN}</h2><p style="margin:5px 0 0 0; font-size:13px; color:#444;">${eD}<br>📞 ${eT} ${c.chave_pix?' | PIX: '+c.chave_pix:''}</p></td><td style="width:25%; text-align:right; vertical-align:middle; font-size:13px;"><strong style="font-size:15px;">${tD}</strong><br><span style="color:#555;">Data: ${dHj}</span></td></tr></table><div style="background:#f9f9f9; padding:15px; border:1px solid #ddd; border-radius:6px; margin-bottom:20px; font-size:14px;"><strong>Cliente:</strong> ${p.cliente||'Consumidor Final'}<br>${eC?`<strong>Endereço:</strong> ${eC}`:''}</div><table style="width:100%; border-collapse:collapse; margin-bottom:25px; font-size:14px;"><thead><tr style="background:#e0e0e0; border-bottom:2px solid #000;">${tHead}</tr></thead><tbody>${lT}</tbody></table><div style="display:flex; justify-content:space-between; border-top:2px solid #000; padding-top:20px;"><div style="width:55%; font-size:13px; color:#333; line-height:1.5;">${iP?`<strong>Informações de Pagamento:</strong><br>${iP}`:''}</div><div style="width:40%; text-align:right;"><h3 style="margin:0; font-size:24px; color:#000;">Total: R$ ${formatMoeda(p.total)}</h3></div></div>${obsFooter}</div>`;setTimeout(()=>window.print(),300)}
-function enviarWhatsAppPedido(){const idA=document.getElementById('f_id').value;if(!idA)return showToast("Salve o pedido antes de enviar!","error");const p=DB.servicos.find(x=>x.id==idA);if(!p)return;const c=DB.config||{};const eN=c.nome||"Minha Empresa";const eT=c.telefone||"";const eP=c.chave_pix||"";const ocultarValores=document.getElementById('f_ocultar_valores')&&document.getElementById('f_ocultar_valores').checked&&p.tipo==='orcamento';let tipoTxt=p.tipo==='orcamento'?'ORÇAMENTO':'PEDIDO / FATURA';let txt=`*${tipoTxt} Nº ${String(p.id).slice(-4)}*\n`;txt+=`*${eN}*\n`;if(eT)txt+=`Contato: ${eT}\n`;txt+=`\n*Cliente:* ${p.cliente||'Consumidor'}\n`;txt+=`*Data:* ${formatarDataBR(p.data)}\n`;txt+=`\n*DETALHES DO SERVIÇO:*\n`;txt+=`--------------------------------------\n`;if(p.servico)txt+=`-> ${p.servico.replace(/\n/g,' ')}\n`;if(p.itens_usados&&p.itens_usados.length>0){p.itens_usados.forEach(i=>{if(!ocultarValores){txt+=`- ${i.qtd}x ${i.item} (R$ ${formatMoeda(i.valor)})\n*Sub:* R$ ${formatMoeda(i.qtd*i.valor)}\n`}else{txt+=`- ${i.qtd}x ${i.item}\n`}})}if(p.mao_obra>0){if(!ocultarValores){txt+=`- Mão de Obra / Serviço:\n*Sub:* R$ ${formatMoeda(p.mao_obra)}\n`}else{txt+=`- Mão de Obra / Serviço\n`}}txt+=`--------------------------------------\n`;txt+=`*TOTAL GERAL: R$ ${formatMoeda(p.total)}*\n`;txt+=`--------------------------------------\n`;if(p.tipo!=='orcamento'){let vD=p.total-p.pago;if(p.pago>0)txt+=`*Valor Recebido:* R$ ${formatMoeda(p.pago)}\n`;let dPg='';if(p.pago_entrada>0)dPg+=`   • Entrada: R$ ${formatMoeda(p.pago_entrada)} (${formatarDataBR(p.data_entrada)||'-'})\n`;if(p.pago_parcela1>0)dPg+=`   • Parcela 1: R$ ${formatMoeda(p.pago_parcela1)} (${formatarDataBR(p.data_parcela1)||'-'})\n`;if(p.pago_parcela2>0)dPg+=`   • Parcela 2: R$ ${formatMoeda(p.pago_parcela2)} (${formatarDataBR(p.data_parcela2)||'-'})\n`;if(p.pago_parcela3>0)dPg+=`   • Parcela 3: R$ ${formatMoeda(p.pago_parcela3)} (${formatarDataBR(p.data_parcela3)||'-'})\n`;if(dPg!=='')txt+=`\n*Desdobramento:*\n${dPg}\n`;if(vD>0){txt+=`*Resta Pagar:* R$ ${formatMoeda(vD)}\n`;if(eP)txt+=`\n*Chave PIX:* ${eP}\n`}else{txt+=`\n*STATUS: TOTALMENTE PAGO*\n`}}else{txt+=`\n_Orçamento sujeito a validade e aprovação. Valores incluem material, mão de obra e montagem conforme acordado._\n`}txt+=`\nObrigado pela preferência!`;window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank')}
+function enviarWhatsAppPedido(){const idA=document.getElementById('f_id').value;if(!idA)return showToast("Salve o pedido antes de enviar!","error");const p=DB.servicos.find(x=>x.id==idA);if(!p)return;const c=DB.config||{};const eN=c.nome||"Minha Empresa";const eT=c.telefone||"";const eP=c.chave_pix||"";const ocultarValores=document.getElementById('f_ocultar_valores')&&document.getElementById('f_ocultar_valores').checked&&p.tipo==='orcamento';let tipoTxt=p.tipo==='orcamento'?'ORÇAMENTO':'PEDIDO / FATURA';let txt=`*${tipoTxt} Nº ${String(p.id).slice(-4)}*\n*${eN}*\n`;if(eT)txt+=`Contato: ${eT}\n`;txt+=`\n*Cliente:* ${p.cliente||'Consumidor'}\n*Data:* ${formatarDataBR(p.data)}\n\n*DETALHES DO SERVIÇO:*\n--------------------------------------\n`;if(p.servico)txt+=`-> ${p.servico.replace(/\n/g,' ')}\n`;if(p.itens_usados&&p.itens_usados.length>0){p.itens_usados.forEach(i=>{if(!ocultarValores){txt+=`- ${i.qtd}x ${i.item} (R$ ${formatMoeda(i.valor)})\n*Sub:* R$ ${formatMoeda(i.qtd*i.valor)}\n`}else{txt+=`- ${i.qtd}x ${i.item}\n`}})}if(p.mao_obra>0){if(!ocultarValores){txt+=`- Mão de Obra / Serviço:\n*Sub:* R$ ${formatMoeda(p.mao_obra)}\n`}else{txt+=`- Mão de Obra / Serviço\n`}}txt+=`--------------------------------------\n*TOTAL GERAL: R$ ${formatMoeda(p.total)}*\n--------------------------------------\n`;if(p.tipo!=='orcamento'){let vD=p.total-p.pago;if(p.pago>0)txt+=`*Valor Recebido:* R$ ${formatMoeda(p.pago)}\n`;let dPg='';if(p.pago_entrada>0)dPg+=`   • Entrada: R$ ${formatMoeda(p.pago_entrada)} (${formatarDataBR(p.data_entrada)||'-'})\n`;if(p.pago_parcela1>0)dPg+=`   • Parcela 1: R$ ${formatMoeda(p.pago_parcela1)} (${formatarDataBR(p.data_parcela1)||'-'})\n`;if(p.pago_parcela2>0)dPg+=`   • Parcela 2: R$ ${formatMoeda(p.pago_parcela2)} (${formatarDataBR(p.data_parcela2)||'-'})\n`;if(p.pago_parcela3>0)dPg+=`   • Parcela 3: R$ ${formatMoeda(p.pago_parcela3)} (${formatarDataBR(p.data_parcela3)||'-'})\n`;if(dPg!=='')txt+=`\n*Desdobramento:*\n${dPg}\n`;if(vD>0){txt+=`*Resta Pagar:* R$ ${formatMoeda(vD)}\n`;if(eP)txt+=`\n*Chave PIX:* ${eP}\n`}else{txt+=`\n*STATUS: TOTALMENTE PAGO*\n`}}else{txt+=`\n_Orçamento sujeito a validade e aprovação. Valores incluem material, mão de obra e montagem conforme acordado._\n`}txt+=`\nObrigado pela preferência!`;window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank')}
 function adicionarItemCompraUI(){const i=document.getElementById('c_item_nome').value,q=parseInt(document.getElementById('c_item_qtd').value)||1,v=parseFloat(document.getElementById('c_item_valor').value)||0;if(!i)return showToast("Digite o nome","error");itensCompraAtual.push({item:i,qtd:q,valor:v});document.getElementById('c_item_nome').value="";document.getElementById('c_item_qtd').value="1";document.getElementById('c_item_valor').value="";renderizarItensCompra()}
 function adicionarItemCompraAoEstoque(){const i=document.getElementById('c_item_nome').value,q=parseInt(document.getElementById('c_item_qtd').value)||1,v=parseFloat(document.getElementById('c_item_valor').value)||0;if(!i)return showToast("Digite o nome","error");let e=DB.estoque.find(x=>x.item.toLowerCase()===i.toLowerCase());if(e){e.quantidade+=q;e.valor_venda=v}else DB.estoque.push({id:generateID(),item:i,localizacao:"",quantidade:q,valor_venda:v,link:""});saveDB();showToast("Enviado p/ Estoque!","success");document.getElementById('c_item_nome').value="";document.getElementById('c_item_qtd').value="1";document.getElementById('c_item_valor').value=""}
 function editarItemCompraLista(idx){let i=itensCompraAtual[idx];let n=prompt("Editar Nome do Item:",i.item);if(n===null)return;let q=prompt(`Editar Quantidade de "${n}":`,i.qtd);if(q===null)return;let v=prompt(`Editar Valor Unitário de "${n}":`,i.valor);if(v===null)return;i.item=n;i.qtd=parseInt(q)||1;i.valor=parseFloat(v)||0;renderizarItensCompra()}
@@ -824,9 +704,6 @@ function toggleSubrotinaLem(idx,sridx){const p=DB.lembretes.find(x=>x.id==idLemb
 function removerSubrotinaLem(idx,sridx){const p=DB.lembretes.find(x=>x.id==idLembreteAberto);p.itens[idxLembreteEditando].subitens[idx].subrotinas.splice(sridx,1);saveDB();renderizarSubLembretesModal()}
 function renderizarSubLembretesModal(){const p=DB.lembretes.find(x=>x.id==idLembreteAberto);const t=p.itens[idxLembreteEditando];const c=document.getElementById('lista_sub_lem_modal');if(!t.subitens||t.subitens.length===0){c.innerHTML='<div style="color:#666;font-size:14px;text-align:center;padding:10px;">Nenhuma adicionada.</div>';return}c.innerHTML=t.subitens.map((s,idx)=>{let subR=s.subrotinas||[];let subR_html=subR.map((sr,sridx)=>`<div style="display:flex;align-items:center;padding:10px 0 10px 25px;border-bottom:1px dashed #333;"><div class="todo-circle ${sr.concluido?'done':''}" style="width:18px;height:18px;margin-right:8px;cursor:pointer;" onclick="toggleSubrotinaLem(${idx}, ${sridx})">${sr.concluido?'<i class="fas fa-check" style="font-size:10px;"></i>':''}</div><div style="flex:1;font-size:15px;cursor:pointer;${sr.concluido?'text-decoration:line-through;color:#666;':'color:#ccc;'}" onclick="toggleSubrotinaLem(${idx}, ${sridx})">${sr.nome}</div><div style="font-size:12px; color:#aaa; margin-right:10px;">${formatarDataBR(sr.data)||'Sem data'}</div><i class="fas fa-times" style="color:#666;font-size:14px;cursor:pointer;padding:5px;" onclick="removerSubrotinaLem(${idx}, ${sridx})"></i></div>`).join('');return `<div style="margin-bottom:10px;background:rgba(0,0,0,0.2);padding:12px;border-radius:6px;border:1px solid #333;"><div style="display:flex;align-items:center;margin-bottom:5px;"><div class="todo-circle ${s.concluido?'done':''}" style="width:22px;height:22px;margin-right:10px;cursor:pointer;" onclick="toggleSubLem(${idx})">${s.concluido?'<i class="fas fa-check" style="font-size:12px;"></i>':''}</div><div style="flex:1;font-size:17px;font-weight:bold;cursor:pointer;${s.concluido?'text-decoration:line-through;color:#666;':'color:#fff;'}" onclick="toggleSubLem(${idx})">${s.nome}</div><div style="font-size:12px; color:var(--orange); margin-right:10px;">${formatarDataBR(s.data)||'Sem data'}</div><i class="fas fa-times" style="color:#666;font-size:16px;cursor:pointer;padding:5px;" onclick="removerSubLem(${idx})"></i></div>${subR_html}<div style="display:flex;align-items:center;padding-left:25px;margin-top:5px;gap:5px;"><i class="fas fa-level-up-alt fa-rotate-90" style="color:#666;font-size:14px;"></i><input type="text" placeholder="Subrotina..." id="n_sr_nome_${idx}" style="background:transparent;border:none;padding:0;margin:0;outline:none;font-size:15px;flex:1;color:#aaa;"><input type="date" id="n_sr_data_${idx}" style="width:110px;margin:0;padding:5px; border-radius:4px; background:rgba(255,255,255,0.05); color:#fff; border:1px solid #444; font-size:12px;"><i class="fas fa-save" style="color:var(--green);cursor:pointer;font-size:18px;padding:3px;" onclick="adicionarSubrotinaLem(${idx})"></i></div></div>`}).join('')}
 function imprimirLembrete(){if(!idLembreteAberto)return showToast("Abra um grupo primeiro!","error");const p=DB.lembretes.find(x=>x.id==idLembreteAberto);if(!p)return;const c=DB.config||{},eN=c.nome||"Minha Empresa",dHj=formatarDataBR(new Date().toISOString().split('T')[0]),logoH=c.logo?`<img src="${c.logo}" style="max-height:60px; max-width:120px; object-fit:contain;">`:'';let lT="";if(!p.itens||p.itens.length===0){lT=`<tr><td colspan="3" style="text-align:center;padding:15px;border-bottom:1px solid #ccc;">Nenhum lembrete registrado.</td></tr>`;}else{p.itens.forEach(t=>{let status=t.concluido?'<span style="color:green;font-weight:bold;">Concluído</span>':'A Fazer';let dataT=t.data?formatarDataBR(t.data):'-';lT+=`<tr style="background:#fdfdfd;"><td style="padding:10px; border-bottom:1px solid #ccc;"><b>${t.nome}</b></td><td style="padding:10px; border-bottom:1px solid #ccc; text-align:center;">${dataT}</td><td style="padding:10px; border-bottom:1px solid #ccc; text-align:center;">${status}</td></tr>`;if(t.subitens&&t.subitens.length>0){t.subitens.forEach(s=>{let sStatus=s.concluido?'<span style="color:green;">Concluído</span>':'A Fazer';let sData=s.data?formatarDataBR(s.data):'-';lT+=`<tr><td style="padding:8px; border-bottom:1px dashed #eee; padding-left:30px; color:#555;">↳ ${s.nome}</td><td style="padding:8px; border-bottom:1px dashed #eee; text-align:center; color:#555;">${sData}</td><td style="padding:8px; border-bottom:1px dashed #eee; text-align:center; color:#555;">${sStatus}</td></tr>`;if(s.subrotinas&&s.subrotinas.length>0){s.subrotinas.forEach(sr=>{let srStatus=sr.concluido?'<span style="color:green;">Concluído</span>':'A Fazer';let srData=sr.data?formatarDataBR(sr.data):'-';lT+=`<tr><td style="padding:6px; border-bottom:1px dashed #f9f9f9; padding-left:50px; color:#888; font-size:12px;">- ${sr.nome}</td><td style="padding:6px; border-bottom:1px dashed #f9f9f9; text-align:center; color:#888; font-size:12px;">${srData}</td><td style="padding:6px; border-bottom:1px dashed #f9f9f9; text-align:center; color:#888; font-size:12px;">${srStatus}</td></tr>`;});}});}});}document.getElementById('area-impressao').innerHTML=`<div style="font-family:'Segoe UI',Arial,sans-serif; color:#000; padding:20px; border:1px solid #000; max-width:800px; margin:0 auto; box-sizing:border-box;"><table style="width:100%; border-bottom:2px solid #000; padding-bottom:15px; margin-bottom:20px;"><tr><td style="width:25%; text-align:left; vertical-align:middle;">${logoH}</td><td style="width:50%; text-align:center; vertical-align:middle;"><h2 style="margin:0; font-size:22px;">${eN}</h2><p style="margin:5px 0 0 0; font-size:13px; color:#444;">Relatório de Lembretes / Tarefas</p></td><td style="width:25%; text-align:right; vertical-align:middle; font-size:13px;"><span style="color:#555;">Gerado em:<br><b>${dHj}</b></span></td></tr></table><div style="background:#f9f9f9; padding:15px; border-left:4px solid var(--orange); border-radius:6px; margin-bottom:20px; font-size:16px;"><strong>Grupo de Lembretes:</strong> ${p.titulo}</div><table style="width:100%; border-collapse:collapse; margin-bottom:25px; font-size:14px;"><thead><tr style="background:#e0e0e0; border-bottom:2px solid #000;"><th style="padding:10px; text-align:left;">Descrição</th><th style="padding:10px; text-align:center; width:20%;">Data Prevista</th><th style="padding:10px; text-align:center; width:20%;">Status</th></tr></thead><tbody>${lT}</tbody></table></div>`;setTimeout(()=>window.print(),300);}
-// =================================================================
-// FUNÇÕES DA ABA CORES
-// =================================================================
 function initCoresTab() {
 if (!DB.cores_corantes || DB.cores_corantes.length === 0) {
 DB.cores_corantes = [
@@ -1073,6 +950,5 @@ DB.cores_receitas.splice(index, 1);
 saveDB();
 renderHistoryCores();
 }
-// =================================================================
 </script></body>
 </html>
