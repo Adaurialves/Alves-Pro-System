@@ -1003,24 +1003,20 @@ async function enviarMensagemIA() {
     const historyEl = document.getElementById('ia_messages');
     const sendBtn = document.getElementById('ia_send_btn');
     
-    // Adiciona mensagem do usuário
     adicionarMensagemChat('user', msg);
     inputEl.value = '';
     inputEl.style.height = 'auto';
     
-    // Mostra indicador de digitação
     sendBtn.disabled = true;
     mostrarTyping();
 
-    // 🎯 LISTA DE MODELOS EM ORDEM DE PREFERÊNCIA (fallback automático)
+    // 🎯 MODELOS ATUAIS (setembro 2026) + API v1 (estável)
     const modelos = [
-        'gemini-2.5-flash',      // Mais recente (2026)
-        'gemini-2.5-pro',        // Alternativa pro
-        'gemini-2.0-flash',      // Estável atual
-        'gemini-2.0-flash-001',  // Versão específica
-        'gemini-1.5-flash',      // Clássico
-        'gemini-1.5-pro',        // Pro clássico
-        'gemini-pro'             // Último recurso
+        'gemini-2.5-flash',       // ✅ Mais recente e rápido (RECOMENDADO)
+        'gemini-2.5-pro',         // ✅ Alternativa mais potente
+        'gemini-2.5-flash-lite',  // ✅ Ultra rápido
+        'gemini-2.0-flash',       // ✅ Versão anterior estável
+        'gemini-1.5-flash-latest' // Último recurso
     ];
 
     try {
@@ -1028,10 +1024,10 @@ async function enviarMensagemIA() {
         let modeloUsado = null;
         let ultimoErro = null;
 
-        // Tenta cada modelo até um funcionar
         for (const modelo of modelos) {
             try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`;
+                // 🔥 USANDO API v1 (estável) em vez de v1beta
+                const url = `https://generativelanguage.googleapis.com/v1/models/${modelo}:generateContent?key=${apiKey}`;
                 
                 const response = await fetch(url, {
                     method: 'POST',
@@ -1044,8 +1040,6 @@ async function enviarMensagemIA() {
                         }],
                         generationConfig: {
                             temperature: 0.7,
-                            topK: 40,
-                            topP: 0.95,
                             maxOutputTokens: 2048
                         }
                     })
@@ -1059,7 +1053,7 @@ async function enviarMensagemIA() {
                         resposta = texto;
                         modeloUsado = modelo;
                         console.log(`✅ Modelo ${modelo} funcionou!`);
-                        break; // Sai do loop quando encontrar um que funcione
+                        break;
                     }
                 } else {
                     const err = await response.json().catch(() => ({}));
@@ -1072,11 +1066,9 @@ async function enviarMensagemIA() {
             }
         }
 
-        // Remove indicador de digitação
         removerTyping();
 
         if (resposta) {
-            // Formata resposta (markdown básico)
             const respostaFormatada = resposta
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*(.*?)\*/g, '<em>$1</em>')
