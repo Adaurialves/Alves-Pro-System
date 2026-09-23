@@ -966,7 +966,7 @@ async function chamarGemini(prompt,contextoExtra=''){
   let ultimoErro=null;
   for(const modelo of modelos){
     try{
-      const url=`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1/models/${modelo}:generateContent?key=${apiKey}`;
       const response=await fetch(url,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
