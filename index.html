@@ -988,33 +988,131 @@ async function chamarGemini(prompt,contextoExtra=''){
   throw new Error(`Nenhum modelo funcionou. Último erro: ${ultimoErro}`);
 }
 
-async function enviarMensagemIA(){
-  const input=document.getElementById('ia_input');
-  const msg=input.value.trim();
-  if(!msg)return;
-  const apiKey=(DB.config?.ia_api_key||'').trim();
-  if(!apiKey){showToast("⚠️ Configure sua API Key em Ajustes → IA","error");mudarTela('tela_config');return}
-  adicionarMensagemChat('user',msg);
-  input.value='';
-  input.style.height='auto';
-  const sendBtn=document.getElementById('ia_send_btn');
-  sendBtn.disabled=true;
-  mostrarTyping();
-  try{
-    const {texto:resposta,modelo}=await chamarGemini(msg);
-    removerTyping();
-    adicionarMensagemChat('assistant',resposta,[
-      {icon:'fa-copy',label:'Copiar',onClick:()=>{navigator.clipboard.writeText(resposta.replace(/<[^>]+>/g,''));showToast('Copiado!','success')}},
-      {icon:'fa-whatsapp',label:'WhatsApp',onClick:()=>window.open(`https://wa.me/?text=${encodeURIComponent(resposta.replace(/<[^>]+>/g,''))}`,'_blank')}
-    ]);
-    showToast(`✅ Resposta gerada (${modelo})`,"success");
-  }catch(e){
-    removerTyping();
-    adicionarMensagemChat('assistant',`❌ **Erro:** ${e.message}\n\nVerifique sua API Key em Ajustes → Configuração da IA.`);
-    showToast("Erro: "+e.message,"error");
-  }finally{
-    sendBtn.disabled=false;
-  }
+async function enviarMensagemIA() {
+    const apiKey = (DB.config?.ia_api_key || '').trim();
+    if (!apiKey) {
+        showToast("⚠️ Configure sua API Key em Ajustes → IA", "error");
+        mudarTela('tela_config');
+        return;
+    }
+
+    const inputEl = document.getElementById('ia_input');
+    const msg = inputEl.value.trim();
+    if (!msg) return;
+
+    const historyEl = document.getElementById('ia_messages');
+    const sendBtn = document.getElementById('ia_send_btn');
+    
+    // Adiciona mensagem do usuário
+    adicionarMensagemChat('user', msg);
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+    
+    // Mostra indicador de digitação
+    sendBtn.disabled = true;
+    mostrarTyping();
+
+    // 🎯 LISTA DE MODELOS EM ORDEM DE PREFERÊNCIA (fallback automático)
+    const modelos = [
+        'gemini-2.5-flash',      // Mais recente (2026)
+        'gemini-2.5-pro',        // Alternativa pro
+        'gemini-2.0-flash',      // Estável atual
+        'gemini-2.0-flash-001',  // Versão específica
+        'gemini-1.5-flash',      // Clássico
+        'gemini-1.5-pro',        // Pro clássico
+        'gemini-pro'             // Último recurso
+    ];
+
+    try {
+        let resposta = null;
+        let modeloUsado = null;
+        let ultimoErro = null;
+
+        // Tenta cada modelo até um funcionar
+        for (const modelo of modelos) {
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `Você é um assistente especializado em marcenaria, móveis planejados e gestão de marcenarias. Responda de forma prática, objetiva e profissional. Use emojis com moderação. Formate com markdown quando apropriado.\n\nPergunta do usuário: ${msg}`
+                            }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            topK: 40,
+                            topP: 0.95,
+                            maxOutputTokens: 2048
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const texto = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    
+                    if (texto) {
+                        resposta = texto;
+                        modeloUsado = modelo;
+                        console.log(`✅ Modelo ${modelo} funcionou!`);
+                        break; // Sai do loop quando encontrar um que funcione
+                    }
+                } else {
+                    const err = await response.json().catch(() => ({}));
+                    ultimoErro = err.error?.message || `HTTP ${response.status}`;
+                    console.warn(`⚠️ Modelo ${modelo} falhou:`, ultimoErro);
+                }
+            } catch (e) {
+                ultimoErro = e.message;
+                console.warn(`⚠️ Modelo ${modelo} falhou:`, e.message);
+            }
+        }
+
+        // Remove indicador de digitação
+        removerTyping();
+
+        if (resposta) {
+            // Formata resposta (markdown básico)
+            const respostaFormatada = resposta
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code style="background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;color:var(--cyan);">$1</code>')
+                .replace(/\n/g, '<br>');
+
+            adicionarMensagemChat('assistant', respostaFormatada, [
+                {
+                    icon: 'fa-copy',
+                    label: 'Copiar',
+                    onClick: () => {
+                        navigator.clipboard.writeText(resposta);
+                        showToast('Copiado!', 'success');
+                    }
+                },
+                {
+                    icon: 'fa-whatsapp',
+                    label: 'WhatsApp',
+                    onClick: () => {
+                        window.open(`https://wa.me/?text=${encodeURIComponent(resposta)}`, '_blank');
+                    }
+                }
+            ]);
+
+            showToast(`✅ Resposta gerada (${modeloUsado})`, "success");
+        } else {
+            throw new Error(`Nenhum modelo funcionou. Último erro: ${ultimoErro}`);
+        }
+
+    } catch (error) {
+        removerTyping();
+        adicionarMensagemChat('assistant', `❌ <strong>Erro:</strong> ${error.message}<br><br><small>Verifique:<br>• Se sua chave de API está correta<br>• Se tem internet<br>• Se a chave foi gerada em <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--cyan);">aistudio.google.com</a></small>`);
+        showToast("Erro na IA: " + error.message, "error");
+    } finally {
+        sendBtn.disabled = false;
+    }
 }
 
 async function acaoRapidaIA(acao){
