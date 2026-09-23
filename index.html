@@ -98,6 +98,9 @@ input[type="color"]{height:50px;padding:2px;cursor:pointer;background:var(--card
 .logo-status.ok{background:rgba(48,209,88,0.1);color:var(--green);border:1px solid rgba(48,209,88,0.3)}
 .logo-status.erro{background:rgba(255,69,58,0.1);color:var(--red);border:1px solid rgba(255,69,58,0.3)}
 .logo-status.info{background:rgba(10,132,255,0.1);color:var(--blue);border:1px solid rgba(10,132,255,0.3)}
+/* Bloco de endereço reorganizado */
+.endereco-bloco{background:rgba(90,200,250,0.05);border:1px solid rgba(90,200,250,0.2);border-radius:10px;padding:12px;margin:10px 0 15px 0}
+.endereco-bloco h5{margin:0 0 10px 0;color:var(--cyan);font-size:12px;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px}
 @media print{
 @page{margin:0}
 body{background:#fff!important;margin:0;padding:0}
@@ -231,23 +234,158 @@ body *{visibility:hidden}
 
 <button class="btn-flutuante" onclick="abrirModalPorTela()">+</button>
 
-<!-- MODAL PEDIDO - COM NOVO ITEM, QTD, VALOR -->
-<div id="modalPedido" class="modal"><div class="modal-content"><input type="hidden" id="f_id"><label>Cliente</label><input type="text" id="f_cliente"><label id="label_servico">Serviço Principal</label><textarea id="f_servico" rows="3" placeholder="Descreva o serviço..."></textarea><div style="display:flex;gap:10px"><div style="flex:1"><label>Data</label><input type="date" id="f_data"></div><div style="flex:1"><label>Tipo</label><select id="f_tipo" onchange="ajustarCamposModal()"><option value="servico">Serviço/Pedido</option><option value="orcamento">Orçamento</option><option value="compra">Converter p/ Compras</option></select></div></div><label>Status</label><select id="f_status"></select><div style="display:flex;gap:10px"><div style="flex:1"><label>Base (R$)</label><input type="number" id="f_total_base" value="0" oninput="document.getElementById('f_total').value=this.value;document.getElementById('f_multiplicador').value='1';"></div><div style="flex:1"><label>Margem</label><select id="f_multiplicador" onchange="document.getElementById('f_total').value=(parseFloat(document.getElementById('f_total_base').value)*parseFloat(this.value)).toFixed(2)" style="margin:0;"><option value="1">x1</option><option value="1.5">x1.5</option><option value="2">x2</option><option value="2.5">x2.5</option><option value="3">x3</option><option value="4">x4</option><option value="5">x5</option></select></div><div style="flex:1"><label>Final (R$)</label><input type="number" id="f_total" value="0"></div><input type="hidden" id="f_pago" value="0"></div><label>Mão de Obra R$</label><input type="number" id="f_mao_obra" value="0" oninput="recalcularTotal()"><div id="f_pagamentos_section"><label style="color:var(--gold);font-size:11px;margin-top:15px;margin-bottom:5px;"><i class="fas fa-money-bill-wave"></i> Pagamentos</label><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:15px;background:rgba(255,255,255,.02);padding:15px;border-radius:8px;border:1px solid #333;"><div style="display:flex;flex-direction:column;gap:5px;"><label style="font-size:10px;">Entrada</label><input type="number" id="f_entrada" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green);"><label style="font-size:10px;margin-top:5px;">Data</label><input type="date" id="f_entrada_data" style="margin:0;padding:8px;font-size:12px;"></div><div style="display:flex;flex-direction:column;gap:5px;"><label style="font-size:10px;">Parcela 1</label><input type="number" id="f_parcela1" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green);"><label style="font-size:10px;margin-top:5px;">Data</label><input type="date" id="f_parcela1_data" style="margin:0;padding:8px;font-size:12px;"></div><div style="display:flex;flex-direction:column;gap:5px;"><label style="font-size:10px;">Parcela 2</label><input type="number" id="f_parcela2" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green);"><label style="font-size:10px;margin-top:5px;">Data</label><input type="date" id="f_parcela2_data" style="margin:0;padding:8px;font-size:12px;"></div><div style="display:flex;flex-direction:column;gap:5px;"><label style="font-size:10px;">Parcela 3</label><input type="number" id="f_parcela3" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green);"><label style="font-size:10px;margin-top:5px;">Data</label><input type="date" id="f_parcela3_data" style="margin:0;padding:8px;font-size:12px;"></div></div></div><label>Endereço</label><input type="text" id="f_endereco"><div style="display:flex;gap:10px"><div style="flex:1"><label>Nº</label><input type="text" id="f_numero"></div><div style="flex:2"><label>Comp.</label><input type="text" id="f_complemento"></div></div><label>Cidade</label><input type="text" id="f_cidade"><label>Lembrete</label><textarea id="f_lembrete" rows="2"></textarea>
-<div style="display:flex;gap:10px;margin-bottom:10px"><button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1" onclick="abrirSeletorEstoque('pedido')"><i class="fas fa-box"></i> ADD ESTOQUE</button><button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);flex:1" onclick="abrirSeletorServico('pedido')"><i class="fas fa-tools"></i> ADD CATÁLOGO</button></div>
-<!-- NOVO BLOCO: ADICIONAR ITEM MANUAL -->
+<!-- ========================================================== -->
+<!-- MODAL PEDIDO - ENDEREÇO LOGO ABAIXO DO CLIENTE -->
+<!-- ========================================================== -->
+<div id="modalPedido" class="modal"><div class="modal-content">
+<input type="hidden" id="f_id">
+
+<!-- CLIENTE -->
+<label><i class="fas fa-user" style="margin-right:5px;"></i>Cliente</label>
+<input type="text" id="f_cliente" placeholder="Nome do cliente">
+
+<!-- BLOCO ENDEREÇO REORGANIZADO -->
+<div class="endereco-bloco">
+<h5><i class="fas fa-map-marker-alt"></i> Endereço de Entrega / Serviço</h5>
+<label>Rua / Endereço</label>
+<input type="text" id="f_endereco" placeholder="Ex: Rua das Flores">
+<div style="display:flex;gap:10px;">
+<div style="flex:1;"><label>Nº</label><input type="text" id="f_numero" placeholder="123"></div>
+<div style="flex:2;"><label>Complemento</label><input type="text" id="f_complemento" placeholder="Apto, Bloco..."></div>
+</div>
+<label>Cidade</label>
+<input type="text" id="f_cidade" placeholder="Ex: São Paulo - SP">
+<label><i class="fas fa-sticky-note" style="margin-right:5px;"></i>Lembrete / Obs. de Entrega</label>
+<textarea id="f_lembrete" rows="2" placeholder="Ex: Portão azul, ligar antes..."></textarea>
+</div>
+
+<!-- SERVIÇO / DESCRIÇÃO -->
+<label id="label_servico"><i class="fas fa-clipboard-list" style="margin-right:5px;"></i>Serviço Principal</label>
+<textarea id="f_servico" rows="3" placeholder="Descreva o serviço ou orçamento..."></textarea>
+
+<!-- DATA E TIPO -->
+<div style="display:flex;gap:10px;">
+<div style="flex:1;"><label>Data</label><input type="date" id="f_data"></div>
+<div style="flex:1;"><label>Tipo</label>
+<select id="f_tipo" onchange="ajustarCamposModal()">
+<option value="servico">Serviço/Pedido</option>
+<option value="orcamento">Orçamento</option>
+<option value="compra">Converter p/ Compras</option>
+</select></div>
+</div>
+
+<!-- STATUS -->
+<label>Status</label>
+<select id="f_status"></select>
+
+<!-- VALORES -->
+<div style="display:flex;gap:10px;">
+<div style="flex:1;"><label>Base (R$)</label><input type="number" id="f_total_base" value="0" oninput="document.getElementById('f_total').value=this.value;document.getElementById('f_multiplicador').value='1';"></div>
+<div style="flex:1;"><label>Margem</label>
+<select id="f_multiplicador" onchange="document.getElementById('f_total').value=(parseFloat(document.getElementById('f_total_base').value)*parseFloat(this.value)).toFixed(2)" style="margin:0;">
+<option value="1">x1</option><option value="1.5">x1.5</option><option value="2">x2</option><option value="2.5">x2.5</option><option value="3">x3</option><option value="4">x4</option><option value="5">x5</option>
+</select></div>
+<div style="flex:1;"><label>Final (R$)</label><input type="number" id="f_total" value="0" style="color:var(--green);font-weight:bold;"></div>
+<input type="hidden" id="f_pago" value="0">
+</div>
+
+<!-- MÃO DE OBRA -->
+<label>Mão de Obra (R$)</label>
+<input type="number" id="f_mao_obra" value="0" oninput="recalcularTotal()">
+
+<!-- PAGAMENTOS -->
+<div id="f_pagamentos_section">
+<label style="color:var(--gold);font-size:11px;margin-top:15px;margin-bottom:5px;"><i class="fas fa-money-bill-wave"></i> Pagamentos</label>
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:15px;background:rgba(255,255,255,.02);padding:15px;border-radius:8px;border:1px solid #333;">
+<div style="display:flex;flex-direction:column;gap:5px;"><label style="font-size:10px;">Entrada</label><input type="number" id="f_entrada" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green);"><label style="font-size:10px;margin-top:5px;">Data</label><input type="date" id="f_entrada_data" style="margin:0;padding:8px;font-size:12px;"></div>
+<div style="display:flex;flex-direction:column;gap:5px;"><label style="font-size:10px;">Parcela 1</label><input type="number" id="f_parcela1" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green);"><label style="font-size:10px;margin-top:5px;">Data</label><input type="date" id="f_parcela1_data" style="margin:0;padding:8px;font-size:12px;"></div>
+<div style="display:flex;flex-direction:column;gap:5px;"><label style="font-size:10px;">Parcela 2</label><input type="number" id="f_parcela2" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green);"><label style="font-size:10px;margin-top:5px;">Data</label><input type="date" id="f_parcela2_data" style="margin:0;padding:8px;font-size:12px;"></div>
+<div style="display:flex;flex-direction:column;gap:5px;"><label style="font-size:10px;">Parcela 3</label><input type="number" id="f_parcela3" value="0" oninput="somarPagamentos()" style="margin:0;text-align:center;font-size:16px;font-weight:bold;padding:10px;color:var(--green);border:1px solid var(--green);"><label style="font-size:10px;margin-top:5px;">Data</label><input type="date" id="f_parcela3_data" style="margin:0;padding:8px;font-size:12px;"></div>
+</div>
+</div>
+
+<!-- BOTÕES ESTOQUE/CATÁLOGO -->
+<div style="display:flex;gap:10px;margin-bottom:10px;">
+<button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1;" onclick="abrirSeletorEstoque('pedido')"><i class="fas fa-box"></i> ADD ESTOQUE</button>
+<button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);flex:1;" onclick="abrirSeletorServico('pedido')"><i class="fas fa-tools"></i> ADD CATÁLOGO</button>
+</div>
+
+<!-- NOVO ITEM MANUAL -->
 <div style="background:rgba(48,209,88,0.05);padding:12px;border-radius:8px;border:1px solid rgba(48,209,88,0.2);margin-bottom:10px;">
 <label style="color:var(--green);font-size:11px;margin-bottom:8px;"><i class="fas fa-plus-circle"></i> ADICIONAR NOVO ITEM MANUAL</label>
 <div style="display:flex;gap:8px;align-items:flex-end;">
-<div style="flex:2;"><label style="font-size:10px;">Item / Descrição</label><input type="text" id="f_novo_item_nome" placeholder="Ex: Parafuso, Cola, etc." style="margin:0;"></div>
+<div style="flex:2;"><label style="font-size:10px;">Item / Descrição</label><input type="text" id="f_novo_item_nome" placeholder="Ex: Parafuso, Cola..." style="margin:0;"></div>
 <div style="flex:1;"><label style="font-size:10px;">Qtd</label><input type="number" id="f_novo_item_qtd" value="1" style="margin:0;text-align:center;"></div>
 <div style="flex:1;"><label style="font-size:10px;">Valor Unit. (R$)</label><input type="number" id="f_novo_item_valor" placeholder="0.00" style="margin:0;text-align:center;"></div>
 <button onclick="adicionarNovoItemPedido()" style="padding:12px 16px;background:var(--green);border:none;border-radius:8px;color:#fff;font-weight:bold;cursor:pointer;margin-bottom:0;"><i class="fas fa-plus"></i></button>
 </div>
 </div>
-<div id="container_itens_venda"></div>
-<button onclick="salvarPedido()" style="width:100%;padding:15px;background:var(--green);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR</button><label class="label-check" id="container_ocultar_valores" style="display:none;margin-top:15px;border-color:var(--teal);color:var(--teal);"><input type="checkbox" id="f_ocultar_valores" class="check-inline"> Ocultar valores na impressão</label><button id="btn_imprimir_pedido" onclick="imprimirPedidoOuOrcamento()" style="width:100%;padding:12px;background:none;border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-print"></i> IMPRIMIR PDF</button><button id="btn_zap_pedido" onclick="enviarWhatsAppPedido()" style="width:100%;padding:12px;background:none;border:1px solid #25D366;border-radius:8px;color:#25D366;font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fab fa-whatsapp"></i> WHATSAPP</button><button id="btn_duplicar_pedido" onclick="duplicarRegistroAtual('pedido')" style="width:100%;padding:12px;background:none;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-copy"></i> DUPLICAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
 
-<div id="modalAgenda" class="modal"><div class="modal-content" style="border-color:var(--purple)"><h3 style="color:var(--purple);margin-top:0"><i class="fas fa-calendar-alt"></i> Compromisso</h3><input type="hidden" id="a_id"><label>Cliente</label><input type="text" id="a_cliente"><label>Descrição</label><textarea id="a_servico" rows="3"></textarea><div style="display:flex;gap:10px"><div style="flex:1"><label>Data</label><input type="date" id="a_data"></div><div style="flex:1"><label>Status</label><select id="a_status"><option value="pendente">Pendente</option><option value="concluido">Concluído</option><option value="compra">Compras</option></select></div></div><label>Endereço</label><input type="text" id="a_endereco"><div style="display:flex;gap:10px"><div style="flex:1"><label>Nº</label><input type="text" id="a_numero"></div><div style="flex:2"><label>Comp.</label><input type="text" id="a_complemento"></div></div><label>Cidade</label><input type="text" id="a_cidade"><label>Lembrete</label><textarea id="a_lembrete" rows="2"></textarea><div style="display:flex;gap:10px;margin-bottom:10px"><button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1;margin:0" onclick="abrirSeletorEstoque('agenda')"><i class="fas fa-box"></i> ESTOQUE</button><button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);flex:1;margin:0" onclick="abrirSeletorServico('agenda')"><i class="fas fa-tools"></i> CATÁLOGO</button></div><div id="container_itens_agenda"></div><button onclick="salvarAgenda()" style="width:100%;padding:15px;background:var(--purple);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
+<!-- LISTA DE ITENS -->
+<div id="container_itens_venda"></div>
+
+<!-- BOTÕES DE AÇÃO -->
+<button onclick="salvarPedido()" style="width:100%;padding:15px;background:var(--green);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer;font-size:15px;"><i class="fas fa-save"></i> SALVAR</button>
+<label class="label-check" id="container_ocultar_valores" style="display:none;margin-top:15px;border-color:var(--teal);color:var(--teal);"><input type="checkbox" id="f_ocultar_valores" class="check-inline"> Ocultar valores na impressão</label>
+<button id="btn_imprimir_pedido" onclick="imprimirPedidoOuOrcamento()" style="width:100%;padding:12px;background:none;border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-print"></i> IMPRIMIR PDF</button>
+<button id="btn_zap_pedido" onclick="enviarWhatsAppPedido()" style="width:100%;padding:12px;background:none;border:1px solid #25D366;border-radius:8px;color:#25D366;font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fab fa-whatsapp"></i> WHATSAPP</button>
+<button id="btn_duplicar_pedido" onclick="duplicarRegistroAtual('pedido')" style="width:100%;padding:12px;background:none;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-copy"></i> DUPLICAR</button>
+<button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button>
+</div></div>
+
+<!-- ========================================================== -->
+<!-- MODAL AGENDA - ENDEREÇO LOGO ABAIXO DO CLIENTE -->
+<!-- ========================================================== -->
+<div id="modalAgenda" class="modal"><div class="modal-content" style="border-color:var(--purple)">
+<h3 style="color:var(--purple);margin-top:0"><i class="fas fa-calendar-alt"></i> Compromisso / Agenda</h3>
+<input type="hidden" id="a_id">
+
+<!-- CLIENTE -->
+<label><i class="fas fa-user" style="margin-right:5px;"></i>Cliente / Título</label>
+<input type="text" id="a_cliente" placeholder="Nome do cliente ou título">
+
+<!-- BLOCO ENDEREÇO REORGANIZADO -->
+<div class="endereco-bloco">
+<h5><i class="fas fa-map-marker-alt"></i> Local do Compromisso</h5>
+<label>Rua / Endereço</label>
+<input type="text" id="a_endereco" placeholder="Ex: Rua das Flores">
+<div style="display:flex;gap:10px;">
+<div style="flex:1;"><label>Nº</label><input type="text" id="a_numero" placeholder="123"></div>
+<div style="flex:2;"><label>Complemento</label><input type="text" id="a_complemento" placeholder="Apto, Bloco..."></div>
+</div>
+<label>Cidade</label>
+<input type="text" id="a_cidade" placeholder="Ex: São Paulo - SP">
+<label><i class="fas fa-sticky-note" style="margin-right:5px;"></i>Lembrete Extra</label>
+<textarea id="a_lembrete" rows="2" placeholder="Obs. sobre o local ou compromisso..."></textarea>
+</div>
+
+<!-- DESCRIÇÃO -->
+<label><i class="fas fa-clipboard-list" style="margin-right:5px;"></i>Descrição / Assunto</label>
+<textarea id="a_servico" rows="3" placeholder="Descreva o compromisso..."></textarea>
+
+<!-- DATA E STATUS -->
+<div style="display:flex;gap:10px;">
+<div style="flex:1;"><label>Data</label><input type="date" id="a_data"></div>
+<div style="flex:1;"><label>Status</label>
+<select id="a_status">
+<option value="pendente">Pendente</option>
+<option value="concluido">Concluído (Mover p/ Pedido)</option>
+<option value="compra">Converter p/ Compras</option>
+</select></div>
+</div>
+
+<!-- ITENS OPCIONAIS -->
+<label style="color:var(--gold);font-size:11px;margin-top:15px;margin-bottom:5px;"><i class="fas fa-list-ul"></i> Itens (Opcional)</label>
+<div style="display:flex;gap:10px;margin-bottom:10px;">
+<button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1;margin:0;" onclick="abrirSeletorEstoque('agenda')"><i class="fas fa-box"></i> ESTOQUE</button>
+<button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);flex:1;margin:0;" onclick="abrirSeletorServico('agenda')"><i class="fas fa-tools"></i> CATÁLOGO</button>
+</div>
+<div id="container_itens_agenda" style="margin-bottom:15px;"></div>
+
+<!-- BOTÕES -->
+<button onclick="salvarAgenda()" style="width:100%;padding:15px;background:var(--purple);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer;font-size:15px;"><i class="fas fa-save"></i> SALVAR COMPROMISSO</button>
+<button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button>
+</div></div>
 
 <div id="modalEstoque" class="modal"><div class="modal-content"><input type="hidden" id="e_id"><label>Item</label><input type="text" id="e_item"><label>Localização</label><input type="text" id="e_localizacao"><label>Link</label><input type="url" id="e_link"><label>Qtd</label><input type="number" id="e_qtd"><label>Valor Venda</label><input type="number" id="e_venda"><button onclick="salvarEstoque()" style="width:100%;padding:15px;background:var(--orange);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
 
@@ -255,7 +393,7 @@ body *{visibility:hidden}
 
 <div id="modalAPagar" class="modal"><div class="modal-content modal-large" style="border-color:var(--red);"><h3 style="color:var(--red);margin-top:0;text-align:center;"><i class="fas fa-hand-holding-usd"></i> Conta a Pagar</h3><input type="hidden" id="ap_id"><div style="display:flex;gap:10px;"><div style="flex:1"><label>Tipo</label><select id="ap_tipo" onchange="atualizarLabelAPagar()"><option value="funcionario">👷 Funcionário</option><option value="emprestimo">🏦 Empréstimo</option><option value="fornecedor">🏭 Fornecedor</option><option value="aluguel">🏠 Aluguel</option><option value="outro">📋 Outro</option></select></div><div style="flex:1"><label>Criação</label><input type="date" id="ap_data_criacao"></div></div><label id="ap_label_nome">Nome</label><input type="text" id="ap_nome"><label>Descrição</label><textarea id="ap_descricao" rows="2"></textarea><div style="display:flex;gap:10px;"><div style="flex:1"><label>Valor Total (R$)</label><input type="number" id="ap_valor_total" value="0" oninput="calcularRestanteAPagar()" style="font-size:18px;font-weight:bold;color:var(--red);text-align:center;"></div><div style="flex:1"><label>Vencimento</label><input type="date" id="ap_data_vencimento"></div></div><div class="restante-display" id="ap_restante_box"><span>💰 Restante</span><strong id="ap_restante_valor">R$ 0,00</strong></div><label style="color:var(--green);font-size:12px;margin-top:10px;"><i class="fas fa-plus-circle"></i> Pagamento</label><div style="display:flex;gap:10px;align-items:flex-end;"><div style="flex:1"><label>Valor (R$)</label><input type="number" id="ap_novo_pagamento" value="0" style="font-size:16px;font-weight:bold;color:var(--green);text-align:center;border-color:var(--green);"></div><div style="flex:1"><label>Data</label><input type="date" id="ap_data_pagamento"></div><div style="flex:0 0 auto;"><button onclick="adicionarPagamentoAPagar()" style="padding:12px 20px;background:var(--green);border:none;border-radius:8px;color:#fff;font-weight:bold;cursor:pointer;margin-bottom:12px;"><i class="fas fa-plus"></i></button></div></div><label style="color:var(--gold);font-size:11px;"><i class="fas fa-history"></i> Histórico</label><div class="pagamento-historico" id="ap_historico_container"><div style="text-align:center;color:#666;font-size:12px;padding:10px;">Nenhum pagamento.</div></div><label>Observações</label><textarea id="ap_observacoes" rows="2"></textarea><button onclick="salvarAPagar()" style="width:100%;padding:15px;background:var(--red);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer;font-size:15px;"><i class="fas fa-save"></i> SALVAR</button><button id="btn_imprimir_apagar" onclick="imprimirReciboAPagar()" style="width:100%;padding:12px;background:none;border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-file-invoice"></i> IMPRIMIR RECIBO</button><button id="btn_zap_apagar" onclick="enviarWhatsAppAPagar()" style="width:100%;padding:12px;background:none;border:1px solid #25D366;border-radius:8px;color:#25D366;font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fab fa-whatsapp"></i> WHATSAPP</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
 
-<!-- MODAL COMPRAS - COM NOVAS OPÇÕES DE STATUS -->
+<!-- MODAL COMPRAS -->
 <div id="modalCompras" class="modal"><div class="modal-content"><input type="hidden" id="c_id"><label>Cliente</label><input type="text" id="c_cliente"><div style="display:flex;gap:10px"><div style="flex:1"><label>Data</label><input type="date" id="c_data"></div><div style="flex:1"><label>Status / Ação</label><select id="c_status"><option value="em_compra">🛒 Em Compra</option><option value="gasto">💸 Enviar para Gastos</option><option value="pedido">📄 Converter em Pedido</option><option value="orcamento">📋 Converter em Orçamento</option></select></div></div><div style="background:rgba(255,255,255,.05);padding:10px;border-radius:8px;margin-bottom:10px;border:1px solid #444"><label style="color:var(--pink)">Novo Item</label><input type="text" id="c_item_nome"><div style="display:flex;gap:10px"><div style="flex:1"><label>Qtd</label><input type="number" id="c_item_qtd" value="1"></div><div style="flex:1"><label>Valor</label><input type="number" id="c_item_valor"></div></div><div style="display:flex;gap:5px"><button class="btn-outline" style="color:var(--pink);border-color:var(--pink);flex:1;margin:0" onclick="adicionarItemCompraUI()">+ LISTA</button><button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1;margin:0" onclick="adicionarItemCompraAoEstoque()">+ ESTOQUE</button></div><button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);margin-top:10px;width:100%" onclick="abrirSeletorEstoque('compra')">PUXAR DO ESTOQUE</button></div><div id="container_itens_compra" style="max-height:200px;overflow-y:auto;margin-bottom:10px"></div><label>Total (R$)</label><input type="number" id="c_total" value="0"><button onclick="salvarCompra()" style="width:100%;padding:15px;background:var(--pink);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:10px;cursor:pointer">SALVAR</button><button onclick="imprimirCompra()" style="width:100%;padding:12px;background:none;border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:bold;margin-top:10px;cursor:pointer"><i class="fas fa-print"></i> IMPRIMIR</button><button id="btn_duplicar_compra" onclick="duplicarRegistroAtual('compra')" style="width:100%;padding:12px;background:none;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-copy"></i> DUPLICAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
 
 <div id="modalServicosCatalogo" class="modal"><div class="modal-content"><input type="hidden" id="sc_id"><label>Nome</label><input type="text" id="sc_nome"><label>Preço</label><input type="number" id="sc_preco"><button onclick="salvarServicoCatalogo()" style="width:100%;padding:15px;background:var(--cyan);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
@@ -276,9 +414,6 @@ const firebaseConfig={apiKey:"AIzaSyB1c4Mir1IEc5DyIHUncWUzoNk7ocYXAcg",authDomai
 firebase.initializeApp(firebaseConfig);
 const database=firebase.database();
 
-// =================================================================
-// SISTEMA DE SINCRONIZAÇÃO ROBUSTO
-// =================================================================
 let isSaving=false;
 let lastSyncedHash=null;
 let renderDebounceTimer=null;
@@ -317,7 +452,6 @@ window.onload=()=>{
   document.getElementById('filtro_mes').value=m<10?'0'+m:''+m;
   document.getElementById('app_principal').style.display='block';
   initDB();
-  // Backup automático a cada 5 minutos
   autoBackupTimer=setInterval(()=>{
     try{
       const backups=JSON.parse(localStorage.getItem('alvesProBackups')||'[]');
@@ -439,33 +573,10 @@ function limparBancoDados(){if(confirm("⚠️ APAGAR TODOS OS DADOS?")){databas
 function exportarBackup(){const d=JSON.stringify(DB,null,2);const b=new Blob([d],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='alves_backup_'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(u);showToast("Backup baixado!","success")}
 function importarBackup(e){const f=e.target.files[0];if(!f)return;if(!confirm("Restaurar backup?"))return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);DB=d;preencherPadroesDB();saveDB();carregarConfiguracoes();carregarDados();showToast("Restaurado!","success")}catch(err){showToast("Inválido!","error")}};r.readAsText(f);e.target.value=''}
 
-// =================================================================
-// LOGO - URL GITHUB + ARQUIVO
-// =================================================================
-function converterUrlGithub(url){
-  if(!url)return url;
-  url=url.trim();
-  if(url.includes('github.com')&&url.includes('/blob/')){
-    url=url.replace('github.com','raw.githubusercontent.com').replace('/blob/','/');
-  }
-  return url;
-}
+function converterUrlGithub(url){if(!url)return url;url=url.trim();if(url.includes('github.com')&&url.includes('/blob/')){url=url.replace('github.com','raw.githubusercontent.com').replace('/blob/','/')}return url}
 function isUrl(str){return str&&/^https?:\/\/.+/i.test(str.trim())}
 function trocarAbaLogo(tipo,el){document.querySelectorAll('.logo-type-tab').forEach(t=>t.classList.remove('ativo'));el.classList.add('ativo');document.getElementById('box_logo_url').classList.toggle('visivel',tipo==='url');document.getElementById('box_logo_arquivo').classList.toggle('visivel',tipo==='arquivo')}
-function previewLogoUrl(){
-  const url=document.getElementById('cfg_logo_url').value.trim();
-  const img=document.getElementById('img_preview');
-  const ph=document.getElementById('img_placeholder');
-  const status=document.getElementById('logo_status_msg');
-  if(!url){img.style.display='none';ph.style.display='block';status.className='logo-status info';status.innerHTML='ℹ️ Digite uma URL';return}
-  const urlFinal=converterUrlGithub(url);
-  status.className='logo-status info';status.innerHTML='🔄 Carregando...';
-  const testImg=new Image();
-  testImg.crossOrigin="anonymous";
-  testImg.onload=function(){img.src=urlFinal;img.style.display='block';ph.style.display='none';status.className='logo-status ok';status.innerHTML='✅ Logo OK!'};
-  testImg.onerror=function(){img.style.display='none';ph.style.display='block';status.className='logo-status erro';status.innerHTML='❌ URL inválida'};
-  testImg.src=urlFinal;
-}
+function previewLogoUrl(){const url=document.getElementById('cfg_logo_url').value.trim();const img=document.getElementById('img_preview');const ph=document.getElementById('img_placeholder');const status=document.getElementById('logo_status_msg');if(!url){img.style.display='none';ph.style.display='block';status.className='logo-status info';status.innerHTML='ℹ️ Digite uma URL';return}const urlFinal=converterUrlGithub(url);status.className='logo-status info';status.innerHTML='🔄 Carregando...';const testImg=new Image();testImg.crossOrigin="anonymous";testImg.onload=function(){img.src=urlFinal;img.style.display='block';ph.style.display='none';status.className='logo-status ok';status.innerHTML='✅ Logo OK!'};testImg.onerror=function(){img.style.display='none';ph.style.display='block';status.className='logo-status erro';status.innerHTML='❌ URL inválida'};testImg.src=urlFinal}
 function testarLogoUrl(){const url=document.getElementById('cfg_logo_url').value.trim();if(!url)return showToast("Digite uma URL!","error");previewLogoUrl();setTimeout(()=>{const status=document.getElementById('logo_status_msg');if(status.classList.contains('ok'))showToast("Logo OK!","success");else if(status.classList.contains('erro'))showToast("URL inválida","error")},1500)}
 function limparLogo(){document.getElementById('cfg_logo_url').value='';document.getElementById('img_preview').style.display='none';document.getElementById('img_placeholder').style.display='block';document.getElementById('logo_status_msg').className='logo-status info';document.getElementById('logo_status_msg').innerHTML='ℹ️ Logo removida. Salve.';document.getElementById('logo_display').style.display='none';showToast("Logo removida","info")}
 
@@ -548,9 +659,6 @@ function carregarDados(){
   renderizarTudo();checarAgendaNotif();
 }
 
-// =================================================================
-// TRADUZIR STATUS DE COMPRA
-// =================================================================
 function traduzirStatusCompra(status){
   switch(status){
     case 'em_compra': return {texto:'Em Compra', classe:'status-em_compra'};
@@ -589,7 +697,6 @@ function renderizarTudo(){
     }
   });
   
-  // COMPRAS - COM NOVAS OPÇÕES
   dadosCompras.forEach(c=>{
     if((c.cliente||'').toLowerCase().includes(t)){
       let rI=c.itens&&c.itens.length>0?c.itens.map(i=>`${i.qtd}x ${i.item}`).join(', '):'Vazio';
@@ -648,18 +755,12 @@ function renderizarTudo(){
   renderizarGrafico();
 }
 
-// =================================================================
-// IR PARA PEDIDO GERADO A PARTIR DA COMPRA
-// =================================================================
 function irParaPedidoGerado(idPedido){
   if(!idPedido){showToast("Pedido não encontrado!","error");return}
   mudarTela('tela_pedidos');
   setTimeout(()=>{editarPedido(idPedido)},200);
 }
 
-// =================================================================
-// A PAGAR
-// =================================================================
 function renderizarAPagar(){
   const dAP=document.getElementById('listaAPagar');
   if(!dAP)return;
@@ -778,6 +879,11 @@ function abrirModalPorTela(){
     else if(telaAtiva==='tela_pedidos'||telaAtiva==='tela_orcamentos'){
       document.getElementById('f_id').value="";
       document.getElementById('f_cliente').value="";
+      document.getElementById('f_endereco').value="";
+      document.getElementById('f_numero').value="";
+      document.getElementById('f_complemento').value="";
+      document.getElementById('f_cidade').value="";
+      document.getElementById('f_lembrete').value="";
       document.getElementById('f_servico').value="";
       document.getElementById('f_total_base').value="0";
       document.getElementById('f_multiplicador').value="1";
@@ -792,11 +898,6 @@ function abrirModalPorTela(){
       document.getElementById('f_parcela2_data').value="";
       document.getElementById('f_parcela3').value="0";
       document.getElementById('f_parcela3_data').value="";
-      document.getElementById('f_endereco').value="";
-      document.getElementById('f_numero').value="";
-      document.getElementById('f_complemento').value="";
-      document.getElementById('f_cidade').value="";
-      document.getElementById('f_lembrete').value="";
       document.getElementById('f_data').value=new Date().toISOString().split('T')[0];
       if(telaAtiva==='tela_orcamentos')document.getElementById('f_tipo').value='orcamento';
       else document.getElementById('f_tipo').value='servico';
@@ -805,7 +906,21 @@ function abrirModalPorTela(){
       renderizarItensPedido();
       document.getElementById('modalPedido').style.display='flex';
     }
-    else if(telaAtiva==='tela_agenda'){document.getElementById('a_id').value="";document.querySelectorAll('#modalAgenda input, #modalAgenda textarea').forEach(i=>i.value='');document.getElementById('a_data').value=new Date().toISOString().split('T')[0];document.getElementById('a_status').value='pendente';itensNaAgenda=[];renderizarItensAgenda();document.getElementById('modalAgenda').style.display='flex'}
+    else if(telaAtiva==='tela_agenda'){
+      document.getElementById('a_id').value="";
+      document.getElementById('a_cliente').value="";
+      document.getElementById('a_endereco').value="";
+      document.getElementById('a_numero').value="";
+      document.getElementById('a_complemento').value="";
+      document.getElementById('a_cidade').value="";
+      document.getElementById('a_lembrete').value="";
+      document.getElementById('a_servico').value="";
+      document.getElementById('a_data').value=new Date().toISOString().split('T')[0];
+      document.getElementById('a_status').value='pendente';
+      itensNaAgenda=[];
+      renderizarItensAgenda();
+      document.getElementById('modalAgenda').style.display='flex';
+    }
     else if(telaAtiva==='tela_pendencias'){document.getElementById('p_id').value="";document.getElementById('p_titulo').value="";document.getElementById('modalPendencias').style.display='flex'}
     else if(telaAtiva==='tela_pendencias_detalhes'){document.getElementById('todo_new_task').focus()}
     else if(telaAtiva==='tela_lembretes'){document.getElementById('lem_id').value="";document.getElementById('lem_titulo').value="";document.getElementById('modalNovoLembrete').style.display='flex'}
@@ -815,9 +930,6 @@ function abrirModalPorTela(){
 
 function excluirRegistro(t,id){if(confirm("Excluir?")){const i=DB[t].findIndex(x=>x.id==id);if(i>-1)DB[t].splice(i,1);saveDB();if(t==='pendencias'&&telaAtiva==='tela_pendencias_detalhes'){mudarTela('tela_pendencias');renderizarTudo()}else if(t==='lembretes'&&telaAtiva==='tela_lembretes_detalhes'){mudarTela('tela_lembretes');renderizarTudo()}else renderizarTudo()}}
 
-// =================================================================
-// SALVAR PEDIDO - ROBUSTO
-// =================================================================
 function salvarPedido(){
   try{
     const cliente=document.getElementById('f_cliente').value.trim();
@@ -894,6 +1006,11 @@ function editarPedido(id){
     if(!p)return showToast("Não encontrado!","error");
     document.getElementById('f_id').value=p.id||"";
     document.getElementById('f_cliente').value=p.cliente||"";
+    document.getElementById('f_endereco').value=p.endereco||'';
+    document.getElementById('f_numero').value=p.numero||'';
+    document.getElementById('f_complemento').value=p.complemento||'';
+    document.getElementById('f_cidade').value=p.cidade||'';
+    document.getElementById('f_lembrete').value=p.lembrete||'';
     document.getElementById('f_servico').value=p.servico||"";
     document.getElementById('f_total_base').value=p.total_base!==undefined?p.total_base:(p.total||0);
     document.getElementById('f_multiplicador').value=p.multiplicador||'1';
@@ -910,11 +1027,6 @@ function editarPedido(id){
     if(p.pago_entrada===undefined&&p.pago>0)document.getElementById('f_entrada').value=p.pago;
     document.getElementById('f_data').value=p.data||new Date().toISOString().split('T')[0];
     document.getElementById('f_tipo').value=p.tipo||'servico';
-    document.getElementById('f_endereco').value=p.endereco||'';
-    document.getElementById('f_numero').value=p.numero||'';
-    document.getElementById('f_complemento').value=p.complemento||'';
-    document.getElementById('f_cidade').value=p.cidade||'';
-    document.getElementById('f_lembrete').value=p.lembrete||'';
     document.getElementById('f_mao_obra').value=p.mao_obra||0;
     ajustarCamposModal();
     if(p.status){
@@ -934,9 +1046,6 @@ function editarPedido(id){
   }catch(e){console.error('Erro:',e);showToast("Erro ao abrir","error")}
 }
 
-// =================================================================
-// ✅ NOVO ITEM MANUAL NO PEDIDO
-// =================================================================
 function adicionarNovoItemPedido(){
   const nome=document.getElementById('f_novo_item_nome').value.trim();
   const qtd=parseInt(document.getElementById('f_novo_item_qtd').value)||0;
@@ -961,7 +1070,23 @@ function adicionarNovoItemPedido(){
 
 function salvarAgenda(){let sA=document.getElementById('a_status').value;let tA='compromisso';let idAtual=document.getElementById('a_id').value;if(sA==='compra'){let itensC=itensNaAgenda.map(i=>({item:i.item,qtd:i.qtd,valor:i.valor,id_referencia:i.id_referencia||""}));let totComp=itensC.reduce((a,b)=>a+(b.qtd*b.valor),0);DB.compras.push({id:generateID(),cliente:document.getElementById('a_cliente').value,itens:itensC,total:totComp,data:document.getElementById('a_data').value,status:'em_compra'});if(idAtual)DB.servicos=DB.servicos.filter(x=>x.id!=idAtual);saveDB();fecharModais();renderizarTudo();showToast("Convertido!","success");return}if(sA==='concluido'){tA='servico';sA='pendente';showToast("Movido!","success")}let totalAgenda=itensNaAgenda.reduce((acc,i)=>acc+(i.qtd*i.valor),0);const o={id:idAtual||generateID(),cliente:document.getElementById('a_cliente').value,servico:document.getElementById('a_servico').value,itens_usados:itensNaAgenda,total:totalAgenda,total_base:totalAgenda,multiplicador:1,pago:0,pago_entrada:0,data_entrada:'',pago_parcela1:0,data_parcela1:'',pago_parcela2:0,data_parcela2:'',pago_parcela3:0,data_parcela3:'',data:document.getElementById('a_data').value,tipo:tA,status:sA,endereco:document.getElementById('a_endereco').value,numero:document.getElementById('a_numero').value,complemento:document.getElementById('a_complemento').value,cidade:document.getElementById('a_cidade').value,lembrete:document.getElementById('a_lembrete').value,mao_obra:0};if(idAtual){const i=DB.servicos.findIndex(x=>x.id==o.id);DB.servicos[i]=o}else DB.servicos.push(o);saveDB();fecharModais();renderizarTudo()}
 
-function editarAgenda(id){const p=DB.servicos.find(x=>x.id==id);if(!p)return showToast("Não encontrado!","error");document.getElementById('a_id').value=p.id;document.getElementById('a_cliente').value=p.cliente;document.getElementById('a_servico').value=p.servico||'';document.getElementById('a_data').value=p.data;document.getElementById('a_status').value=p.status||'pendente';document.getElementById('a_endereco').value=p.endereco||'';document.getElementById('a_numero').value=p.numero||'';document.getElementById('a_complemento').value=p.complemento||'';document.getElementById('a_cidade').value=p.cidade||'';document.getElementById('a_lembrete').value=p.lembrete||'';itensNaAgenda=p.itens_usados||[];renderizarItensAgenda();document.getElementById('modalAgenda').style.display='flex'}
+function editarAgenda(id){
+  const p=DB.servicos.find(x=>x.id==id);
+  if(!p)return showToast("Não encontrado!","error");
+  document.getElementById('a_id').value=p.id;
+  document.getElementById('a_cliente').value=p.cliente;
+  document.getElementById('a_endereco').value=p.endereco||'';
+  document.getElementById('a_numero').value=p.numero||'';
+  document.getElementById('a_complemento').value=p.complemento||'';
+  document.getElementById('a_cidade').value=p.cidade||'';
+  document.getElementById('a_lembrete').value=p.lembrete||'';
+  document.getElementById('a_servico').value=p.servico||'';
+  document.getElementById('a_data').value=p.data;
+  document.getElementById('a_status').value=p.status||'pendente';
+  itensNaAgenda=p.itens_usados||[];
+  renderizarItensAgenda();
+  document.getElementById('modalAgenda').style.display='flex';
+}
 
 function renderizarItensAgenda(){document.getElementById('container_itens_agenda').innerHTML=itensNaAgenda.map((i,idx)=>{let ic=i.tipo_item==='servico'?'<i class="fas fa-tools" style="color:var(--cyan);margin-right:5px"></i>':'<i class="fas fa-box" style="color:var(--orange);margin-right:5px"></i>';return`<div class="item-selecionado"><span style="display:flex;align-items:center;">${ic}<div>${i.qtd}x ${i.item}<br><b style="color:var(--green)">R$ ${formatMoeda(i.qtd*i.valor)}</b></div></span><div style="display:flex;gap:15px;"><i class="fas fa-edit" style="color:var(--blue);cursor:pointer;" onclick="editarItemAgenda(${idx})"></i><i class="fas fa-trash" style="color:var(--red);cursor:pointer;" onclick="removerItemAgenda(${idx})"></i></div></div>`}).join('')}
 function editarItemAgenda(idx){let i=itensNaAgenda[idx];let n=prompt("Qtd:",i.qtd);if(n===null)return;let v=prompt("Valor:",i.valor);if(v===null)return;i.qtd=parseInt(n)||1;i.valor=parseFloat(v)||0;renderizarItensAgenda()}
@@ -969,7 +1094,7 @@ function removerItemAgenda(idx){itensNaAgenda.splice(idx,1);renderizarItensAgend
 
 function imprimirPedidoOuOrcamento(){const idA=document.getElementById('f_id').value;if(!idA)return showToast("Salve primeiro!","error");const p=DB.servicos.find(x=>x.id==idA);if(!p)return;const c=DB.config||{},eN=c.nome||"Minha Empresa",eD=c.endereco||"",eT=c.telefone||"",eP=c.chave_pix||"Não";const dHj=formatarDataBR(new Date().toISOString().split('T')[0]);const tD=p.tipo==='orcamento'?`Orçamento Nº ${String(p.id).slice(-4)}`:`Pedido Nº ${String(p.id).slice(-4)}`;let eC=[p.endereco,p.numero,p.complemento,p.cidade].filter(Boolean).join(', '),lT="";const ocultarValores=document.getElementById('f_ocultar_valores')&&document.getElementById('f_ocultar_valores').checked&&p.tipo==='orcamento';const colSpan=ocultarValores?2:4;if(p.servico){lT+=`<tr><td style="padding:10px;border-bottom:1px solid #ccc;font-weight:bold;">${p.servico.replace(/\n/g,'<br>')}</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:center;">1</td>`;if(!ocultarValores)lT+=`<td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">-</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">-</td>`;lT+=`</tr>`}if(p.mao_obra>0){lT+=`<tr><td style="padding:10px;border-bottom:1px solid #ccc;">Mão de Obra</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:center;">1</td>`;if(!ocultarValores)lT+=`<td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">R$ ${formatMoeda(p.mao_obra)}</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">R$ ${formatMoeda(p.mao_obra)}</td>`;lT+=`</tr>`}if(p.itens_usados&&p.itens_usados.length>0){p.itens_usados.forEach(i=>{lT+=`<tr><td style="padding:10px;border-bottom:1px solid #ccc;">${i.item}</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:center;">${i.qtd}</td>`;if(!ocultarValores)lT+=`<td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">R$ ${formatMoeda(i.valor)}</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">R$ ${formatMoeda(i.valor*i.qtd)}</td>`;lT+=`</tr>`})}if(lT==="")lT=`<tr><td colspan="${colSpan}" style="text-align:center;padding:15px;">Vazio</td></tr>`;let tHead=`<th style="padding:10px;text-align:left;">Descrição</th><th style="padding:10px;text-align:center;width:10%;">Qtd</th>`;if(!ocultarValores)tHead+=`<th style="padding:10px;text-align:right;width:20%;">Unit.</th><th style="padding:10px;text-align:right;width:20%;">Subtotal</th>`;let iP="";if(p.tipo==='orcamento'){iP=''}else{let vD=p.total-p.pago;if(vD<=0)iP=`<strong style="color:green;">TOTALMENTE PAGO</strong>`;else iP=`Meios: Dinheiro/Pix.<br><strong>PIX:</strong> ${eP}<br><strong>Resta:</strong> R$ ${formatMoeda(vD)}`}let logoH=c.logo?`<img src="${c.logo}" style="max-height:110px;max-width:200px;object-fit:contain;" onerror="this.style.display='none'">`:'';const aI=document.getElementById('area-impressao');aI.innerHTML=`<div style="font-family:'Segoe UI',Arial,sans-serif;color:#000;padding:20px;border:1px solid #000;max-width:800px;margin:0 auto;"><table style="width:100%;border-bottom:2px solid #000;padding-bottom:15px;margin-bottom:20px;"><tr><td style="width:25%;text-align:left;">${logoH}</td><td style="width:50%;text-align:center;"><h2 style="margin:0;font-size:22px;">${eN}</h2><p style="margin:5px 0;font-size:13px;color:#444;">${eD}<br>📞 ${eT}</p></td><td style="width:25%;text-align:right;font-size:13px;"><strong style="font-size:15px;">${tD}</strong><br><span style="color:#555;">Data: ${dHj}</span></td></tr></table><div style="background:#f9f9f9;padding:15px;border:1px solid #ddd;border-radius:6px;margin-bottom:20px;"><strong>Cliente:</strong> ${p.cliente||'Final'}<br>${eC?`<strong>Endereço:</strong> ${eC}`:''}</div><table style="width:100%;border-collapse:collapse;margin-bottom:25px;font-size:14px;"><thead><tr style="background:#e0e0e0;border-bottom:2px solid #000;">${tHead}</tr></thead><tbody>${lT}</tbody></table><div style="display:flex;justify-content:space-between;border-top:2px solid #000;padding-top:20px;"><div style="width:55%;font-size:13px;">${iP?`<strong>Pagamento:</strong><br>${iP}`:''}</div><div style="width:40%;text-align:right;"><h3 style="margin:0;font-size:24px;">Total: R$ ${formatMoeda(p.total)}</h3></div></div></div>`;setTimeout(()=>window.print(),300)}
 
-function enviarWhatsAppPedido(){const idA=document.getElementById('f_id').value;if(!idA)return showToast("Salve primeiro!","error");const p=DB.servicos.find(x=>x.id==idA);if(!p)return;const c=DB.config||{};const eN=c.nome||"Minha Empresa",eT=c.telefone||"",eP=c.chave_pix||"";const ocultarValores=document.getElementById('f_ocultar_valores')&&document.getElementById('f_ocultar_valores').checked&&p.tipo==='orcamento';let tipoTxt=p.tipo==='orcamento'?'ORÇAMENTO':'PEDIDO';let txt=`*${tipoTxt} Nº ${String(p.id).slice(-4)}*\n*${eN}*\n`;if(eT)txt+=`📞 ${eT}\n`;txt+=`\n*Cliente:* ${p.cliente||'Final'}\n*Data:* ${formatarDataBR(p.data)}\n\n*DETALHES:*\n--------------------------------------\n`;if(p.servico)txt+=`-> ${p.servico.replace(/\n/g,' ')}\n`;if(p.itens_usados&&p.itens_usados.length>0){p.itens_usados.forEach(i=>{if(!ocultarValores){txt+=`- ${i.qtd}x ${i.item} (R$ ${formatMoeda(i.valor)})\n*Sub:* R$ ${formatMoeda(i.qtd*i.valor)}\n`}else txt+=`- ${i.qtd}x ${i.item}\n`})}if(p.mao_obra>0){if(!ocultarValores)txt+=`- Mão de Obra:\n*Sub:* R$ ${formatMoeda(p.mao_obra)}\n`;else txt+=`- Mão de Obra\n`}txt+=`--------------------------------------\n*TOTAL: R$ ${formatMoeda(p.total)}*\n--------------------------------------\n`;if(p.tipo!=='orcamento'){let vD=p.total-p.pago;if(p.pago>0)txt+=`*Recebido:* R$ ${formatMoeda(p.pago)}\n`;if(vD>0){txt+=`*Resta:* R$ ${formatMoeda(vD)}\n`;if(eP)txt+=`\n*PIX:* ${eP}\n`}else txt+=`\n*✅ TOTALMENTE PAGO*\n`}txt+=`\nObrigado!`;window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank')}
+function enviarWhatsAppPedido(){const idA=document.getElementById('f_id').value;if(!idA)return showToast("Salve primeiro!","error");const p=DB.servicos.find(x=>x.id==idA);if(!p)return;const c=DB.config||{};const eN=c.nome||"Minha Empresa",eT=c.telefone||"",eP=c.chave_pix||"";const ocultarValores=document.getElementById('f_ocultar_valores')&&document.getElementById('f_ocultar_valores').checked&&p.tipo==='orcamento';let tipoTxt=p.tipo==='orcamento'?'ORÇAMENTO':'PEDIDO';let txt=`*${tipoTxt} Nº ${String(p.id).slice(-4)}*\n*${eN}*\n`;if(eT)txt+=`📞 ${eT}\n`;txt+=`\n*Cliente:* ${p.cliente||'Final'}\n*Data:* ${formatarDataBR(p.data)}\n`;let eC=[p.endereco,p.numero,p.complemento,p.cidade].filter(Boolean).join(', ');if(eC)txt+=`*Endereço:* ${eC}\n`;txt+=`\n*DETALHES:*\n--------------------------------------\n`;if(p.servico)txt+=`-> ${p.servico.replace(/\n/g,' ')}\n`;if(p.itens_usados&&p.itens_usados.length>0){p.itens_usados.forEach(i=>{if(!ocultarValores){txt+=`- ${i.qtd}x ${i.item} (R$ ${formatMoeda(i.valor)})\n*Sub:* R$ ${formatMoeda(i.qtd*i.valor)}\n`}else txt+=`- ${i.qtd}x ${i.item}\n`})}if(p.mao_obra>0){if(!ocultarValores)txt+=`- Mão de Obra:\n*Sub:* R$ ${formatMoeda(p.mao_obra)}\n`;else txt+=`- Mão de Obra\n`}txt+=`--------------------------------------\n*TOTAL: R$ ${formatMoeda(p.total)}*\n--------------------------------------\n`;if(p.tipo!=='orcamento'){let vD=p.total-p.pago;if(p.pago>0)txt+=`*Recebido:* R$ ${formatMoeda(p.pago)}\n`;if(vD>0){txt+=`*Resta:* R$ ${formatMoeda(vD)}\n`;if(eP)txt+=`\n*PIX:* ${eP}\n`}else txt+=`\n*✅ TOTALMENTE PAGO*\n`}txt+=`\nObrigado!`;window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank')}
 
 function adicionarItemCompraUI(){const i=document.getElementById('c_item_nome').value,q=parseInt(document.getElementById('c_item_qtd').value)||1,v=parseFloat(document.getElementById('c_item_valor').value)||0;if(!i)return showToast("Digite o nome","error");itensCompraAtual.push({item:i,qtd:q,valor:v});document.getElementById('c_item_nome').value="";document.getElementById('c_item_qtd').value="1";document.getElementById('c_item_valor').value="";renderizarItensCompra()}
 function adicionarItemCompraAoEstoque(){const i=document.getElementById('c_item_nome').value,q=parseInt(document.getElementById('c_item_qtd').value)||1,v=parseFloat(document.getElementById('c_item_valor').value)||0;if(!i)return showToast("Digite o nome","error");let e=DB.estoque.find(x=>x.item.toLowerCase()===i.toLowerCase());if(e){e.quantidade+=q;e.valor_venda=v}else DB.estoque.push({id:generateID(),item:i,localizacao:"",quantidade:q,valor_venda:v,link:""});saveDB();showToast("Enviado!","success");document.getElementById('c_item_nome').value="";document.getElementById('c_item_qtd').value="1";document.getElementById('c_item_valor').value=""}
@@ -977,9 +1102,6 @@ function editarItemCompraLista(idx){let i=itensCompraAtual[idx];let n=prompt("No
 function removerItemCompra(idx){const i=itensCompraAtual[idx];if(i.id_referencia&&!i.estoque_pendente){const p=DB.estoque.find(e=>e.id==i.id_referencia);if(p){p.quantidade+=i.qtd;saveDB()}}itensCompraAtual.splice(idx,1);renderizarItensCompra()}
 function renderizarItensCompra(){const c=document.getElementById('container_itens_compra');let t=0;if(itensCompraAtual.length===0)c.innerHTML='<div style="text-align:center;color:#888;">Vazio</div>';else c.innerHTML=itensCompraAtual.map((i,idx)=>{let s=i.qtd*i.valor;t+=s;return`<div class="item-selecionado"><span style="flex:1;">${i.qtd}x ${i.item} <br><b style="color:var(--pink);">R$ ${formatMoeda(s)}</b></span><div style="display:flex;gap:15px;"><i class="fas fa-edit" style="color:var(--blue);cursor:pointer;" onclick="editarItemCompraLista(${idx})"></i><i class="fas fa-trash" style="color:var(--red);cursor:pointer;" onclick="removerItemCompra(${idx})"></i></div></div>`}).join('');document.getElementById('c_total').value=t.toFixed(2)}
 
-// =================================================================
-// SALVAR COMPRA - COM NOVAS OPÇÕES DE STATUS
-// =================================================================
 function salvarCompra(){
   let sA=document.getElementById('c_status').value;
   itensCompraAtual.forEach(i=>{
@@ -997,8 +1119,6 @@ function salvarCompra(){
     data:document.getElementById('c_data').value,
     status:sA
   };
-  
-  // ✅ ENVIAR PARA GASTOS
   if(sA==='gasto'){
     DB.gastos.push({id:generateID(),descricao:"Compra: "+(o.cliente||'Diversos'),valor:o.total,data:o.data});
     if(document.getElementById('c_id').value){const i=DB.compras.findIndex(c=>c.id==o.id);if(i>-1)DB.compras[i]=o}else DB.compras.push(o);
@@ -1006,28 +1126,16 @@ function salvarCompra(){
     showToast("💸 Compra enviada para Gastos!","success");
     return;
   }
-  
-  // ✅ CONVERTER EM PEDIDO
   if(sA==='pedido'){
     let itensPedido=o.itens.map(i=>({id_referencia:generateID(),item:i.item,qtd:i.qtd,valor:i.valor,tipo_item:'compra'}));
     const novoPedido={
-      id:generateID(),
-      cliente:o.cliente||'Cliente',
+      id:generateID(),cliente:o.cliente||'Cliente',
       servico:"Pedido gerado a partir de lista de compras",
-      itens_usados:itensPedido,
-      total_base:o.total,
-      multiplicador:1,
-      total:o.total,
-      pago:0,
-      pago_entrada:0,data_entrada:'',
-      pago_parcela1:0,data_parcela1:'',
-      pago_parcela2:0,data_parcela2:'',
-      pago_parcela3:0,data_parcela3:'',
-      data:o.data,
-      tipo:'servico',
-      status:'pendente',
-      endereco:'',numero:'',complemento:'',cidade:'',lembrete:'',
-      mao_obra:0
+      itens_usados:itensPedido,total_base:o.total,multiplicador:1,total:o.total,
+      pago:0,pago_entrada:0,data_entrada:'',pago_parcela1:0,data_parcela1:'',
+      pago_parcela2:0,data_parcela2:'',pago_parcela3:0,data_parcela3:'',
+      data:o.data,tipo:'servico',status:'pendente',
+      endereco:'',numero:'',complemento:'',cidade:'',lembrete:'',mao_obra:0
     };
     DB.servicos.push(novoPedido);
     o.id_pedido_gerado=novoPedido.id;
@@ -1042,8 +1150,6 @@ function salvarCompra(){
     },800);
     return;
   }
-  
-  // ✅ CONVERTER EM ORÇAMENTO
   if(sA==='orcamento'){
     let iC=o.itens.map(i=>({id_referencia:generateID(),item:i.item,qtd:i.qtd,valor:i.valor,tipo_item:'compra'}));
     DB.servicos.push({id:generateID(),cliente:o.cliente,servico:"Lista Mat: "+o.cliente,itens_usados:iC,total_base:o.total,multiplicador:1,total:o.total,pago:0,data:o.data,tipo:'orcamento',status:'aguardando'});
@@ -1052,8 +1158,6 @@ function salvarCompra(){
     showToast("📋 Convertido em Orçamento!","success");
     return;
   }
-  
-  // ✅ EM COMPRA (padrão)
   if(document.getElementById('c_id').value){const i=DB.compras.findIndex(x=>x.id==o.id);if(i>-1)DB.compras[i]=o;else DB.compras.push(o)}else DB.compras.push(o);
   saveDB();fecharModais();renderizarTudo();
   showToast("🛒 Lista salva!","success");
