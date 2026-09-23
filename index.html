@@ -859,53 +859,197 @@ function construirContextoApp(){
   return ctx;
 }
 
-async function chamarGemini(prompt,contextoExtra=''){
-  const apiKey=(DB.config?.ia_api_key||'').trim();
-  if(!apiKey)throw new Error('API Key não configurada. Vá em Ajustes → Configuração da IA.');
-  
-  const sistema=`Você é um assistente especializado em marcenaria e gestão de marcenarias. Responda de forma prática, objetiva e profissional. Use emojis com moderação. Formate com markdown quando apropriado.\n\n${construirContextoApp()}\n${contextoExtra}`;
-  
-  // 🎯 LISTA OFICIAL DE MODELOS (confirmados em setembro/2026)
-  const modelos=[
-    'gemini-3.8-flash',
-    'gemini-3.7-flash',
-    'gemini-3.6-flash',
-    'gemini-3.5-flash',
-    'gemini-2.5-flash',
-    'gemini-2.5-pro'
-  ];
-  
-  let ultimoErro=null;
-  for(const modelo of modelos){
-    try{
-      console.log(`🔄 Tentando modelo: ${modelo}`);
-      const url=`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`;
-      const response=await fetch(url,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          contents:[{role:'user',parts:[{text:sistema+'\n\nPERGUNTA: '+prompt}]}],
-          generationConfig:{temperature:0.7,maxOutputTokens:2048}
-        })
-      });
-      if(response.ok){
-        const data=await response.json();
-        const texto=data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if(texto){
-          console.log(`✅ Modelo ${modelo} funcionou!`);
-          return {texto,modelo};
+async function chamarGemini(prompt, contextoExtra = '') {
+    const apiKey = (DB.config?.ia_api_key || '').trim();
+    if (!apiKey) throw new Error('API Key não configurada. Vá em Ajustes → Configuração da IA.');
+
+    //  SYSTEM PROMPT COMPLETO - A IA agora conhece todo o app
+    const systemPrompt = `Você é o assistente virtual oficial do ALVES Pro System, um aplicativo completo de gestão para marcenarias e móveis planejados.
+
+## 📱 FUNCIONALIDADES DO SISTEMA:
+
+### 🏠 PAINEL (Home)
+- Balanço mensal com: Já Recebido, A Receber, Gastos, Em Caixa
+- Gráfico de linha comparando Entradas vs Saídas por dia
+- Filtro por mês (Janeiro a Dezembro)
+- Botões para gerar Relatório Mensal e Anual em PDF
+
+###  PEDIDOS
+- Gestão completa de pedidos/serviços
+- Campos: Cliente, Endereço (Rua, Nº, Complemento, Cidade), Lembrete
+- Serviço principal (descrição)
+- Data, Tipo (Serviço/Orçamento/Compra), Status
+- Valores: Base, Margem (x1 a x5), Final
+- Mão de obra (valor separado)
+- Pagamentos: Entrada + 3 Parcelas com datas
+- Itens: do Estoque, do Catálogo de Serviços, ou Item Manual (novo)
+- Botões: Imprimir PDF, Enviar WhatsApp, Duplicar
+- Checkbox "Ocultar valores" para orçamentos
+- Ao marcar status "Concluído", quita automaticamente o restante
+
+### 💰 ORÇAMENTOS
+- Mesma estrutura de Pedidos, mas tipo "orcamento"
+- Status: Aguardando ou Aprovado (move para Pedido)
+- Ao aprovar, vira automaticamente um Pedido pendente
+
+### 🛒 COMPRAS
+- Lista de compras com itens
+- 4 status de ação:
+  • 🛒 Em Compra (salva normalmente)
+  • 💸 Enviar para Gastos (cria registro em Gastos)
+  • 📄 Converter em Pedido (cria pedido e oferece abrir)
+  • 📋 Converter em Orçamento (cria orçamento)
+- Botão "Puxar do Estoque" para usar itens existentes
+- Botão "+ Estoque" para adicionar item direto ao estoque
+- Imprimir lista em PDF
+
+### 📦 ESTOQUE
+- Cadastro de produtos: Item, Localização, Link (URL), Qtd, Valor Venda
+- Integração com Pedidos, Compras e Agenda
+- Controle automático de baixa ao usar em pedidos
+
+### 🔧 SERVIÇOS (Catálogo)
+- Cadastro de serviços com nome e preço base
+- Usado como "Mão de Obra" em pedidos
+
+### 📅 AGENDA
+- Compromissos com cliente, descrição, endereço completo
+- Status: Pendente, Concluído (move para Pedido), Compra
+- Notificações automáticas para compromissos do dia seguinte
+
+### 💸 GASTOS
+- Registro simples: Descrição, Valor, Data
+- Gerados automaticamente ao concluir compras
+
+### ⚠️ A PAGAR
+- Contas a pagar com tipo: Funcionário, Empréstimo, Fornecedor, Aluguel, Outro
+- Valor total, data de criação, vencimento
+- Múltiplos pagamentos parciais com histórico
+- Barra de progresso visual
+- Status automático: Pendente, Parcial, Quitado, Vencido
+- Imprimir recibo profissional em PDF
+- Enviar recibo via WhatsApp
+- Filtros por tipo
+
+### ✅ PENDÊNCIAS
+- Listas de tarefas hierárquicas: Tarefa → Subtarefa → Sub-rotina
+- Checkboxes para marcar conclusão
+- Progresso visual (X de Y concluídas)
+- Enviar relatório via WhatsApp
+
+### 🔔 LEMBRETES
+- Grupos de lembretes com datas
+- Hierarquia: Lembrete → Subtarefa → Sub-rotina
+- Imprimir relatório em PDF
+
+### 🗺️ PLANO DE CORTE
+- Otimização de corte de chapas (MDF, etc)
+- Algoritmo de bin packing com rotação opcional
+- Campos: Cliente, Material, Espessura, Dimensões da chapa, Espessura da serra
+- Peças com: Qtd, Comp, Larg, Descrição, Cor da fita
+- Fitas de borda: C1, C2, L1, L2 (com toggles visuais)
+- Resultados: Total de chapas, Área líquida, Total de fita em metros
+- 4 ações:
+  1. Gerar Mapa (otimização visual)
+  2. Exportar PDF (com imagens das chapas)
+  3. Etiquetas (impressão em grid A4, 6 por página)
+  4. Gerar Compras (cria lista automática)
+- Salvar/Carregar planos
+
+### 📐 VENDA M²
+- Calculadora de venda por metro quadrado
+- Campos: Largura/Comprimento do painel, Custo, Margem (x1 a x3), Custo fita/m
+- Adicionar peças com fitas C1/C2/L1/L2
+- Cálculo automático: Área, Valor/m², Total
+- Salvar como Orçamento direto
+
+### 🎨 CORES
+- Comparador visual de cores com tela cheia
+- Calibrador de tonalidade (slider -100 a +100)
+- Cor alvo com seletor de cor e nome
+- Cadastro de corantes (nome + hex)
+- Cálculo de mistura: gotas de cada corante para X ml de silicone
+- Potência do corante ajustável
+- Histórico de receitas salvas (até 15)
+
+### 🤖 IA ASSISTENTE (eu!)
+- Chat com Google Gemini
+- Ações rápidas: Descrição Orçamento, Msg WhatsApp, Sugestão Corte, Sugerir Cor, Análise Financeira, Sugerir Prazo
+- Botões Copiar e WhatsApp em cada resposta
+- Limpar histórico
+
+### ⚙️ AJUSTES
+- Configurações da empresa: Nome, Telefone, Endereço, Chave PIX, Mensagem
+- Logo via URL (GitHub) ou upload de arquivo
+- Chave API do Google Gemini
+- Backup manual (exportar JSON)
+- Restaurar backup
+- Limpar dados da nuvem
+
+## 💡 FLUXOS DE TRABALHO IMPORTANTES:
+
+1. **Orçamento → Pedido**: Crie orçamento, edite, mude status para "Aprovado" → vira pedido automaticamente
+2. **Compra → Pedido**: Na tela Compras, status "Converter em Pedido" → cria pedido com os itens
+3. **Compra → Gasto**: Status "Enviar para Gastos" → registra despesa automaticamente
+4. **Agenda → Pedido**: Status "Concluído" → move para Pedidos
+5. **Venda M² → Orçamento**: Calcule peças e salve direto como orçamento
+6. **Plano Corte → Compras**: Gere lista de materiais automaticamente
+
+##  REGRAS DE RESPOSTA:
+- Responda SEMPRE em português do Brasil
+- Seja prático, direto e objetivo
+- Use emojis com moderação para facilitar leitura
+- Quando o usuário perguntar sobre funcionalidade, explique o passo a passo
+- Se perguntar sobre fluxo, explique a sequência de telas
+- Use formatação markdown (negrito, listas) para clareza
+- Se não souber algo específico do app, diga que pode explicar outras funcionalidades
+
+## 📊 DADOS ATUAIS DO USUÁRIO:
+${construirContextoApp()}
+
+PERGUNTA DO USUÁRIO: ${prompt}
+
+${contextoExtra}`;
+
+    // 🎯 LISTA OFICIAL DE MODELOS
+    const modelos = [
+        'gemini-3.8-flash',
+        'gemini-3.7-flash',
+        'gemini-3.6-flash',
+        'gemini-3.5-flash',
+        'gemini-2.5-flash',
+        'gemini-2.5-pro'
+    ];
+
+    let ultimoErro = null;
+    for (const modelo of modelos) {
+        try {
+            console.log(`🔄 Tentando modelo: ${modelo}`);
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
+                    generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+                })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const texto = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (texto) {
+                    console.log(`✅ Modelo ${modelo} funcionou!`);
+                    return { texto, modelo };
+                }
+            } else {
+                const err = await response.json().catch(() => ({}));
+                ultimoErro = err.error?.message || `HTTP ${response.status} (${modelo})`;
+            }
+        } catch (e) {
+            ultimoErro = e.message;
         }
-      }else{
-        const err=await response.json().catch(()=>({}));
-        ultimoErro=err.error?.message||`HTTP ${response.status} (${modelo})`;
-        console.warn(`⚠️ Modelo ${modelo} falhou:`, ultimoErro);
-      }
-    }catch(e){
-      ultimoErro=e.message;
-      console.warn(`⚠️ Modelo ${modelo} falhou:`, e.message);
     }
-  }
-  throw new Error(`Nenhum modelo funcionou. Último erro: ${ultimoErro}`);
+    throw new Error(`Nenhum modelo funcionou. Último erro: ${ultimoErro}`);
 }
 
 async function enviarMensagemIA(){
