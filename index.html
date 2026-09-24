@@ -496,35 +496,89 @@ async function gerarDescricaoOrcamentoIA() {
     itensTexto = itensNoPedido.map(item => `- ${item.qtd}x ${item.item} (R$ ${formatMoeda(item.valor)} un.)`).join('\n');
   }
 
-  const prompt = `Atue como um especialista em marcenaria e móveis planejados. Crie uma descrição profissional, detalhada e persuasiva para um orçamento. 
-  Cliente: ${cliente}
-  Itens incluídos no orçamento:
-  ${itensTexto}
-  
-  Inclua uma introdução cordial, detalhes sobre a qualidade dos materiais, prazo de entrega estimado, garantia e uma conclusão profissional convidando o cliente a fechar negócio. Seja direto, use formatação clara com tópicos e seja persuasivo.`;
+  const total = document.getElementById('f_total').value || "0";
+  const maoObra = document.getElementById('f_mao_obra').value || "0";
+  const empresa = DB.config?.nome || "Minha Empresa";
+
+  const prompt = `Atue como um especialista em marcenaria e móveis planejados da empresa "${empresa}". 
+Crie uma descrição profissional, detalhada e persuasiva para um orçamento.
+
+Cliente: ${cliente}
+Itens incluídos no orçamento:
+${itensTexto}
+Mão de obra: R$ ${formatMoeda(maoObra)}
+Total: R$ ${formatMoeda(total)}
+
+Inclua:
+- Uma introdução cordial e profissional
+- Detalhes sobre a qualidade dos materiais e acabamento
+- Prazo de entrega estimado (sugira 15-30 dias úteis)
+- Garantia do serviço
+- Condições de pagamento
+- Uma conclusão profissional convidando o cliente a fechar negócio
+
+Seja direto, use formatação clara com tópicos e seja persuasivo. Responda em português do Brasil.`;
+
+  // 🎯 LISTA DE MODELOS COM FALLBACK AUTOMÁTICO
+  const modelos = [
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-001',
+    'gemini-1.5-flash'
+  ];
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
-      })
-    });
+    let resposta = null;
+    let modeloUsado = null;
+    let ultimoErro = null;
 
-    if (!response.ok) throw new Error("Erro na API");
-    const data = await response.json();
-    const textoGerado = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    for (const modelo of modelos) {
+      try {
+        console.log(`🔄 Tentando modelo: ${modelo}`);
+        
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { 
+              temperature: 0.7, 
+              maxOutputTokens: 2048 
+            }
+          })
+        });
 
-    if (textoGerado) {
-      document.getElementById('f_servico').value = textoGerado;
-      showToast("Descrição gerada com sucesso!", "success");
+        if (response.ok) {
+          const data = await response.json();
+          const textoGerado = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+          if (textoGerado) {
+            resposta = textoGerado;
+            modeloUsado = modelo;
+            console.log(`✅ Modelo ${modelo} funcionou!`);
+            break;
+          }
+        } else {
+          const err = await response.json().catch(() => ({}));
+          ultimoErro = err.error?.message || `HTTP ${response.status}`;
+          console.warn(`⚠️ Modelo ${modelo} falhou:`, ultimoErro);
+        }
+      } catch (e) {
+        ultimoErro = e.message;
+        console.warn(`⚠️ Modelo ${modelo} falhou:`, e.message);
+      }
+    }
+
+    if (resposta) {
+      document.getElementById('f_servico').value = resposta;
+      showToast(`✅ Descrição gerada com sucesso! (${modeloUsado})`, "success");
     } else {
-      throw new Error("Resposta vazia da IA");
+      throw new Error(`Nenhum modelo funcionou. Último erro: ${ultimoErro}`);
     }
   } catch (error) {
-    showToast("Erro ao gerar descrição: " + error.message, "error");
+    showToast("❌ Erro ao gerar descrição: " + error.message, "error");
+    console.error("Erro completo:", error);
   } finally {
     btn.innerHTML = originalText;
     btn.disabled = false;
