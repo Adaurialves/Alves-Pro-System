@@ -488,146 +488,42 @@ async function gerarDescricaoOrcamentoIA() {
   const cliente = document.getElementById('f_cliente').value || "Cliente";
   const btn = document.getElementById('btn_gerar_ia_orcamento');
   const originalText = btn.innerHTML;
-  btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Gerando apresentação profissional...';
+  btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Gerando...';
   btn.disabled = true;
 
-  // Dados da empresa
-  const empresa = DB.config?.nome || "Minha Empresa";
-  const telefone = DB.config?.telefone || "";
-  const endereco = DB.config?.endereco || "";
-  const pix = DB.config?.chave_pix || "";
-  const mensagem = DB.config?.mensagem || "";
-
-  // Dados do orçamento
-  const total = document.getElementById('f_total').value || "0";
-  const maoObra = document.getElementById('f_mao_obra').value || "0";
-  const dataOrcamento = document.getElementById('f_data').value || new Date().toISOString().split('T')[0];
-  const validade = "15 dias";
-
-  // Monta lista detalhada de itens
-  let itensTexto = "";
+  let itensTexto = "Nenhum item adicionado.";
   if (itensNoPedido.length > 0) {
-    itensTexto = itensNoPedido.map((item, idx) => {
-      const subtotal = (item.qtd * item.valor).toFixed(2);
-      const tipo = item.tipo_item === 'servico' ? ' Serviço' : 
-                   item.tipo_item === 'compra' ? '🛒 Material' : 
-                   item.tipo_item === 'novo' ? '✨ Item' : ' Produto';
-      return `${idx + 1}. ${tipo}: ${item.item}\n   • Quantidade: ${item.qtd}x\n   • Valor unitário: R$ ${formatMoeda(item.valor)}\n   • Subtotal: R$ ${formatMoeda(subtotal)}`;
-    }).join('\n\n');
-  } else {
-    itensTexto = "Nenhum item adicionado ainda.";
+    itensTexto = itensNoPedido.map(item => `- ${item.qtd}x ${item.item} (R$ ${formatMoeda(item.valor)} un.)`).join('\n');
   }
 
-  const valorMaoObra = parseFloat(maoObra) > 0 ? `R$ ${formatMoeda(maoObra)}` : "Incluso no valor total";
-  const valorTotal = `R$ ${formatMoeda(total)}`;
+  const total = document.getElementById('f_total').value || "0";
+  const maoObra = document.getElementById('f_mao_obra').value || "0";
+  const empresa = DB.config?.nome || "Minha Empresa";
 
-  // 🎯 PROMPT PROFISSIONAL E ESTRUTURADO
-  const prompt = `Você é um consultor comercial especializado em marcenaria de alto padrão e móveis planejados.
+  const prompt = `Atue como um especialista em marcenaria e móveis planejados da empresa "${empresa}". 
+Crie uma descrição profissional, detalhada e persuasiva para um orçamento.
 
-Gere uma APRESENTAÇÃO COMERCIAL PROFISSIONAL e COMPLETA para o seguinte orçamento, com linguagem persuasiva, técnica e elegante.
-
-═══════════════════════════════════════
-📋 DADOS DA EMPRESA
-═══════════════════════════════════════
-Empresa: ${empresa}
-Telefone: ${telefone }
-Endereço: ${endereco}
-Chave PIX: ${pix}
-Mensagem padrão: ${mensagem}
-
-═══════════════════════════════════════
- DADOS DO CLIENTE
-═══════════════════════════════════════
-Nome: ${cliente}
-Data do orçamento: ${formatarDataBR(dataOrcamento)}
-Validade da proposta: ${validade}
-
-
-
-TOTAL: R$ ${formatMoeda(total)}
-MÃO DE OBRA: R$ ${formatMoeda(maoObra)}
-
-═══════════════════════════════════════
-💰 VALORES
-═══════════════════════════════════════
-Mão de obra: ${valorMaoObra}
-TOTAL DO ORÇAMENTO: ${valorTotal}
-
-═══════════════════════════════════════
-📦 ITENS DO ORÇAMENTO
-═══════════════════════════════════════
+Cliente: ${cliente}
+Itens incluídos no orçamento:
 ${itensTexto}
+Mão de obra: R$ ${formatMoeda(maoObra)}
+Total: R$ ${formatMoeda(total)}
 
-═══════════════════════════════════════
- ESTRUTURA OBRIGATÓRIA DA APRESENTAÇÃO
-═══════════════════════════════════════
-
-Crie a apresentação com as seguintes SEÇÕES (use emojis com moderação e formatação clara):
-
-1️⃣ CABEÇALHO E SAUDAÇÃO
-- Saudação cordial e personalizada ao cliente
-- Apresentação breve da empresa ${empresa}
-- Agradecimento pela oportunidade
-
-2️⃣ ESCOPO DO PROJETO
-- Descrição geral e envolvente do que será entregue
-- Destaque para qualidade e personalização
-
-3️ DETALHAMENTO TÉCNICO DOS ITENS
-- Para CADA item da lista acima, crie uma descrição técnica profissional
-- Mencione materiais, acabamento, durabilidade e benefícios
-- Use linguagem que transmita valor e qualidade
-
-4️ DIFERENCIAIS DA EMPRESA
-- Qualidade dos materiais (MDF, MDP, ferragens)
-- Acabamento profissional
-- Pontualidade na entrega
-- Atendimento personalizado
+Inclua:
+- Uma introdução cordial e profissional
+- Detalhes sobre a qualidade dos materiais e acabamento
+- Prazo de entrega estimado (sugira 15-30 dias úteis)
 - Garantia do serviço
+- Condições de pagamento
+- Uma conclusão profissional convidando o cliente a fechar negócio
 
-5️⃣ CONDIÇÕES COMERCIAIS
-- Valor total: ${valorTotal}
-- Forma de pagamento sugerida (entrada + parcelas)
-- Prazo de execução estimado (sugira 15-30 dias úteis)
-- Validade da proposta: ${validade}
+Seja direto, use formatação clara com tópicos e seja persuasivo. Responda em português do Brasil.`;
 
-6️⃣ GARANTIA E PÓS-VENDA
-- Garantia do serviço (sugira 12 meses)
-- Suporte após entrega
-- Regulagem e ajustes inclusos
-
-7️⃣ OBSERVAÇÕES TÉCNICAS IMPORTANTES
-- Medidas sujeitas a conferência no local
-- Possíveis alterações de cor de materiais conforme disponibilidade
-- Instalação e montagem inclusas
-- Limpeza pós-obra
-
-8️⃣ ENCERRAMENTO PROFISSIONAL
-- Frase de fechamento persuasiva
-- Convite para fechar negócio
-- Dados de contato: ${telefone}
-- Chave PIX: ${pix}
-
-═══════════════════════════════════════
-⚠️ REGRAS IMPORTANTES
-═══════════════════════════════════════
-- Responda em PORTUGUÊS DO BRASIL
-- Use formatação clara com quebras de linha
-- Seja PERSUASIVO mas não exagerado
-- Transmita CONFIANÇA e PROFISSIONALISMO
-- NÃO invente preços ou valores que não foram informados
-- NÃO use markdown (sem **, #, etc)
-- NÃO use gírias ou linguagem informal
-- Cada item deve ter uma descrição técnica de 2-3 linhas
-- O texto final deve ter entre 800-3500 caracteres
-- FINALIZE SEMPRE a última frase completamente
-- Use tópicos e marcadores para facilitar leitura`;
-
-  // 🎯 LISTA DE MODELOS COM FALLBACK
   const modelos = [
     'gemini-2.5-flash',
-    'gemini-3.1-pro',
-    'gemini-pro'
+    'gemini-2.5-pro',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash'
   ];
 
   try {
@@ -637,7 +533,7 @@ Crie a apresentação com as seguintes SEÇÕES (use emojis com moderação e fo
 
     for (const modelo of modelos) {
       try {
-        console.log(`🔄 Tentando modelo: ${modelo}`);
+        console.log(`🔄 Tentando: ${modelo}`);
         
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`, {
           method: 'POST',
@@ -658,40 +554,48 @@ Crie a apresentação com as seguintes SEÇÕES (use emojis com moderação e fo
           if (textoGerado) {
             resposta = textoGerado;
             modeloUsado = modelo;
-            console.log(`✅ Modelo ${modelo} funcionou!`);
+            console.log(`✅ ${modelo} Funcionou!`);
             break;
           }
         } else {
           const err = await response.json().catch(() => ({}));
           ultimoErro = err.error?.message || `HTTP ${response.status}`;
-          console.warn(`⚠️ Modelo ${modelo} falhou:`, ultimoErro);
+          console.warn(`⚠️ ${modelo} falhou:`, ultimoErro);
         }
       } catch (e) {
         ultimoErro = e.message;
-        console.warn(`️ Modelo ${modelo} falhou:`, e.message);
+        console.warn(`⚠️ ${modelo} erro:`, e.message);
       }
     }
 
     if (resposta) {
-      // Limpa formatação excessiva da IA para ficar apresentável no textarea
-      const textoLimpo = resposta
-        .replace(/#{1,6}\s/g, '')  // Remove headers markdown
-        .replace(/\*\*(.+?)\*\*/g, '$1')  // Remove negrito
-        .replace(/\*(.+?)\*/g, '$1')  // Remove itálico
-        .replace(/`(.+?)`/g, '$1')  // Remove code
-        .replace(/_{3,}/g, '────────────────────────────────────')  // Transforma underscores em linha
-        .replace(/\n{3,}/g, '\n\n');  // Remove quebras excessivas
-
-      document.getElementById('f_servico').value = textoLimpo;
-      showToast(`✅ Apresentação profissional gerada! (${modeloUsado})`, "success");
+      // ✅ CORREÇÃO: Usar let e criar nova variável para cada transformação
+      let textoFinal = resposta;
       
-      // Rola o textarea para o topo para o usuário ver
+      // Remove markdown excessivo
+      textoFinal = textoFinal.replace(/#{1,6}\s/g, '');
+      textoFinal = textoFinal.replace(/\*\*(.+?)\*\*/g, '$1');
+      textoFinal = textoFinal.replace(/\*(.+?)\*/g, '$1');
+      textoFinal = textoFinal.replace(/`(.+?)`/g, '$1');
+      textoFinal = textoFinal.replace(/_{3,}/g, '────────────────────────────────────');
+      textoFinal = textoFinal.replace(/\n{3,}/g, '\n\n');
+      textoFinal = textoFinal.trim();
+
+      // Garante que termine com ponto final
+      if (!textoFinal.match(/[.!?]$/)) {
+        textoFinal += '.';
+      }
+
+      document.getElementById('f_servico').value = textoFinal;
+      showToast(`✅ Descrição gerada! (${modeloUsado})`, "success");
+      
+      // Rola para o topo do textarea
       document.getElementById('f_servico').scrollTop = 0;
     } else {
       throw new Error(`Nenhum modelo funcionou. Último erro: ${ultimoErro}`);
     }
   } catch (error) {
-    showToast("❌ Erro ao gerar: " + error.message, "error");
+    showToast(" Erro ao gerar: " + error.message, "error");
     console.error("Erro completo:", error);
   } finally {
     btn.innerHTML = originalText;
