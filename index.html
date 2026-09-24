@@ -494,129 +494,51 @@ async function gerarDescricaoOrcamentoIA() {
   // Dados da empresa
   const empresa = DB.config?.nome || "Minha Empresa";
   const telefone = DB.config?.telefone || "";
-  const endereco = DB.config?.endereco || "";
   const pix = DB.config?.chave_pix || "";
-  const mensagem = DB.config?.mensagem || "";
 
-  // Dados do orçamento
-  const total = document.getElementById('f_total').value || "0";
-  const maoObra = document.getElementById('f_mao_obra').value || "0";
-  const dataOrcamento = document.getElementById('f_data').value || new Date().toISOString().split('T')[0];
-  const validade = "15 dias";
-
-  // Monta lista detalhada de itens
-  let itensTexto = "";
+  // Monta lista de itens
+  let itensTexto = "Nenhum item adicionado.";
   if (itensNoPedido.length > 0) {
     itensTexto = itensNoPedido.map((item, idx) => {
       const subtotal = (item.qtd * item.valor).toFixed(2);
-      const tipo = item.tipo_item === 'servico' ? ' Serviço' : 
-                   item.tipo_item === 'compra' ? '🛒 Material' : 
-                   item.tipo_item === 'novo' ? '✨ Item' : ' Produto';
-      return `${idx + 1}. ${tipo}: ${item.item}\n   • Quantidade: ${item.qtd}x\n   • Valor unitário: R$ ${formatMoeda(item.valor)}\n   • Subtotal: R$ ${formatMoeda(subtotal)}`;
-    }).join('\n\n');
-  } else {
-    itensTexto = "Nenhum item adicionado ainda.";
+      return `${idx + 1}. ${item.item} - ${item.qtd}x R$ ${formatMoeda(item.valor)} = R$ ${formatMoeda(subtotal)}`;
+    }).join('\n');
   }
 
-  const valorMaoObra = parseFloat(maoObra) > 0 ? `R$ ${formatMoeda(maoObra)}` : "Incluso no valor total";
-  const valorTotal = `R$ ${formatMoeda(total)}`;
+  const total = document.getElementById('f_total').value || "0";
+  const maoObra = document.getElementById('f_mao_obra').value || "0";
 
-  // 🎯 PROMPT PROFISSIONAL E ESTRUTURADO
-  const prompt = `Você é um consultor comercial especializado em marcenaria de alto padrão e móveis planejados.
+  // 🎯 PROMPT OTIMIZADO E DIRETO
+  const prompt = `Crie uma apresentação comercial profissional para orçamento de marcenaria.
 
-Gere uma APRESENTAÇÃO COMERCIAL PROFISSIONAL e COMPLETA para o seguinte orçamento, com linguagem persuasiva, técnica e elegante.
+EMPRESA: ${empresa}
+TELEFONE: ${telefone}
+PIX: ${pix}
+CLIENTE: ${cliente}
+TOTAL: R$ ${formatMoeda(total)}
+MÃO DE OBRA: R$ ${formatMoeda(maoObra)}
 
-═══════════════════════════════════════
-📋 DADOS DA EMPRESA
-═══════════════════════════════════════
-Empresa: ${empresa}
-Telefone: ${telefone || "Não informado"}
-Endereço: ${endereco || "Não informado"}
-Chave PIX: ${pix || "Não informada"}
-Mensagem padrão: ${mensagem || ""}
-
-═══════════════════════════════════════
- DADOS DO CLIENTE
-═══════════════════════════════════════
-Nome: ${cliente}
-Data do orçamento: ${formatarDataBR(dataOrcamento)}
-Validade da proposta: ${validade}
-
-═══════════════════════════════════════
-💰 VALORES
-═══════════════════════════════════════
-Mão de obra: ${valorMaoObra}
-TOTAL DO ORÇAMENTO: ${valorTotal}
-
-═══════════════════════════════════════
-📦 ITENS DO ORÇAMENTO
-═══════════════════════════════════════
+ITENS:
 ${itensTexto}
 
-═══════════════════════════════════════
- ESTRUTURA OBRIGATÓRIA DA APRESENTAÇÃO
-═══════════════════════════════════════
+ESTRUTURA OBRIGATÓRIA (seja conciso mas completo):
 
-Crie a apresentação com as seguintes SEÇÕES (use emojis com moderação e formatação clara):
+1. Saudação profissional ao cliente
+2. Breve apresentação da empresa
+3. Descrição técnica de cada item (2-3 linhas por item, destacando qualidade)
+4. Condições comerciais (prazo 15-30 dias, garantia 12 meses)
+5. Forma de pagamento sugerida
+6. Encerramento cordial com contato
 
-1️⃣ CABEÇALHO E SAUDAÇÃO
-- Saudação cordial e personalizada ao cliente
-- Apresentação breve da empresa ${empresa}
-- Agradecimento pela oportunidade
+REGRAS:
+- Português do Brasil
+- Linguagem profissional mas acessível
+- Use tópicos e quebras de linha para facilitar leitura
+- NÃO use markdown (sem **, #, etc)
+- FINALIZE SEMPRE a última frase completamente
+- Máximo 1500 caracteres`;
 
-2️⃣ ESCOPO DO PROJETO
-- Descrição geral e envolvente do que será entregue
-- Destaque para qualidade e personalização
-
-3️ DETALHAMENTO TÉCNICO DOS ITENS
-- Para CADA item da lista acima, crie uma descrição técnica profissional
-- Mencione materiais, acabamento, durabilidade e benefícios
-- Use linguagem que transmita valor e qualidade
-
-4️ DIFERENCIAIS DA EMPRESA
-- Qualidade dos materiais (MDF, MDP, ferragens)
-- Acabamento profissional
-- Pontualidade na entrega
-- Atendimento personalizado
-- Garantia do serviço
-
-5️⃣ CONDIÇÕES COMERCIAIS
-- Valor total: ${valorTotal}
-- Forma de pagamento sugerida (entrada + parcelas)
-- Prazo de execução estimado (sugira 15-30 dias úteis)
-- Validade da proposta: ${validade}
-
-6️⃣ GARANTIA E PÓS-VENDA
-- Garantia do serviço (sugira 12 meses)
-- Suporte após entrega
-- Regulagem e ajustes inclusos
-
-7️⃣ OBSERVAÇÕES TÉCNICAS IMPORTANTES
-- Medidas sujeitas a conferência no local
-- Possíveis alterações de cor de materiais conforme disponibilidade
-- Instalação e montagem inclusas
-- Limpeza pós-obra
-
-8️⃣ ENCERRAMENTO PROFISSIONAL
-- Frase de fechamento persuasiva
-- Convite para fechar negócio
-- Dados de contato: ${telefone}
-- Chave PIX: ${pix}
-
-═══════════════════════════════════════
-⚠️ REGRAS IMPORTANTES
-═══════════════════════════════════════
-- Responda em PORTUGUÊS DO BRASIL
-- Use formatação clara com quebras de linha
-- Seja PERSUASIVO mas não exagerado
-- Transmita CONFIANÇA e PROFISSIONALISMO
-- NÃO invente preços ou valores que não foram informados
-- NÃO use gírias ou linguagem informal
-- Cada item deve ter uma descrição técnica de 2-3 linhas
-- O texto final deve ter entre 800-1500 caracteres
-- Use tópicos e marcadores para facilitar leitura`;
-
-  // 🎯 LISTA DE MODELOS COM FALLBACK
+  // 🎯 MODELOS COM FALLBACK
   const modelos = [
     'gemini-2.0-flash',
     'gemini-2.5-flash',
@@ -627,11 +549,10 @@ Crie a apresentação com as seguintes SEÇÕES (use emojis com moderação e fo
   try {
     let resposta = null;
     let modeloUsado = null;
-    let ultimoErro = null;
 
     for (const modelo of modelos) {
       try {
-        console.log(`🔄 Tentando modelo: ${modelo}`);
+        console.log(`🔄 Tentando: ${modelo}`);
         
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`, {
           method: 'POST',
@@ -639,9 +560,17 @@ Crie a apresentação com as seguintes SEÇÕES (use emojis com moderação e fo
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: { 
-              temperature: 0.7, 
-              maxOutputTokens: 2048 
-            }
+              temperature: 0.7,
+              maxOutputTokens: 4096,  // ✅ AUMENTADO de 1024 para 4096
+              topP: 0.95,
+              topK: 64
+            },
+            safetySettings: [
+              { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+              { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+              { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+              { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+            ]
           })
         });
 
@@ -652,40 +581,43 @@ Crie a apresentação com as seguintes SEÇÕES (use emojis com moderação e fo
           if (textoGerado) {
             resposta = textoGerado;
             modeloUsado = modelo;
-            console.log(`✅ Modelo ${modelo} funcionou!`);
+            console.log(`✅ ${modelo} funcionou!`);
             break;
           }
         } else {
           const err = await response.json().catch(() => ({}));
-          ultimoErro = err.error?.message || `HTTP ${response.status}`;
-          console.warn(`⚠️ Modelo ${modelo} falhou:`, ultimoErro);
+          console.warn(`⚠️ ${modelo} falhou:`, err.error?.message);
         }
       } catch (e) {
-        ultimoErro = e.message;
-        console.warn(`️ Modelo ${modelo} falhou:`, e.message);
+        console.warn(`⚠️ ${modelo} erro:`, e.message);
       }
     }
 
     if (resposta) {
-      // Limpa formatação excessiva da IA para ficar apresentável no textarea
+      // ✅ LIMPEZA DA RESPOSTA
       const textoLimpo = resposta
-        .replace(/#{1,6}\s/g, '')  // Remove headers markdown
         .replace(/\*\*(.+?)\*\*/g, '$1')  // Remove negrito
-        .replace(/\*(.+?)\*/g, '$1')  // Remove itálico
-        .replace(/`(.+?)`/g, '$1')  // Remove code
-        .replace(/_{3,}/g, '────────────────────────────────────')  // Transforma underscores em linha
-        .replace(/\n{3,}/g, '\n\n');  // Remove quebras excessivas
+        .replace(/\*(.+?)\*/g, '$1')      // Remove itálico
+        .replace(/#{1,6}\s/g, '')         // Remove headers
+        .replace(/`(.+?)`/g, '$1')        // Remove code
+        .replace(/\n{3,}/g, '\n\n')       // Remove quebras excessivas
+        .trim();
+
+      // ✅ VERIFICA SE TERMINOU COMPLETO
+      if (!textoLimpo.match(/[.!?]$/)) {
+        textoLimpo += '.';
+      }
 
       document.getElementById('f_servico').value = textoLimpo;
-      showToast(`✅ Apresentação profissional gerada! (${modeloUsado})`, "success");
+      showToast(`✅ Apresentação gerada! (${modeloUsado})`, "success");
       
-      // Rola o textarea para o topo para o usuário ver
+      // Rola para o topo do textarea
       document.getElementById('f_servico').scrollTop = 0;
     } else {
-      throw new Error(`Nenhum modelo funcionou. Último erro: ${ultimoErro}`);
+      throw new Error("Nenhum modelo respondeu. Verifique sua API Key.");
     }
   } catch (error) {
-    showToast("❌ Erro ao gerar: " + error.message, "error");
+    showToast("❌ Erro: " + error.message, "error");
     console.error("Erro completo:", error);
   } finally {
     btn.innerHTML = originalText;
