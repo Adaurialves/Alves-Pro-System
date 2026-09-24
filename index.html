@@ -865,244 +865,150 @@ function imprimirPedidoOuOrcamento(){
   const eN=c.nome||"Minha Empresa";
   const eD=c.endereco||"";
   const eT=c.telefone||"";
-  const eP=c.chave_pix||"";
+  const eP=c.chave_pix||"Não";
   const dHj=formatarDataBR(new Date().toISOString().split('T')[0]);
   const tD=p.tipo==='orcamento'?`ORÇAMENTO Nº ${String(p.id).slice(-4)}`:`PEDIDO Nº ${String(p.id).slice(-4)}`;
   
-  // Endereço completo
   const eC=[p.endereco,p.numero,p.complemento,p.cidade].filter(Boolean).join(', ');
-  
-  // Ocultar valores
   const ocultarValores=document.getElementById('f_ocultar_valores')&&document.getElementById('f_ocultar_valores').checked&&p.tipo==='orcamento';
-  
-  // Logo
-  const logoH=c.logo?`<img src="${c.logo}" style="max-height:80px;max-width:150px;object-fit:contain;">`:`<div style="width:80px;height:80px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#888;font-size:10px;">SEM LOGO</div>`;
-  
-  // Status badge colorido
-  const statusColors={
-    'pendente':'#ff453a','andamento':'#0a84ff','concluido':'#30d158',
-    'aguardando':'#ff9f0a','aprovado':'#30d158','em_compra':'#0a84ff'
-  };
-  const statusColor=statusColors[p.status]||'#888';
+  const colSpan=ocultarValores?2:4;
   
   // 🎯 SEÇÃO DA DESCRIÇÃO GERADA PELA IA (ESCOPO DO PROJETO)
-  let secaoDescricaoIA='';
+  let secaoDescricaoIA = '';
   if(p.servico && p.servico.trim().length > 50){
-    const descricaoFormatada=p.servico
-      .replace(/\n/g,'<br>')
-      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g,'<em>$1</em>')
-      .replace(/`(.+?)`/g,'<code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:12px;">$1</code>')
-      .replace(/─{3,}/g,'<hr style="border:none;border-top:1px solid #ddd;margin:10px 0;">')
-      .replace(/═{3,}/g,'<hr style="border:none;border-top:2px solid #000;margin:10px 0;">');
+    // Formata a descrição preservando quebras de linha e formatação
+    const descricaoFormatada = p.servico
+      .replace(/\n/g, '<br>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/`(.+?)`/g, '<code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:11px;">$1</code>')
+      .replace(/─{3,}/g, '<hr style="border:none;border-top:1px solid #ddd;margin:10px 0;">')
+      .replace(/═{3,}/g, '<hr style="border:none;border-top:2px solid #000;margin:10px 0;">');
     
-    secaoDescricaoIA=`
-    <div style="margin-bottom:20px;border:1px solid #ddd;border-radius:10px;overflow:hidden;page-break-inside:avoid;">
-      <div style="background:linear-gradient(135deg,#1e1f27,#2b2d3a);color:white;padding:12px 15px;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;">
-        <i class="fas fa-file-alt" style="margin-right:8px;"></i>ESCOPO DO PROJETO
+    secaoDescricaoIA = `
+    <div style="margin-bottom:25px; border:1px solid #ddd; border-radius:10px; overflow:hidden; page-break-inside:avoid;">
+      <div style="background:linear-gradient(135deg,#1e1f27,#2b2d3a); color:white; padding:14px 18px; font-size:14px; font-weight:bold; text-transform:uppercase; letter-spacing:1px;">
+        <i class="fas fa-file-alt" style="margin-right:8px;"></i> ESCOPO DO PROJETO
       </div>
-      <div style="padding:18px;background:#fafafa;font-size:12px;color:#333;line-height:1.7;text-align:justify;">
+      <div style="padding:20px; background:#fafafa; font-size:13px; color:#333; line-height:1.7; text-align:justify;">
         ${descricaoFormatada}
       </div>
     </div>`;
   }
   
-  // Tabela de itens (com ícones coloridos como no modal)
-  let itensHTML='';
-  if(p.itens_usados && p.itens_usados.length>0){
-    itensHTML=`
-    <div style="margin-bottom:20px;">
-      <div style="background:#f0f0f0;padding:10px 15px;border-radius:8px 8px 0 0;border:1px solid #ddd;border-bottom:none;font-size:12px;font-weight:bold;color:#555;text-transform:uppercase;">
-        <i class="fas fa-list" style="margin-right:8px;"></i>ITENS DO ${p.tipo==='orcamento'?'ORÇAMENTO':'PEDIDO'}
-      </div>
-      <div style="border:1px solid #ddd;border-radius:0 0 8px 8px;overflow:hidden;">
-    `;
-    
-    p.itens_usados.forEach((item,idx)=>{
-      // Ícone colorido baseado no tipo
-      let iconeHTML='';
-      if(item.tipo_item==='servico'){
-        iconeHTML='<i class="fas fa-tools" style="color:#5ac8fa;margin-right:8px;"></i>';
-      }else if(item.tipo_item==='compra'){
-        iconeHTML='<i class="fas fa-shopping-cart" style="color:#ff2d55;margin-right:8px;"></i>';
-      }else if(item.tipo_item==='novo'){
-        iconeHTML='<i class="fas fa-plus-circle" style="color:#30d158;margin-right:8px;"></i>';
-      }else{
-        iconeHTML='<i class="fas fa-box" style="color:#ff9f0a;margin-right:8px;"></i>';
-      }
-      
-      const subtotal=item.qtd*item.valor;
-      itensHTML+=`
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 15px;border-bottom:1px solid #eee;background:${idx%2===0?'#fff':'#fafafa'};">
-          <div style="display:flex;align-items:center;flex:1;">
-            ${iconeHTML}
-            <div>
-              <div style="font-size:13px;font-weight:bold;color:#333;">${item.qtd}x ${item.item}</div>
-              ${!ocultarValores?`<div style="font-size:11px;color:#888;margin-top:2px;">R$ ${formatMoeda(subtotal)}</div>`:''}
-            </div>
-          </div>
-          ${!ocultarValores?`<div style="font-size:14px;font-weight:bold;color:#30d158;">R$ ${formatMoeda(subtotal)}</div>`:''}
-        </div>
-      `;
+  // Tabela de itens
+  let lT="";
+  
+  // Se a descrição for curta (≤50 chars), mostra na tabela normalmente
+  if(p.servico && p.servico.trim().length <= 50){
+    lT+=`<tr><td style="padding:10px;border-bottom:1px solid #ccc;font-weight:bold;">${p.servico.replace(/\n/g,'<br>')}</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:center;">1</td>`;
+    if(!ocultarValores)lT+=`<td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">-</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">-</td>`;
+    lT+=`</tr>`;
+  }
+  
+  if(p.mao_obra>0){
+    lT+=`<tr><td style="padding:10px;border-bottom:1px solid #ccc;">Mão de Obra</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:center;">1</td>`;
+    if(!ocultarValores)lT+=`<td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">R$ ${formatMoeda(p.mao_obra)}</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">R$ ${formatMoeda(p.mao_obra)}</td>`;
+    lT+=`</tr>`;
+  }
+  
+  if(p.itens_usados&&p.itens_usados.length>0){
+    p.itens_usados.forEach(i=>{
+      lT+=`<tr><td style="padding:10px;border-bottom:1px solid #ccc;">${i.item}</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:center;">${i.qtd}</td>`;
+      if(!ocultarValores)lT+=`<td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">R$ ${formatMoeda(i.valor)}</td><td style="padding:10px;border-bottom:1px solid #ccc;text-align:right;">R$ ${formatMoeda(i.valor*i.qtd)}</td>`;
+      lT+=`</tr>`;
     });
-    
-    itensHTML+=`</div></div>`;
   }
   
-  // Mão de obra
-  let maoObraHTML='';
-  if(p.mao_obra && p.mao_obra>0){
-    maoObraHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 15px;background:#fafafa;border:1px solid #ddd;border-radius:8px;margin-bottom:15px;">
-      <div style="display:flex;align-items:center;">
-        <i class="fas fa-tools" style="color:#5ac8fa;margin-right:10px;font-size:16px;"></i>
-        <div>
-          <div style="font-size:12px;color:#888;text-transform:uppercase;font-weight:bold;">Mão de Obra / Serviço</div>
-          <div style="font-size:13px;color:#333;">1x Serviço</div>
-        </div>
-      </div>
-      ${!ocultarValores?`<div style="font-size:16px;font-weight:bold;color:#30d158;">R$ ${formatMoeda(p.mao_obra)}</div>`:''}
-    </div>`;
-  }
+  if(lT==="")lT=`<tr><td colspan="${colSpan}" style="text-align:center;padding:15px;">Nenhum item detalhado.</td></tr>`;
   
-  // Pagamentos em grid 2x2 (igual ao modal)
-  let pagamentosHTML='';
-  const pagamentos=[];
-  if(p.pago_entrada>0)pagamentos.push({label:'Entrada',valor:p.pago_entrada,data:p.data_entrada,cor:'#30d158'});
-  if(p.pago_parcela1>0)pagamentos.push({label:'Parcela 1',valor:p.pago_parcela1,data:p.data_parcela1,cor:'#30d158'});
-  if(p.pago_parcela2>0)pagamentos.push({label:'Parcela 2',valor:p.pago_parcela2,data:p.data_parcela2,cor:'#30d158'});
-  if(p.pago_parcela3>0)pagamentos.push({label:'Parcela 3',valor:p.pago_parcela3,data:p.data_parcela3,cor:'#30d158'});
+  let tHead=`<th style="padding:10px;text-align:left;">Descrição / Serviço</th><th style="padding:10px;text-align:center;width:10%;">Qtd</th>`;
+  if(!ocultarValores){tHead+=`<th style="padding:10px;text-align:right;width:20%;">Unit.</th><th style="padding:10px;text-align:right;width:20%;">Subtotal</th>`}
   
-  if(pagamentos.length>0){
-    pagamentosHTML=`
-    <div style="margin-bottom:20px;">
-      <div style="background:#f0f0f0;padding:10px 15px;border-radius:8px 8px 0 0;border:1px solid #ddd;border-bottom:none;font-size:12px;font-weight:bold;color:#555;text-transform:uppercase;">
-        <i class="fas fa-money-bill-wave" style="margin-right:8px;"></i>PAGAMENTOS
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:15px;background:#fafafa;border:1px solid #ddd;border-radius:0 0 8px 8px;">
-    `;
-    
-    pagamentos.forEach(pg=>{
-      pagamentosHTML+=`
-        <div style="display:flex;flex-direction:column;gap:5px;background:white;padding:12px;border-radius:8px;border:1px solid #eee;">
-          <div style="font-size:10px;color:#888;text-transform:uppercase;font-weight:bold;">${pg.label}</div>
-          <div style="font-size:18px;font-weight:bold;color:${pg.cor};text-align:center;">R$ ${formatMoeda(pg.valor)}</div>
-          ${pg.data?`<div style="font-size:10px;color:#888;text-align:center;">Venc: ${formatarDataBR(pg.data)}</div>`:''}
-        </div>
-      `;
-    });
-    
-    pagamentosHTML+=`</div></div>`;
-  }
-  
-  // Total final destacado
-  const totalHTML=`
-  <div style="background:linear-gradient(135deg,#30d158,#28a745);color:white;padding:20px;border-radius:10px;margin-top:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 15px rgba(48,209,88,0.3);">
-    <div>
-      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:0.9;">TOTAL ${p.tipo==='orcamento'?'DO ORÇAMENTO':'DO PEDIDO'}</div>
-      <div style="font-size:28px;font-weight:bold;margin-top:5px;">R$ ${formatMoeda(p.total)}</div>
-    </div>
-    <div style="text-align:right;">
-      <div style="font-size:11px;opacity:0.9;">Data</div>
-      <div style="font-size:14px;font-weight:bold;">${dHj}</div>
-    </div>
-  </div>`;
-  
-  // Observações de orçamento
-  let obsFooter='';
+  let iP="";
+  let obsFooter="";
   if(p.tipo==='orcamento'){
-    obsFooter=`
-    <div style="margin-top:20px;padding:15px;background:#f9f9f9;border-left:4px solid #5ac8fa;border-radius:4px;font-size:12px;color:#333;line-height:1.6;">
-      <strong style="font-size:13px;color:#000;">📋 Observações Importantes:</strong><br>
+    iP='';
+    obsFooter=`<div style="margin-top:20px; padding:15px; background:#f9f9f9; border-left:4px solid #5ac8fa; border-radius:4px; font-size:13px; color:#333; line-height:1.6;">
+      <strong style="font-size:14px; color:#000;">Observações Importantes:</strong><br>
       • Neste valor estão inclusos: todos os materiais descritos, fabricação sob medida, frete e mão de obra de montagem no local.<br>
       • Limpeza pós-obra e regulagem fina das portas e gavetas já contempladas.<br>
-      • <strong>Validade deste orçamento: 15 dias.</strong><br><br>
+      • Validade deste orçamento: 15 dias.<br><br>
       <em>Fico à inteira disposição para esclarecer qualquer dúvida ou ajustarmos os detalhes.</em>
     </div>`;
   }else{
-    // Informações de pagamento para pedidos
     let vD=p.total-p.pago;
-    let infoPagamento='';
-    if(vD<=0){
-      infoPagamento=`<div style="background:#30d158;color:white;padding:15px;border-radius:8px;text-align:center;font-size:16px;font-weight:bold;margin-top:15px;">✅ TOTALMENTE PAGO</div>`;
-    }else{
-      infoPagamento=`
-      <div style="background:#fff5f5;border:2px solid #ff453a;border-radius:8px;padding:15px;margin-top:15px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-size:11px;color:#888;text-transform:uppercase;">Restante a Pagar</div>
-            <div style="font-size:22px;font-weight:bold;color:#ff453a;">R$ ${formatMoeda(vD)}</div>
-          </div>
-          ${eP?`<div style="text-align:right;"><div style="font-size:11px;color:#888;">Chave PIX</div><div style="font-size:13px;font-weight:bold;color:#333;">${eP}</div></div>`:''}
-        </div>
-      </div>`;
-    }
-    obsFooter=infoPagamento;
+    if(vD<=0)iP=`<strong style="color:green;font-size:16px;">TOTALMENTE PAGO</strong>`;
+    else iP=`Meios de Pagamento: Dinheiro ou Pix.<br><strong>Chave PIX:</strong> ${eP}<br><strong>Resta Pagar:</strong> R$ ${formatMoeda(vD)}`;
+    let dPg='';
+    if(p.pago_entrada>0)dPg+=`• Entrada: R$ ${formatMoeda(p.pago_entrada)} (Venc: ${formatarDataBR(p.data_entrada)||'-'})<br>`;
+    if(p.pago_parcela1>0)dPg+=`• Parcela 1: R$ ${formatMoeda(p.pago_parcela1)} (Venc: ${formatarDataBR(p.data_parcela1)||'-'})<br>`;
+    if(p.pago_parcela2>0)dPg+=`• Parcela 2: R$ ${formatMoeda(p.pago_parcela2)} (Venc: ${formatarDataBR(p.data_parcela2)||'-'})<br>`;
+    if(p.pago_parcela3>0)dPg+=`• Parcela 3: R$ ${formatMoeda(p.pago_parcela3)} (Venc: ${formatarDataBR(p.data_parcela3)||'-'})<br>`;
+    if(dPg!=='')iP+=`<br><br><strong>Desdobramento:</strong><br>${dPg}`;
+    obsFooter="";
   }
   
-  // Montagem final do documento (réplica do modal)
+  let logoH=c.logo?`<img src="${c.logo}" style="max-height:110px; max-width:200px; object-fit:contain;">`:'';
+  
   const aI=document.getElementById('area-impressao');
   aI.innerHTML=`
-  <div style="font-family:'Segoe UI',Arial,sans-serif;color:#000;padding:30px;max-width:800px;margin:0 auto;background:white;">
+  <div style="font-family:'Segoe UI',Arial,sans-serif; color:#000; padding:30px; max-width:800px; margin:0 auto; box-sizing:border-box; background:white;">
     
-    <!-- CABEÇALHO (igual ao modal) -->
-    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #000;padding-bottom:15px;margin-bottom:20px;">
-      <div style="width:30%;">${logoH}</div>
-      <div style="width:40%;text-align:center;">
-        <h1 style="margin:0;font-size:24px;text-transform:uppercase;color:#000;">${eN}</h1>
-        <p style="margin:5px 0 0 0;font-size:12px;color:#555;">${eD}<br>📞 ${eT}${eP?' | PIX: '+eP:''}</p>
-      </div>
-      <div style="width:30%;text-align:right;">
-        <div style="background:#000;color:white;padding:8px 12px;border-radius:6px;display:inline-block;">
-          <strong style="font-size:14px;">${tD}</strong>
-        </div>
-        <div style="margin-top:8px;font-size:12px;color:#555;">
-          <strong>Data:</strong> ${dHj}<br>
-          <strong>Cliente:</strong> ${p.cliente||'Consumidor Final'}
-        </div>
-      </div>
+    <!-- CABEÇALHO -->
+    <table style="width:100%; border-bottom:3px solid #000; padding-bottom:15px; margin-bottom:25px;">
+      <tr>
+        <td style="width:25%; text-align:left; vertical-align:middle;">${logoH}</td>
+        <td style="width:50%; text-align:center; vertical-align:middle;">
+          <h1 style="margin:0; font-size:24px; text-transform:uppercase; color:#000;">${eN}</h1>
+          <p style="margin:5px 0 0 0; font-size:13px; color:#444;">${eD}<br>📞 ${eT} ${c.chave_pix?' | PIX: '+c.chave_pix:''}</p>
+        </td>
+        <td style="width:25%; text-align:right; vertical-align:middle;">
+          <strong style="font-size:16px; color:#000;">${tD}</strong><br>
+          <span style="color:#555; font-size:12px;">Data: ${dHj}</span><br>
+          <span style="color:#555; font-size:12px;">Cliente: ${p.cliente||'Consumidor Final'}</span>
+        </td>
+      </tr>
+    </table>
+    
+    <!-- DADOS DO CLIENTE -->
+    <div style="background:#f9f9f9; padding:15px; border:1px solid #ddd; border-radius:8px; margin-bottom:20px; font-size:14px;">
+      <strong style="font-size:15px; color:#000;">👤 Cliente:</strong> ${p.cliente||'Consumidor Final'}<br>
+      ${eC?`<strong style="color:#555;">📍 Endereço:</strong> ${eC}<br>`:''}
+      ${p.cidade?`<strong style="color:#555;">🏙️ Cidade:</strong> ${p.cidade}<br>`:''}
+      ${p.lembrete?`<strong style="color:#555;">📝 Observação:</strong> ${p.lembrete}`:''}
     </div>
-    
-    <!-- BLOCO DO CLIENTE (igual ao modal) -->
-    <div style="background:#f9f9f9;padding:15px;border-radius:10px;margin-bottom:20px;border:1px solid #ddd;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <i class="fas fa-user" style="color:#0a84ff;font-size:18px;"></i>
-        <strong style="font-size:16px;color:#000;">${p.cliente||'Consumidor Final'}</strong>
-        <span style="margin-left:auto;padding:4px 10px;border-radius:12px;font-size:10px;font-weight:bold;color:white;background:${statusColor};text-transform:uppercase;">${p.status||'pendente'}</span>
-      </div>
-      ${eC?`<div style="font-size:12px;color:#555;margin-top:8px;"><i class="fas fa-map-marker-alt" style="color:#ff453a;margin-right:5px;"></i><strong>Endereço:</strong> ${eC}</div>`:''}
-      ${p.lembrete?`<div style="font-size:12px;color:#555;margin-top:5px;"><i class="fas fa-sticky-note" style="color:#ff9f0a;margin-right:5px;"></i><strong>Obs:</strong> ${p.lembrete}</div>`:''}
-    </div>
-    
-    <!-- DESCRIÇÃO DO SERVIÇO (igual ao modal) -->
-    ${p.servico && p.servico.trim().length <= 50 ? `
-    <div style="background:#f9f9f9;padding:15px;border-radius:10px;margin-bottom:20px;border:1px solid #ddd;">
-      <div style="font-size:11px;color:#888;text-transform:uppercase;font-weight:bold;margin-bottom:5px;">
-        <i class="fas fa-clipboard-list" style="color:#d4af37;margin-right:5px;"></i>${p.tipo==='orcamento'?'DESCRIÇÃO DO ORÇAMENTO':'SERVIÇO PRINCIPAL'}
-      </div>
-      <div style="font-size:14px;color:#333;font-weight:bold;">${p.servico.replace(/\n/g,'<br>')}</div>
-    </div>` : ''}
     
     <!-- 🎯 SEÇÃO DESTACADA DA DESCRIÇÃO DA IA -->
     ${secaoDescricaoIA}
     
-    <!-- ITENS (com ícones coloridos como no modal) -->
-    ${itensHTML}
+    <!-- TABELA DE ITENS -->
+    <table style="width:100%; border-collapse:collapse; margin-bottom:25px; font-size:14px;">
+      <thead>
+        <tr style="background:#e0e0e0; border-bottom:2px solid #000;">
+          ${tHead}
+        </tr>
+      </thead>
+      <tbody>${lT}</tbody>
+    </table>
     
-    <!-- MÃO DE OBRA -->
-    ${maoObraHTML}
+    <!-- TOTAL E PAGAMENTO -->
+    <div style="display:flex; justify-content:space-between; border-top:3px solid #000; padding-top:20px; align-items:flex-start;">
+      <div style="width:55%; font-size:13px; color:#333; line-height:1.5;">
+        ${iP?`<strong style="font-size:14px;">💰 Informações de Pagamento:</strong><br>${iP}`:''}
+      </div>
+      <div style="width:40%; text-align:right;">
+        <div style="background:#f9f9f9; border:2px solid #000; border-radius:8px; padding:15px 20px;">
+          <span style="font-size:12px; color:#555; text-transform:uppercase;">Total Geral</span><br>
+          <h2 style="margin:5px 0 0 0; font-size:26px; color:#000;">R$ ${formatMoeda(p.total)}</h2>
+        </div>
+      </div>
+    </div>
     
-    <!-- PAGAMENTOS (grid 2x2 como no modal) -->
-    ${pagamentosHTML}
-    
-    <!-- TOTAL DESTACADO -->
-    ${totalHTML}
-    
-    <!-- OBSERVAÇÕES / PAGAMENTO -->
     ${obsFooter}
     
     <!-- RODAPÉ -->
-    <div style="margin-top:40px;padding-top:15px;border-top:2px dashed #999;text-align:center;font-size:10px;color:#888;">
+    <div style="margin-top:40px; padding-top:15px; border-top:2px dashed #999; text-align:center; font-size:10px; color:#666;">
       Documento gerado automaticamente pelo sistema <strong>${eN}</strong><br>
       Emitido em ${dHj} às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
     </div>
