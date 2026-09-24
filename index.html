@@ -520,11 +520,14 @@ Inclua:
 Seja direto, use formatação clara com tópicos e seja persuasivo. Responda em português do Brasil.`;
 
   // 🎯 MODELOS ATUALIZADOS - Gemini API v1 (modelos atuais e estáveis)
-  const modelos = [
-    'gemini-1.5-flash',  // Modelo estável e gratuito
-    'gemini-1.5-pro',    // Modelo mais inteligente
-    'gemini-pro'         // Modelo legado (fallback)
-  ];
+ const modelos = [
+  'gemini-3.8-flash',    // ✅ Setembro 2026 (mais recente)
+  'gemini-3.7-flash',    // ✅ Agosto 2026
+  'gemini-3.6-flash',    // ✅ Julho 2026
+  'gemini-3.5-flash',    // ✅ Maio 2026
+  'gemini-2.5-flash',    // ✅ Junho 2025 (estável)
+  'gemini-2.5-pro'       // ✅ Alternativa Pro
+];
 
   try {
     let resposta = null;
