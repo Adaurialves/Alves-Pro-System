@@ -1005,7 +1005,102 @@ if(dL)dL.innerHTML+=`<div class="item-card" style="border-left-color:${color}; c
 renderizarAPagar();
 renderizarGrafico();
 }
-function renderizarAPagar(){const dAP=document.getElementById('listaAPagar');if(!dAP)return;const t=document.getElementById('input_busca').value.toLowerCase();let totalDividas=0,totalPago=0,totalRestante=0;let filtered=dadosAPagar;if(filtroAPagarAtual!=='todos'){filtered=filtered.filter(a=>a.tipo===filtroAPagarAtual)}filtered.forEach(a=>{totalDividas+=(a.valor_total||0);let pago=0;if(a.pagamentos&&a.pagamentos.length>0){pago=a.pagamentos.reduce((s,p)=>s+(p.valor||0),0)}totalPago+=pago;let rest=Math.max(0,(a.valor_total||0)-pago);totalRestante+=rest});document.getElementById('ap_total_dividas').innerText="R$ "+formatMoeda(totalDividas);document.getElementById('ap_total_pago').innerText="R$ "+formatMoeda(totalPago);document.getElementById('ap_total_restante').innerText="R$ "+formatMoeda(totalRestante);dAP.innerHTML="";if(filtered.length===0){dAP.innerHTML='<div style="text-align:center;color:#666;padding:30px;font-size:13px;"><i class="fas fa-check-circle" style="font-size:30px;color:var(--green);display:block;margin-bottom:10px;"></i>Nenhuma conta a pagar.<br>Tudo em dia!</div>';return}filtered.forEach(a=>{if(!((a.nome||'').toLowerCase().includes(t)||(a.descricao||'').toLowerCase().includes(t)))return;let pago=0;if(a.pagamentos&&a.pagamentos.length>0){pago=a.pagamentos.reduce((s,p)=>s+(p.valor||0),0)}let rest=Math.max(0,(a.valor_total||0)-pago);let status='pendente';if(rest<=0)status='quitado';else if(pago>0)status='parcial';let hoje=new Date().toISOString().split('T')[0];if(status!=='quitado'&&a.data_vencimento&&a.data_vencimento<hoje)status='vencido';let tipoIcon='📋';if(a.tipo==='funcionario')tipoIcon='👷';else if(a.tipo==='emprestimo')tipoIcon='🏦';else if(a.tipo==='fornecedor')tipoIcon='🏭';else if(a.tipo==='aluguel')tipoIcon='🏠';let vencTxt=a.data_vencimento?`Venc: ${formatarDataBR(a.data_vencimento)}`:'Sem vencimento';let vencColor=status==='vencido'?'var(--red)':'#888';let barraPct=a.valor_total>0?Math.min(100,Math.round((pago/a.valor_total)*100)):0;dAP.innerHTML+=`<div class="item-card" style="border-left-color:${status==='quitado'?'var(--green)':(status==='vencido'?'var(--red)':'var(--orange)')}">
+function renderizarAPagar(){
+    const dAP=document.getElementById('listaAPagar');
+    if(!dAP)return;
+    const t=document.getElementById('input_busca').value.toLowerCase();
+    let totalDividas=0,totalPago=0,totalRestante=0;
+    let filtered=dadosAPagar;
+    if(filtroAPagarAtual!=='todos'){
+        filtered=filtered.filter(a=>a.tipo===filtroAPagarAtual)
+    }
+    filtered.forEach(a=>{
+        totalDividas+=(a.valor_total||0);
+        let pago=0;
+        if(a.pagamentos&&a.pagamentos.length>0){
+            pago=a.pagamentos.reduce((s,p)=>s+(p.valor||0),0)
+        }
+        totalPago+=pago;
+        let rest=Math.max(0,(a.valor_total||0)-pago);
+        totalRestante+=rest
+    });
+    document.getElementById('ap_total_dividas').innerText="R$ "+formatMoeda(totalDividas);
+    document.getElementById('ap_total_pago').innerText="R$ "+formatMoeda(totalPago);
+    document.getElementById('ap_total_restante').innerText="R$ "+formatMoeda(totalRestante);
+    dAP.innerHTML="";
+    if(filtered.length===0){
+        dAP.innerHTML='<div style="text-align:center;color:#666;padding:30px;font-size:13px;"><i class="fas fa-check-circle" style="font-size:30px;color:var(--green);display:block;margin-bottom:10px;"></i>Nenhuma conta a pagar.<br>Tudo em dia!</div>';
+        return
+    }
+    filtered.forEach(a=>{
+        if(!((a.nome||'').toLowerCase().includes(t)||(a.descricao||'').toLowerCase().includes(t)))return;
+        let pago=0;
+        if(a.pagamentos&&a.pagamentos.length>0){
+            pago=a.pagamentos.reduce((s,p)=>s+(p.valor||0),0)
+        }
+        let rest=Math.max(0,(a.valor_total||0)-pago);
+        let status='pendente';
+        if(rest<=0)status='quitado';
+        else if(pago>0)status='parcial';
+        let hoje=new Date().toISOString().split('T')[0];
+        if(status!=='quitado'&&a.data_vencimento&&a.data_vencimento<hoje)status='vencido';
+        let tipoIcon='📋';
+        if(a.tipo==='funcionario')tipoIcon='👷';
+        else if(a.tipo==='emprestimo')tipoIcon='🏦';
+        else if(a.tipo==='fornecedor')tipoIcon='🏭';
+        else if(a.tipo==='aluguel')tipoIcon='🏠';
+        let vencTxt=a.data_vencimento?`Venc: ${formatarDataBR(a.data_vencimento)}`:'Sem vencimento';
+        let vencColor=status==='vencido'?'var(--red)':'#888';
+        let barraPct=a.valor_total>0?Math.min(100,Math.round((pago/a.valor_total)*100)):0;
+        
+        // ==========================================
+        // NOVO: Info de Parcelas no Card (PASSO 4)
+        // ==========================================
+        let parcelasInfo = '';
+        if(a.is_parcelado && a.parcelas && a.parcelas.length > 0) {
+            const mesAtual = new Date().getMonth();
+            const anoAtual = new Date().getFullYear();
+            const parcelasMes = a.parcelas.filter(p => {
+                const dataP = new Date(p.data + 'T00:00:00');
+                return dataP.getMonth() === mesAtual && dataP.getFullYear() === anoAtual;
+            });
+            const totalMes = parcelasMes.reduce((sum, p) => sum + p.valor, 0);
+            const pagasMes = parcelasMes.filter(p => p.paga).length;
+            if(parcelasMes.length > 0) {
+                parcelasInfo = `<div style="background:rgba(10,132,255,0.1);border:1px solid var(--blue);border-radius:6px;padding:8px;margin-top:8px;"><div style="font-size:10px;color:var(--blue);font-weight:bold;margin-bottom:4px;">📅 PARCELAS DESTE MÊS</div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;color:#888;">${pagasMes}/${parcelasMes.length} pagas</span><strong style="font-size:14px;color:var(--blue);">R$ ${formatMoeda(totalMes)}</strong></div></div>`;
+            }
+        }
+        // ==========================================
+
+        dAP.innerHTML+=`<div class="item-card" style="border-left-color:${status==='quitado'?'var(--green)':(status==='vencido'?'var(--red)':'var(--orange)')}">
+<div class="card-header"><h4 onclick="editarAPagar(${a.id})">${tipoIcon} ${a.nome||'Sem Nome'}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('a_pagar', ${a.id})"></i></div>
+<span class="badge-status status-${status}">${status==='quitado'?'✅ Quitado':(status==='vencido'?'⚠️ Vencido':(status==='parcial'?'⏳ Parcial':'🔴 Pendente'))}</span>
+<div class="info-linha">
+<span class="label-mini">DESCRIÇÃO</span>
+<div class="texto-info" style="font-size:13px;">${a.descricao||'Sem descrição'}</div>
+<div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;">
+<span style="color:#888;">Criado: ${formatarDataBR(a.data_criacao)}</span>
+<span style="color:${vencColor};font-weight:bold;">${vencTxt}</span>
+</div>
+<div style="margin-top:10px;background:rgba(255,255,255,0.03);border-radius:6px;padding:8px;border:1px solid #333;">
+<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;">
+<span style="color:#888;">Progresso: ${barraPct}%</span>
+<span style="color:var(--green);font-weight:bold;">Pago: R$ ${formatMoeda(pago)}</span>
+</div>
+<div style="width:100%;height:6px;background:#333;border-radius:3px;overflow:hidden;">
+<div style="width:${barraPct}%;height:100%;background:${status==='quitado'?'var(--green)':'var(--blue)'};border-radius:3px;transition:width 0.3s;"></div>
+</div>
+<div style="display:flex;justify-content:space-between;margin-top:8px;">
+<div class="fin-box" style="flex:1;margin-right:4px;"><span>Total</span><strong style="color:var(--text);font-size:12px;">R$ ${formatMoeda(a.valor_total)}</strong></div>
+<div class="fin-box" style="flex:1;margin:0 4px;"><span>Pago</span><strong style="color:var(--green);font-size:12px;">R$ ${formatMoeda(pago)}</strong></div>
+<div class="fin-box" style="flex:1;margin-left:4px;"><span>Restante</span><strong style="color:${rest>0?'var(--red)':'var(--green)'};font-size:12px;">R$ ${formatMoeda(rest)}</strong></div>
+</div>
+${parcelasInfo}
+</div>
+</div>
+</div>`
+    })
+}
 <div class="card-header"><h4 onclick="editarAPagar(${a.id})">${tipoIcon} ${a.nome||'Sem Nome'}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('a_pagar', ${a.id})"></i></div>
 <span class="badge-status status-${status}">${status==='quitado'?'✅ Quitado':(status==='vencido'?'⚠️ Vencido':(status==='parcial'?'⏳ Parcial':'🔴 Pendente'))}</span>
 <div class="info-linha">
