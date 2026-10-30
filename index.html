@@ -240,7 +240,30 @@ body *{visibility:hidden}
 <div id="modalAgenda" class="modal"><div class="modal-content" style="border-color:var(--purple)"><h3 style="color:var(--purple);margin-top:0"><i class="fas fa-calendar-alt"></i> Compromisso / Agenda</h3><input type="hidden" id="a_id"><label>Cliente / Título</label><input type="text" id="a_cliente"><label>Descrição / Assunto</label><textarea id="a_servico" rows="3"></textarea><div style="display:flex;gap:10px"><div style="flex:1"><label>Data</label><input type="date" id="a_data"></div><div style="flex:1"><label>Status</label><select id="a_status"><option value="pendente">Pendente</option><option value="concluido">Concluído (Mover p/ Pedido)</option><option value="compra">Converter p/ Compras</option></select></div></div><label>Endereço</label><input type="text" id="a_endereco"><div style="display:flex;gap:10px"><div style="flex:1"><label>Nº</label><input type="text" id="a_numero"></div><div style="flex:2"><label>Comp.</label><input type="text" id="a_complemento"></div></div><label>Cidade</label><input type="text" id="a_cidade"><label>Lembrete Extra</label><textarea id="a_lembrete" rows="2"></textarea><label style="color:var(--gold);font-size:11px;margin-top:15px; margin-bottom:5px;"><i class="fas fa-list-ul"></i> Itens (Opcional)</label><div style="display:flex;gap:10px;margin-bottom:10px"><button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1; margin:0;" onclick="abrirSeletorEstoque('agenda')"><i class="fas fa-box"></i> ESTOQUE</button><button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);flex:1; margin:0;" onclick="abrirSeletorServico('agenda')"><i class="fas fa-tools"></i> CATÁLOGO</button></div><div id="container_itens_agenda" style="margin-bottom: 15px;"></div><button onclick="salvarAgenda()" style="width:100%;padding:15px;background:var(--purple);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR COMPROMISSO</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
 <div id="modalEstoque" class="modal"><div class="modal-content"><input type="hidden" id="e_id"><label>Item/Produto</label><input type="text" id="e_item"><label>Localização</label><input type="text" id="e_localizacao"><label>Link do Produto (URL)</label><input type="url" id="e_link" placeholder="https://..."><label>Quantidade</label><input type="number" id="e_qtd"><label>Valor Venda (R$)</label><input type="number" id="e_venda"><button onclick="salvarEstoque()" style="width:100%;padding:15px;background:var(--orange);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
 <div id="modalGastos" class="modal"><div class="modal-content"><input type="hidden" id="g_id"><label>Descrição do Gasto</label><input type="text" id="g_descricao"><label>Valor (R$)</label><input type="number" id="g_valor"><label>Data</label><input type="date" id="g_data"><button onclick="salvarGasto()" style="width:100%;padding:15px;background:var(--red);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR GASTO</button><button id="btn_duplicar_gasto" onclick="duplicarRegistroAtual('gasto')" style="width:100%;padding:12px;background:none;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-copy"></i> DUPLICAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
-<div id="modalAPagar" class="modal"><div class="modal-content modal-large" style="border-color:var(--red);"><h3 style="color:var(--red);margin-top:0;text-align:center;"><i class="fas fa-hand-holding-usd"></i> Conta a Pagar</h3><input type="hidden" id="ap_id"><div style="display:flex;gap:10px;"><div style="flex:1"><label>Tipo</label><select id="ap_tipo" onchange="atualizarLabelAPagar()"><option value="funcionario">👷 Funcionário</option><option value="emprestimo">🏦 Empréstimo</option><option value="fornecedor">🏭 Fornecedor</option><option value="aluguel">🏠 Aluguel</option><option value="outro"> Outro</option></select></div><div style="flex:1"><label>Data de Criação</label><input type="date" id="ap_data_criacao"></div></div><label id="ap_label_nome">Nome do Funcionário</label><input type="text" id="ap_nome" placeholder="Ex: João da Silva"><label>Descrição / Motivo</label><textarea id="ap_descricao" rows="2" placeholder="Ex: Salário de Setembro, Empréstimo pessoal..."></textarea><div style="display:flex;gap:10px;"><div style="flex:1"><label>Valor Total (R$)</label><input type="number" id="ap_valor_total" value="0" oninput="calcularRestanteAPagar()" style="font-size:18px;font-weight:bold;color:var(--red);text-align:center;"></div><div style="flex:1"><label>Data de Vencimento</label><input type="date" id="ap_data_vencimento"></div></div><div class="restante-display" id="ap_restante_box"><span>💰 Restante a Pagar</span><strong id="ap_restante_valor">R$ 0,00</strong></div><label style="color:var(--green);font-size:12px;margin-top:10px;"><i class="fas fa-plus-circle"></i> Registrar Pagamento / Adiantamento</label><div style="display:flex;gap:10px;align-items:flex-end;"><div style="flex:1"><label>Valor Pago (R$)</label><input type="number" id="ap_novo_pagamento" value="0" style="font-size:16px;font-weight:bold;color:var(--green);text-align:center;border-color:var(--green);"></div><div style="flex:1"><label>Data do Pagamento</label><input type="date" id="ap_data_pagamento"></div><div style="flex:0 0 auto;"><button onclick="adicionarPagamentoAPagar()" style="padding:12px 20px;background:var(--green);border:none;border-radius:8px;color:#fff;font-weight:bold;cursor:pointer;font-size:14px;margin-bottom:12px;"><i class="fas fa-plus"></i></button></div></div><label style="color:var(--gold);font-size:11px;"><i class="fas fa-history"></i> Histórico de Pagamentos</label><div class="pagamento-historico" id="ap_historico_container"><div style="text-align:center;color:#666;font-size:12px;padding:10px;">Nenhum pagamento registrado.</div></div><label>Observações</label><textarea id="ap_observacoes" rows="2" placeholder="Anotações extras..."></textarea><button onclick="salvarAPagar()" style="width:100%;padding:15px;background:var(--red);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer;font-size:15px;"><i class="fas fa-save"></i> SALVAR CONTA A PAGAR</button><button id="btn_imprimir_apagar" onclick="imprimirReciboAPagar()" style="width:100%;padding:12px;background:none;border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-file-invoice"></i> IMPRIMIR RECIBO (PDF)</button><button id="btn_zap_apagar" onclick="enviarWhatsAppAPagar()" style="width:100%;padding:12px;background:none;border:1px solid #25D366;border-radius:8px;color:#25D366;font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fab fa-whatsapp"></i> ENVIAR RECIBO (WhatsApp)</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
+<div id="modalAPagar" class="modal"><div class="modal-content modal-large" style="border-color:var(--red);"><h3 style="color:var(--red);margin-top:0;text-align:center;"><i class="fas fa-hand-holding-usd"></i> Conta a Pagar</h3><input type="hidden" id="ap_id"><div style="display:flex;gap:10px;"><div style="flex:1"><label>Tipo</label><select id="ap_tipo" onchange="atualizarLabelAPagar()"><option value="funcionario">👷 Funcionário</option><option value="emprestimo">🏦 Empréstimo</option><option value="fornecedor">🏭 Fornecedor</option><option value="aluguel">🏠 Aluguel</option><option value="outro"> Outro</option></select></div><div style="flex:1"><label>Data de Criação</label><input type="date" id="ap_data_criacao"></div></div><label id="ap_label_nome">Nome do Funcionário</label><input type="text" id="ap_nome" placeholder="Ex: João da Silva"><label>Descrição / Motivo</label><textarea id="ap_descricao" rows="2" placeholder="Ex: Salário de Setembro, Empréstimo pessoal..."></textarea><div style="display:flex;gap:10px;"><div style="flex:1"><label>Valor Total (R$)</label><input type="number" id="ap_valor_total" value="0" oninput="calcularRestanteAPagar()" style="font-size:18px;font-weight:bold;color:var(--red);text-align:center;"></div><div style="flex:1"><label>Data de Vencimento</label><div id="secao_faltas_funcionario" style="display:none; background:rgba(255,159,10,0.05); border:1px solid rgba(255,159,10,0.3); border-radius:10px; padding:15px; margin:15px 0;">
+<label style="color:var(--orange); font-size:12px; margin-bottom:10px; display:block;"><i class="fas fa-user-times"></i> Desconto por Faltas (Funcionário)</label>
+<div style="display:flex; gap:10px; align-items:flex-end;">
+<div style="flex:1;">
+<label>Valor Diário (R$)</label>
+<input type="number" id="ap_valor_diario" value="0" step="0.01" style="font-size:14px; font-weight:bold; color:var(--orange); text-align:center; border-color:var(--orange);" readonly>
+<small style="color:#888; font-size:10px; display:block; margin-top:3px;">Salário ÷ 30 dias</small>
+</div>
+<div style="flex:1;">
+<label>Dias Faltados</label>
+<input type="number" id="ap_dias_faltados" value="0" min="0" style="font-size:16px; font-weight:bold; color:var(--red); text-align:center; border-color:var(--red);">
+</div>
+<div style="flex:0 0 auto;">
+<button onclick="aplicarDescontoFalta()" style="padding:12px 20px; background:var(--orange); border:none; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer; font-size:14px; margin-bottom:12px;" title="Aplicar Desconto"><i class="fas fa-minus-circle"></i></button>
+</div>
+</div>
+<div id="preview_desconto" style="margin-top:10px; padding:10px; background:rgba(255,69,58,0.1); border-radius:6px; display:none;">
+<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+<span style="color:#888;">Desconto calculado:</span>
+<strong id="valor_desconto_preview" style="color:var(--red);">R$ 0,00</strong>
+</div>
+<div style="font-size:11px; color:#aaa;" id="descricao_desconto_preview"></div>
+</div>
+</div><input type="date" id="ap_data_vencimento"></div></div><div class="restante-display" id="ap_restante_box"><span>💰 Restante a Pagar</span><strong id="ap_restante_valor">R$ 0,00</strong></div><label style="color:var(--green);font-size:12px;margin-top:10px;"><i class="fas fa-plus-circle"></i> Registrar Pagamento / Adiantamento</label><div style="display:flex;gap:10px;align-items:flex-end;"><div style="flex:1"><label>Valor Pago (R$)</label><input type="number" id="ap_novo_pagamento" value="0" style="font-size:16px;font-weight:bold;color:var(--green);text-align:center;border-color:var(--green);"></div><div style="flex:1"><label>Data do Pagamento</label><input type="date" id="ap_data_pagamento"></div><div style="flex:0 0 auto;"><button onclick="adicionarPagamentoAPagar()" style="padding:12px 20px;background:var(--green);border:none;border-radius:8px;color:#fff;font-weight:bold;cursor:pointer;font-size:14px;margin-bottom:12px;"><i class="fas fa-plus"></i></button></div></div><label style="color:var(--gold);font-size:11px;"><i class="fas fa-history"></i> Histórico de Pagamentos</label><div class="pagamento-historico" id="ap_historico_container"><div style="text-align:center;color:#666;font-size:12px;padding:10px;">Nenhum pagamento registrado.</div></div><label>Observações</label><textarea id="ap_observacoes" rows="2" placeholder="Anotações extras..."></textarea><button onclick="salvarAPagar()" style="width:100%;padding:15px;background:var(--red);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer;font-size:15px;"><i class="fas fa-save"></i> SALVAR CONTA A PAGAR</button><button id="btn_imprimir_apagar" onclick="imprimirReciboAPagar()" style="width:100%;padding:12px;background:none;border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-file-invoice"></i> IMPRIMIR RECIBO (PDF)</button><button id="btn_zap_apagar" onclick="enviarWhatsAppAPagar()" style="width:100%;padding:12px;background:none;border:1px solid #25D366;border-radius:8px;color:#25D366;font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fab fa-whatsapp"></i> ENVIAR RECIBO (WhatsApp)</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
 <div id="modalCompras" class="modal"><div class="modal-content"><input type="hidden" id="c_id"><label>Cliente/Referência</label><input type="text" id="c_cliente" placeholder="Ex: Projeto Cozinha"><div style="display:flex;gap:10px"><div style="flex:1"><label>Data</label><input type="date" id="c_data"></div><div style="flex:1"><label>Status</label><select id="c_status"><option value="em_compra">Em Compra</option><option value="concluido">Concluída (Gera Gasto)</option><option value="orcamento">Converter em Orçamento</option></select></div></div><div style="background:rgba(255,255,255,.05);padding:10px;border-radius:8px;margin-bottom:10px;border:1px solid #444"><label style="color:var(--pink)"><i class="fas fa-plus-circle"></i> Novo Item</label><input type="text" id="c_item_nome" placeholder="Nome do item"><div style="display:flex;gap:10px"><div style="flex:1"><label>Qtd</label><input type="number" id="c_item_qtd" value="1"></div><div style="flex:1"><label>Valor Un.(R$)</label><input type="number" id="c_item_valor" placeholder="0.00"></div></div><div style="display:flex;gap:5px"><button class="btn-outline" style="color:var(--pink);border-color:var(--pink);flex:1;margin:0" onclick="adicionarItemCompraUI()"><i class="fas fa-plus"></i> NA LISTA</button><button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1;margin:0" onclick="adicionarItemCompraAoEstoque()"><i class="fas fa-box"></i> NO ESTOQUE</button></div><button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);margin-top:10px;width:100%" onclick="abrirSeletorEstoque('compra')"><i class="fas fa-search"></i> PUXAR DO ESTOQUE</button></div><div id="container_itens_compra" style="max-height:200px;overflow-y:auto;margin-bottom:10px"></div><label>Total da Compra (R$)</label><input type="number" id="c_total" value="0"><button onclick="salvarCompra()" style="width:100%;padding:15px;background:var(--pink);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:10px;cursor:pointer">SALVAR LISTA</button><button onclick="imprimirCompra()" style="width:100%;padding:12px;background:none;border:1px solid var(--blue);border-radius:8px;color:var(--blue);font-weight:bold;margin-top:10px;cursor:pointer"><i class="fas fa-print"></i> IMPRIMIR LISTA</button><button id="btn_duplicar_compra" onclick="duplicarRegistroAtual('compra')" style="width:100%;padding:12px;background:none;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:bold;margin-top:10px;cursor:pointer;display:none"><i class="fas fa-copy"></i> DUPLICAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
 <div id="modalServicosCatalogo" class="modal"><div class="modal-content"><input type="hidden" id="sc_id"><label>Nome do Serviço</label><input type="text" id="sc_nome"><label>Preço Base (R$)</label><input type="number" id="sc_preco"><button onclick="salvarServicoCatalogo()" style="width:100%;padding:15px;background:var(--cyan);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR</button><button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
 <div id="modalSeletorEstoque" class="modal"><div class="modal-content" style="border-color:var(--orange)"><h3 style="color:var(--orange);margin-top:0"><i class="fas fa-box"></i> Estoque</h3><label>Selecione</label><select id="sel_produto_estoque"></select><label>Qtd</label><input type="number" id="sel_qtd_estoque" value="1"><button onclick="confirmarAdicaoItem()" style="width:100%;padding:15px;background:var(--orange);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">ADICIONAR</button><button onclick="document.getElementById('modalSeletorEstoque').style.display='none'" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button></div></div>
@@ -1627,6 +1650,186 @@ window.abrirModalPorTela=function(){
   }
   _abrirModalOrig();
 };
+  // ========== SISTEMA DE DESCONTO POR FALTAS ==========
+function atualizarValorDiarioFuncionario() {
+const tipo = document.getElementById('ap_tipo').value;
+const secaoFaltas = document.getElementById('secao_faltas_funcionario');
+const valorDiarioInput = document.getElementById('ap_valor_diario');
+const diasFaltadosInput = document.getElementById('ap_dias_faltados');
+
+if (tipo === 'funcionario') {
+secaoFaltas.style.display = 'block';
+const salarioTotal = parseFloat(document.getElementById('ap_valor_total').value) || 0;
+const valorDiario = salarioTotal > 0 ? (salarioTotal / 30) : 0;
+valorDiarioInput.value = valorDiario.toFixed(2);
+diasFaltadosInput.value = '0';
+document.getElementById('preview_desconto').style.display = 'none';
+} else {
+secaoFaltas.style.display = 'none';
+}
+}
+
+function aplicarDescontoFalta() {
+const valorDiario = parseFloat(document.getElementById('ap_valor_diario').value) || 0;
+const diasFaltados = parseInt(document.getElementById('ap_dias_faltados').value) || 0;
+const nomeFuncionario = document.getElementById('ap_nome').value || 'Funcionário';
+
+if (valorDiario <= 0) {
+showToast("Defina o salário total primeiro!", "error");
+return;
+}
+
+if (diasFaltados <= 0) {
+showToast("Digite a quantidade de dias faltados!", "error");
+return;
+}
+
+const valorDesconto = valorDiario * diasFaltados;
+const dtHoje = hojeLocal();
+
+// Mostra preview antes de confirmar
+const preview = document.getElementById('preview_desconto');
+const valorPreview = document.getElementById('valor_desconto_preview');
+const descPreview = document.getElementById('descricao_desconto_preview');
+
+valorPreview.innerText = "R$ " + formatMoeda(valorDesconto);
+descPreview.innerText = `${diasFaltados} dia(s) × R$ ${formatMoeda(valorDiario)} = Desconto de R$ ${formatMoeda(valorDesconto)}`;
+preview.style.display = 'block';
+
+if (!confirm(`Aplicar desconto de R$ ${formatMoeda(valorDesconto)} por ${diasFaltados} dia(s) de falta?\n\nIsso será registrado como um "pagamento negativo" no histórico.`)) {
+preview.style.display = 'none';
+return;
+}
+
+// Adiciona como pagamento negativo no histórico
+pagamentosTempAPagar.push({
+valor: -valorDesconto, // Valor negativo = desconto
+data: dtHoje,
+id: generateID(),
+tipo: 'desconto_falta',
+descricao: `Desconto: ${diasFaltados} falta(s) de ${nomeFuncionario}`
+});
+
+document.getElementById('ap_dias_faltados').value = '0';
+preview.style.display = 'none';
+
+renderizarHistoricoTempAPagar();
+calcularRestanteAPagar();
+showToast(`Desconto de R$ ${formatMoeda(valorDesconto)} aplicado!`, "success");
+}
+
+// Modificar a função renderizarHistoricoTempAPagar para mostrar descontos
+const _renderizarHistoricoOrig = renderizarHistoricoTempAPagar;
+window.renderizarHistoricoTempAPagar = function() {
+const c = document.getElementById('ap_historico_container');
+if (pagamentosTempAPagar.length === 0) {
+c.innerHTML = '<div style="text-align:center;color:#666;font-size:12px;padding:10px;">Nenhum pagamento registrado.</div>';
+return;
+}
+
+let totalPago = 0;
+let totalDescontos = 0;
+
+c.innerHTML = pagamentosTempAPagar.map((p, i) => {
+const isDesconto = p.valor < 0 || p.tipo === 'desconto_falta';
+const valorAbs = Math.abs(p.valor);
+
+if (isDesconto) {
+totalDescontos += valorAbs;
+} else {
+totalPago += p.valor;
+}
+
+const cor = isDesconto ? 'var(--red)' : 'var(--green)';
+const icone = isDesconto ? 'fa-minus-circle' : 'fa-plus-circle';
+const label = isDesconto ? 'DESCONTO' : 'PAGAMENTO';
+const desc = p.descricao || (isDesconto ? 'Desconto aplicado' : 'Pagamento / Adiantamento');
+
+return `<div class="pagamento-row" style="background:${isDesconto ? 'rgba(255,69,58,0.05)' : 'transparent'}; padding:10px; border-radius:6px; margin-bottom:5px;">
+<div style="flex:1;">
+<div style="display:flex; align-items:center; gap:8px; margin-bottom:3px;">
+<i class="fas ${icone}" style="color:${cor}; font-size:14px;"></i>
+<span style="font-size:10px; color:${cor}; font-weight:bold; text-transform:uppercase;">${label}</span>
+</div>
+<span style="color:${cor}; font-weight:bold; font-size:15px;">${isDesconto ? '-' : ''}R$ ${formatMoeda(valorAbs)}</span><br>
+<span style="color:#888; font-size:10px;">${formatarDataBR(p.data)}</span>
+${desc && desc !== 'Pagamento / Adiantamento' ? `<div style="font-size:11px; color:#aaa; margin-top:3px;">${esc(desc)}</div>` : ''}
+</div>
+<i class="fas fa-trash" style="color:var(--red); cursor:pointer; padding:8px;" onclick="removerPagamentoTempAPagar(${i})"></i>
+</div>`;
+}).join('');
+
+// Resumo final
+let resumoHTML = '<div style="border-top:2px solid #444; margin-top:10px; padding-top:10px;">';
+
+if (totalPago > 0) {
+resumoHTML += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+<span style="color:#888;">Total Pago:</span>
+<strong style="color:var(--green);">R$ ${formatMoeda(totalPago)}</strong>
+</div>`;
+}
+
+if (totalDescontos > 0) {
+resumoHTML += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+<span style="color:#888;">Total Descontos:</span>
+<strong style="color:var(--red);">- R$ ${formatMoeda(totalDescontos)}</strong>
+</div>`;
+}
+
+const liquido = totalPago - totalDescontos;
+resumoHTML += `<div style="display:flex; justify-content:space-between; font-size:13px; margin-top:8px; padding-top:8px; border-top:1px dashed #444;">
+<span style="color:#aaa; font-weight:bold;">Líquido:</span>
+<strong style="color:${liquido >= 0 ? 'var(--green)' : 'var(--red)'}; font-size:15px;">R$ ${formatMoeda(liquido)}</strong>
+</div>`;
+
+resumoHTML += '</div>';
+c.innerHTML += resumoHTML;
+}
+
+// Modificar calcularRestanteAPagar para considerar descontos
+const _calcularRestanteOrig = calcularRestanteAPagar;
+window.calcularRestanteAPagar = function() {
+const total = parseFloat(document.getElementById('ap_valor_total').value) || 0;
+let pagos = 0;
+let descontos = 0;
+
+pagamentosTempAPagar.forEach(p => {
+if (p.valor < 0 || p.tipo === 'desconto_falta') {
+descontos += Math.abs(p.valor);
+} else {
+pagos += p.valor;
+}
+});
+
+const novoPgto = parseFloat(document.getElementById('ap_novo_pagamento').value) || 0;
+const liquidoRecebido = pagos + novoPgto - descontos;
+const rest = Math.max(0, total - liquidoRecebido);
+
+const box = document.getElementById('ap_restante_box');
+const val = document.getElementById('ap_restante_valor');
+val.innerText = "R$ " + formatMoeda(rest);
+
+if (rest <= 0 && total > 0) {
+box.classList.add('quitado');
+} else {
+box.classList.remove('quitado');
+}
+}
+
+// Atualizar a função atualizarLabelAPagar para chamar atualizarValorDiarioFuncionario
+const _atualizarLabelOrig = atualizarLabelAPagar;
+window.atualizarLabelAPagar = function() {
+_atualizarLabelOrig();
+atualizarValorDiarioFuncionario();
+}
+
+// Quando o valor total mudar, recalcular valor diário
+document.getElementById('ap_valor_total').addEventListener('input', function() {
+const tipo = document.getElementById('ap_tipo').value;
+if (tipo === 'funcionario') {
+atualizarValorDiarioFuncionario();
+}
+});
   </script>
 </body>
 </html>
