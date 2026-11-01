@@ -1850,5 +1850,88 @@ window.renderizarAPagar=function(){
 };
 try{renderizarTudo();}catch(e){}
 </script>
+  <script>
+/* ===== PATCH: ATUALIZAÇÃO AUTOMÁTICA (dados + versão do app) ===== */
+
+/* ---------- 1) DADOS: busca na nuvem sem precisar de F5 ---------- */
+let _sincRodando=false;
+function atualizarDaNuvem(silencioso){
+  if(!navigator.onLine||isSyncing||_sincRodando) return;
+  if(!firebase.auth().currentUser) return;
+  _sincRodando=true;
+  database.ref('alvesProDB').once('value').then(s=>{
+    const nuvem=s.val();
+    if(!nuvem) return;
+    /* só aplica se a nuvem for mais nova que o que está no aparelho */
+    if((nuvem.last_updated||0)>(DB.last_updated||0)){
+      DB=nuvem;
+      garantirArraysDB();
+      try{localStorage.setItem('alvesProDB',JSON.stringify(DB));}catch(e){}
+      carregarDados();
+      if(!silencioso) showToast('Dados atualizados!','info');
+    }
+  }).catch(()=>{}).finally(()=>{_sincRodando=false;});
+}
+
+/* ao voltar para o app (abrir, trocar de aba, desbloquear celular) */
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden){
+    try{database.goOnline();}catch(e){}
+    atualizarDaNuvem(false);
+  }
+});
+window.addEventListener('focus',()=>atualizarDaNuvem(true));
+window.addEventListener('online',()=>{
+  try{database.goOnline();}catch(e){}
+  setTimeout(()=>atualizarDaNuvem(false),800);
+});
+
+/* a cada 30 segundos, enquanto o app estiver aberto e visível */
+setInterval(()=>{ if(!document.hidden) atualizarDaNuvem(true); },30000);
+
+/* ---------- 2) VERSÃO DO APP: recarrega sozinho quando há código novo ---------- */
+if('serviceWorker' in navigator){
+  const tinhaControlador=!!navigator.serviceWorker.controller;
+  let recarregando=false;
+
+  function haModalAberto(){
+    return [...document.querySelectorAll('.modal')].some(m=>m.style.display==='flex');
+  }
+  function recarregarQuandoSeguro(){
+    if(recarregando) return;
+    if(haModalAberto()){
+      /* não perde o que você está digitando: espera fechar o modal */
+      showToast('Nova versão pronta. Atualizo quando fechar a janela.','info');
+      const t=setInterval(()=>{
+        if(!haModalAberto()){clearInterval(t);recarregando=true;location.reload();}
+      },1500);
+      return;
+    }
+    recarregando=true;
+    location.reload();
+  }
+
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(tinhaControlador) recarregarQuandoSeguro();
+  });
+
+  navigator.serviceWorker.getRegistration().then(reg=>{
+    if(!reg) return;
+    const checar=()=>reg.update().catch(()=>{});
+    checar();
+    setInterval(checar,60000);
+    document.addEventListener('visibilitychange',()=>{ if(!document.hidden) checar(); });
+    reg.addEventListener('updatefound',()=>{
+      const nw=reg.installing;
+      if(!nw) return;
+      nw.addEventListener('statechange',()=>{
+        if(nw.state==='installed'&&navigator.serviceWorker.controller){
+          nw.postMessage({type:'SKIP_WAITING'});
+        }
+      });
+    });
+  });
+}
+</script>
 </body>
 </html>
