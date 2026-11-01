@@ -1644,5 +1644,211 @@ atualizarValorDiarioFuncionario();
 }
 });
 </script>
+  <script>
+/* ===== PATCH: PDF DO ESTOQUE + PARCELAMENTO NO A PAGAR ===== */
+
+/* ---------- 1) EXPORTAR ESTOQUE EM PDF ---------- */
+(function(){
+  const t=document.querySelector('#tela_estoque .estoque-summary');
+  if(t) t.insertAdjacentHTML('afterend','<button class="btn-outline" style="color:var(--blue);border-color:var(--blue)" onclick="exportarEstoquePDF()"><i class="fas fa-file-pdf"></i> EXPORTAR ESTOQUE (PDF)</button>');
+})();
+function exportarEstoquePDF(){
+  if(!dadosEstoque.length) return showToast('Estoque vazio!','error');
+  const c=DB.config||{}, dHj=formatarDataBR(hojeLocal()), hHj=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const logoH=c.logo&&c.logo.indexOf('data:')===0?`<img src="${c.logo}" style="max-height:70px;max-width:150px;object-fit:contain;">`:'';
+  let tu=0,tv=0;
+  const td='padding:7px;border-bottom:1px solid #ccc;vertical-align:top;';
+  const linhas=dadosEstoque.map((e,i)=>{
+    const q=parseInt(e.quantidade)||0, v=parseFloat(e.valor_venda)||0, s=q*v; tu+=q; tv+=s;
+    return `<tr style="page-break-inside:avoid"><td style="${td}text-align:center">${i+1}</td><td style="${td}font-weight:bold">${esc(e.item)}</td><td style="${td}">${esc(e.localizacao)||'-'}</td><td style="${td}font-size:10px;word-break:break-all">${esc(e.link)||'-'}</td><td style="${td}text-align:center;font-weight:bold">${q}</td><td style="${td}text-align:right">R$ ${formatMoeda(v)}</td><td style="${td}text-align:right;font-weight:bold">R$ ${formatMoeda(s)}</td></tr>`;
+  }).join('');
+  const th='padding:8px;border-bottom:2px solid #000;';
+  document.getElementById('area-impressao').innerHTML=`<div style="font-family:'Segoe UI',Arial,sans-serif;color:#000;padding:20px;max-width:800px;margin:0 auto;box-sizing:border-box;">
+  <table style="width:100%;border-bottom:3px solid #000;margin-bottom:18px;"><tr><td style="width:25%">${logoH}</td><td style="text-align:center"><h2 style="margin:0;text-transform:uppercase">${esc(c.nome||'Minha Empresa')}</h2><p style="margin:4px 0 0;font-size:13px;color:#444">Relatório de Estoque</p></td><td style="width:25%;text-align:right;font-size:12px;color:#555">Emitido em<br><b>${dHj}</b> às ${hHj}</td></tr></table>
+  <div style="display:flex;gap:10px;margin-bottom:18px;">
+    <div style="flex:1;border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center"><span style="font-size:10px;color:#555">PRODUTOS</span><br><b style="font-size:18px">${dadosEstoque.length}</b></div>
+    <div style="flex:1;border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center"><span style="font-size:10px;color:#555">TOTAL DE UNIDADES</span><br><b style="font-size:18px">${tu}</b></div>
+    <div style="flex:1;border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center"><span style="font-size:10px;color:#555">VALOR TOTAL</span><br><b style="font-size:18px">R$ ${formatMoeda(tv)}</b></div>
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:12px;"><thead style="display:table-header-group;background:#e9ecef"><tr><th style="${th}">#</th><th style="${th}text-align:left">Item</th><th style="${th}text-align:left">Localização</th><th style="${th}text-align:left">Link</th><th style="${th}">Qtd</th><th style="${th}text-align:right">Valor Un.</th><th style="${th}text-align:right">Subtotal</th></tr></thead><tbody>${linhas}</tbody>
+  <tfoot><tr><td colspan="4" style="padding:10px;text-align:right;font-weight:bold">TOTAIS:</td><td style="padding:10px;text-align:center;font-weight:bold">${tu}</td><td></td><td style="padding:10px;text-align:right;font-weight:bold;font-size:14px">R$ ${formatMoeda(tv)}</td></tr></tfoot></table></div>`;
+  setTimeout(()=>window.print(),300);
+}
+
+/* ---------- 2) PARCELAMENTO NO A PAGAR ---------- */
+let parcelasTempAPagar=[];
+
+function addMesesISO(iso,n){
+  const [y,m,d]=iso.split('-').map(Number);
+  const t=new Date(y,m-1+n,1), ult=new Date(t.getFullYear(),t.getMonth()+1,0).getDate();
+  return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(Math.min(d,ult)).padStart(2,'0');
+}
+
+/* interface dentro do modal */
+document.getElementById('ap_restante_box').insertAdjacentHTML('beforebegin',`
+<div id="secao_parcelas" style="background:rgba(10,132,255,0.08);border:1px solid rgba(10,132,255,0.3);border-radius:10px;padding:12px;margin:10px 0;">
+  <label style="color:var(--blue);margin-bottom:8px;"><i class="fas fa-calendar-check"></i> Parcelamento</label>
+  <div style="display:flex;gap:8px;">
+    <div style="flex:1"><label style="font-size:10px">Nº de parcelas</label><input type="number" id="ap_qtd_parcelas" value="12" min="1"></div>
+    <div style="flex:1"><label style="font-size:10px">1º vencimento</label><input type="date" id="ap_primeiro_venc"></div>
+  </div>
+  <button class="btn-outline" style="color:var(--blue);border-color:var(--blue);margin-bottom:5px" onclick="gerarParcelasAPagar()"><i class="fas fa-magic"></i> GERAR PARCELAS</button>
+  <div id="ap_parcelas_container"></div>
+</div>`);
+
+function gerarParcelasAPagar(){
+  const total=parseFloat(document.getElementById('ap_valor_total').value)||0;
+  const n=parseInt(document.getElementById('ap_qtd_parcelas').value)||0;
+  const d1=document.getElementById('ap_primeiro_venc').value;
+  if(total<=0) return showToast('Defina o valor total primeiro!','error');
+  if(n<1) return showToast('Informe o nº de parcelas!','error');
+  if(!d1) return showToast('Informe o 1º vencimento!','error');
+  if(parcelasTempAPagar.length&&!confirm('Substituir as parcelas atuais? Os pagamentos lançados por parcela serão removidos.')) return;
+  const ids=new Set(parcelasTempAPagar.map(p=>p.id));
+  pagamentosTempAPagar=pagamentosTempAPagar.filter(x=>!ids.has(x.parcela_id));
+  const base=Math.floor(total/n*100)/100;
+  parcelasTempAPagar=[];
+  for(let i=0;i<n;i++){
+    const v=i===n-1?+(total-base*(n-1)).toFixed(2):base;
+    parcelasTempAPagar.push({id:generateID()+i,num:i+1,valor:v,venc:addMesesISO(d1,i),pago:false});
+  }
+  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8(); calcularRestanteAPagar();
+  showToast(n+' parcelas geradas!','success');
+}
+function renderParcelasAPagar(){
+  const c=document.getElementById('ap_parcelas_container'); if(!c) return;
+  if(!parcelasTempAPagar.length){c.innerHTML='<div style="text-align:center;color:#666;font-size:12px;padding:8px">Sem parcelas. Informe e toque em GERAR.</div>';return;}
+  const n=parcelasTempAPagar.length, soma=parcelasTempAPagar.reduce((a,p)=>a+(parseFloat(p.valor)||0),0);
+  const total=parseFloat(document.getElementById('ap_valor_total').value)||0;
+  c.innerHTML='<div class="pagamento-historico" style="max-height:280px">'+parcelasTempAPagar.map((p,i)=>`
+  <div class="pagamento-row" style="gap:6px;${p.pago?'opacity:.6':''}">
+    <div class="todo-circle ${p.pago?'done':''}" style="cursor:pointer;margin-right:2px" onclick="togglePagoParcela(${i})">${p.pago?'<i class="fas fa-check"></i>':''}</div>
+    <span style="font-size:11px;color:#888;min-width:32px">${p.num}/${n}</span>
+    <input type="date" value="${p.venc}" onchange="editarParcela(${i},'venc',this.value)" style="margin:0;padding:6px;font-size:12px;width:135px">
+    <input type="number" step="0.01" value="${p.valor}" onchange="editarParcela(${i},'valor',this.value)" style="margin:0;padding:6px;font-size:12px;width:90px">
+    <i class="fas fa-trash" style="color:var(--red);cursor:pointer;padding:6px" onclick="removerParcela(${i})"></i>
+  </div>`).join('')+'</div>'
+  +`<div style="font-size:11px;margin-top:6px;color:${Math.abs(soma-total)>0.01?'var(--orange)':'#888'}">Soma das parcelas: R$ ${formatMoeda(soma)}${Math.abs(soma-total)>0.01?' (difere do valor total!)':''} • Toque no círculo para marcar como paga.</div>`;
+}
+function togglePagoParcela(i){
+  const p=parcelasTempAPagar[i], n=parcelasTempAPagar.length;
+  if(!p.pago){
+    pagamentosTempAPagar.push({valor:parseFloat(p.valor)||0,data:hojeLocal(),id:generateID(),parcela_id:p.id,descricao:`Parcela ${p.num}/${n}`});
+    p.pago=true;
+  }else{
+    pagamentosTempAPagar=pagamentosTempAPagar.filter(x=>x.parcela_id!==p.id);
+    p.pago=false;
+  }
+  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8(); calcularRestanteAPagar();
+}
+function editarParcela(i,campo,val){
+  const p=parcelasTempAPagar[i];
+  if(campo==='valor'){
+    p.valor=parseFloat(val)||0;
+    const pg=pagamentosTempAPagar.find(x=>x.parcela_id===p.id); if(pg) pg.valor=p.valor;
+  }else p.venc=val;
+  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8(); calcularRestanteAPagar();
+}
+function removerParcela(i){
+  const p=parcelasTempAPagar[i];
+  pagamentosTempAPagar=pagamentosTempAPagar.filter(x=>x.parcela_id!==p.id);
+  parcelasTempAPagar.splice(i,1);
+  parcelasTempAPagar.forEach((x,k)=>x.num=k+1);
+  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8(); calcularRestanteAPagar();
+}
+/* corrige a lixeira do histórico de pagamentos (estava sem efeito) e atualiza as parcelas */
+function removerPagamentoAPagar(i){
+  const pg=pagamentosTempAPagar[i]; if(!pg) return;
+  if(pg.parcela_id){const p=parcelasTempAPagar.find(x=>x.id===pg.parcela_id); if(p) p.pago=false;}
+  pagamentosTempAPagar.splice(i,1);
+  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8(); calcularRestanteAPagar();
+}
+const _renderPgOrig=r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8;
+window.r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8=function(){
+  _renderPgOrig();
+  document.querySelectorAll('#ap_historico_container .pagamento-row .fa-trash').forEach((el,i)=>{el.onclick=()=>removerPagamentoAPagar(i);});
+  renderParcelasAPagar();
+};
+
+/* salvar / editar / novo */
+window.salvarAPagar=function(){
+  garantirArraysDB();
+  const g=id=>document.getElementById(id);
+  const nome=g('ap_nome').value.trim(); if(!nome) return showToast("Digite o nome!","error");
+  const total=parseFloat(g('ap_valor_total').value)||0; if(total<=0) return showToast("Valor total deve ser maior que zero!","error");
+  const o={id:g('ap_id').value||generateID(),tipo:g('ap_tipo').value,nome:nome,descricao:g('ap_descricao').value,valor_total:total,
+    data_criacao:g('ap_data_criacao').value,data_vencimento:g('ap_data_vencimento').value,
+    pagamentos:pagamentosTempAPagar,parcelas:parcelasTempAPagar,observacoes:g('ap_observacoes').value};
+  if(g('ap_id').value){const i=DB.a_pagar.findIndex(x=>x.id==o.id);if(i>-1)DB.a_pagar[i]=o}else DB.a_pagar.push(o);
+  saveDB().then(()=>{fecharModais();renderizarTudo();showToast("Conta salva!","success")}).catch(e=>showToast("Erro: "+e.message,"error"));
+};
+const _editarAPagarOrig=editarAPagar;
+window.editarAPagar=function(id){
+  _editarAPagarOrig(id);
+  const a=DB.a_pagar.find(x=>x.id==id); if(!a) return;
+  parcelasTempAPagar=a.parcelas?JSON.parse(JSON.stringify(a.parcelas)):[];
+  document.getElementById('ap_qtd_parcelas').value=parcelasTempAPagar.length||12;
+  document.getElementById('ap_primeiro_venc').value=parcelasTempAPagar.length?parcelasTempAPagar[0].venc:'';
+  renderParcelasAPagar();
+};
+const _abrirModalOrig2=window.abrirModalPorTela;
+window.abrirModalPorTela=function(){
+  _abrirModalOrig2();
+  if(telaAtiva==='tela_a_pagar'){
+    parcelasTempAPagar=[];
+    document.getElementById('ap_qtd_parcelas').value=12;
+    document.getElementById('ap_primeiro_venc').value='';
+    renderParcelasAPagar();
+  }
+};
+
+/* ---------- 3) SOMA SÓ DAS PARCELAS DO MÊS ---------- */
+function parcelasDoMes(ym){
+  let total=0,pago=0,qtd=0;
+  (dadosAPagar||[]).forEach(a=>(a.parcelas||[]).forEach(p=>{
+    if((p.venc||'').slice(0,7)===ym){const v=parseFloat(p.valor)||0;total+=v;qtd++;if(p.pago)pago+=v;}
+  }));
+  return {total,pago,pendente:total-pago,qtd};
+}
+/* caixa na tela A Pagar */
+document.querySelector('#tela_a_pagar .apagar-summary').insertAdjacentHTML('afterend',`
+<div style="background:var(--card);border:1px solid var(--blue);border-radius:10px;padding:12px;margin-bottom:15px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+    <span style="font-size:11px;color:var(--blue);font-weight:bold;text-transform:uppercase"><i class="fas fa-calendar-alt"></i> Parcelas do mês</span>
+    <input type="month" id="ap_mes_ref" onchange="renderizarAPagar()" style="width:auto;margin:0;padding:6px;font-size:12px">
+  </div>
+  <div style="text-align:center;margin-top:8px"><span style="font-size:10px;color:#888">AINDA A PAGAR NO MÊS</span><br><strong id="ap_mes_pendente" style="font-size:22px;color:var(--orange)">R$ 0,00</strong><div id="ap_mes_detalhe" style="font-size:11px;color:#888;margin-top:3px"></div></div>
+</div>`);
+document.getElementById('ap_mes_ref').value=hojeLocal().slice(0,7);
+/* caixa no painel */
+document.getElementById('h_total_apagar').parentElement.parentElement.insertAdjacentHTML('afterend',`
+<div style="background:rgba(10,132,255,0.05);border:1px solid rgba(10,132,255,0.25);padding:12px;border-radius:12px;text-align:center;margin-bottom:10px;"><span style="color:#aaa;font-size:10px;font-weight:bold;text-transform:uppercase;display:block;margin-bottom:5px;"><i class="fas fa-calendar-alt"></i> Parcelas a pagar no mês selecionado</span><strong id="h_parcelas_mes" style="font-size:17px;color:var(--blue);">R$ 0,00</strong></div>`);
+function atualizarParcelasHome(){
+  const ym=document.getElementById('filtro_ano').value+'-'+document.getElementById('filtro_mes').value;
+  const r=parcelasDoMes(ym), el=document.getElementById('h_parcelas_mes');
+  if(el) el.innerText='R$ '+formatMoeda(r.pendente);
+}
+const _rgOrig=renderizarGrafico;
+window.renderizarGrafico=function(){_rgOrig();atualizarParcelasHome();};
+
+const _rapOrig=renderizarAPagar;
+window.renderizarAPagar=function(){
+  _rapOrig();
+  const ym=document.getElementById('ap_mes_ref').value||hojeLocal().slice(0,7), r=parcelasDoMes(ym);
+  document.getElementById('ap_mes_pendente').innerText='R$ '+formatMoeda(r.pendente);
+  document.getElementById('ap_mes_detalhe').innerText=r.qtd?`${r.qtd} parcela(s) • total do mês R$ ${formatMoeda(r.total)} • já pago R$ ${formatMoeda(r.pago)}`:'Nenhuma parcela neste mês';
+  /* info da próxima parcela em cada cartão */
+  document.querySelectorAll('#listaAPagar .item-card').forEach(card=>{
+    const h=card.querySelector('h4'); if(!h) return;
+    const m=(h.getAttribute('onclick')||'').match(/editarAPagar\((\d+)\)/); if(!m) return;
+    const a=DB.a_pagar.find(x=>x.id==m[1]); if(!a||!a.parcelas||!a.parcelas.length) return;
+    const pagas=a.parcelas.filter(p=>p.pago).length;
+    const prox=a.parcelas.filter(p=>!p.pago).sort((x,y)=>x.venc.localeCompare(y.venc))[0];
+    const txt=prox?`Próxima: <b>${formatarDataBR(prox.venc)}</b> — R$ ${formatMoeda(prox.valor)} (${prox.num}/${a.parcelas.length})`:'Todas as parcelas pagas ✅';
+    card.insertAdjacentHTML('beforeend',`<div style="margin-top:8px;padding:8px;background:rgba(10,132,255,0.08);border-radius:6px;font-size:11px;color:#ccc"><i class="fas fa-calendar-check" style="color:var(--blue)"></i> ${pagas}/${a.parcelas.length} parcelas pagas • ${txt}</div>`);
+  });
+};
+try{renderizarTudo();}catch(e){}
+</script>
 </body>
 </html>
