@@ -1712,7 +1712,7 @@ function gerarParcelasAPagar(){
     const v=i===n-1?+(total-base*(n-1)).toFixed(2):base;
     parcelasTempAPagar.push({id:generateID()+i,num:i+1,valor:v,venc:addMesesISO(d1,i),pago:false});
   }
-  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8(); calcularRestanteAPagar();
+  rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8(); calcularRestanteAPagar();
   showToast(n+' parcelas geradas!','success');
 }
 function renderParcelasAPagar(){
@@ -1739,7 +1739,7 @@ function togglePagoParcela(i){
     pagamentosTempAPagar=pagamentosTempAPagar.filter(x=>x.parcela_id!==p.id);
     p.pago=false;
   }
-  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8(); calcularRestanteAPagar();
+  rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8(); calcularRestanteAPagar();
 }
 function editarParcela(i,campo,val){
   const p=parcelasTempAPagar[i];
@@ -1747,24 +1747,24 @@ function editarParcela(i,campo,val){
     p.valor=parseFloat(val)||0;
     const pg=pagamentosTempAPagar.find(x=>x.parcela_id===p.id); if(pg) pg.valor=p.valor;
   }else p.venc=val;
-r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8(); calcularRestanteAPagar();
+rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8(); calcularRestanteAPagar();
 }
 function removerParcela(i){
   const p=parcelasTempAPagar[i];
   pagamentosTempAPagar=pagamentosTempAPagar.filter(x=>x.parcela_id!==p.id);
   parcelasTempAPagar.splice(i,1);
   parcelasTempAPagar.forEach((x,k)=>x.num=k+1);
-  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8(); calcularRestanteAPagar();
+  rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8(); calcularRestanteAPagar();
 }
 /* corrige a lixeira do histórico de pagamentos (estava sem efeito) e atualiza as parcelas */
 function removerPagamentoAPagar(i){
   const pg=pagamentosTempAPagar[i]; if(!pg) return;
   if(pg.parcela_id){const p=parcelasTempAPagar.find(x=>x.id===pg.parcela_id); if(p) p.pago=false;}
   pagamentosTempAPagar.splice(i,1);
-  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8(); calcularRestanteAPagar();
+  rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8(); calcularRestanteAPagar();
 }
-const _renderPgOrig=r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8;
-window.r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8=function(){
+const _renderPgOrig=rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8;
+window.rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8=function(){
   _renderPgOrig();
   document.querySelectorAll('#ap_historico_container .pagamento-row .fa-trash').forEach((el,i)=>{el.onclick=()=>removerPagamentoAPagar(i);});
   renderParcelasAPagar();
