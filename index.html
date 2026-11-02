@@ -1644,38 +1644,8 @@ atualizarValorDiarioFuncionario();
 }
 });
 </script>
-  <script>
-/* ===== PATCH: PDF DO ESTOQUE + PARCELAMENTO NO A PAGAR ===== */
-
-/* ---------- 1) EXPORTAR ESTOQUE EM PDF ---------- */
-(function(){
-  const t=document.querySelector('#tela_estoque .estoque-summary');
-  if(t) t.insertAdjacentHTML('afterend','<button class="btn-outline" style="color:var(--blue);border-color:var(--blue)" onclick="exportarEstoquePDF()"><i class="fas fa-file-pdf"></i> EXPORTAR ESTOQUE (PDF)</button>');
-})();
-function exportarEstoquePDF(){
-  if(!dadosEstoque.length) return showToast('Estoque vazio!','error');
-  const c=DB.config||{}, dHj=formatarDataBR(hojeLocal()), hHj=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  const logoH=c.logo&&c.logo.indexOf('data:')===0?`<img src="${c.logo}" style="max-height:70px;max-width:150px;object-fit:contain;">`:'';
-  let tu=0,tv=0;
-  const td='padding:7px;border-bottom:1px solid #ccc;vertical-align:top;';
-  const linhas=dadosEstoque.map((e,i)=>{
-    const q=parseInt(e.quantidade)||0, v=parseFloat(e.valor_venda)||0, s=q*v; tu+=q; tv+=s;
-    return `<tr style="page-break-inside:avoid"><td style="${td}text-align:center">${i+1}</td><td style="${td}font-weight:bold">${esc(e.item)}</td><td style="${td}">${esc(e.localizacao)||'-'}</td><td style="${td}font-size:10px;word-break:break-all">${esc(e.link)||'-'}</td><td style="${td}text-align:center;font-weight:bold">${q}</td><td style="${td}text-align:right">R$ ${formatMoeda(v)}</td><td style="${td}text-align:right;font-weight:bold">R$ ${formatMoeda(s)}</td></tr>`;
-  }).join('');
-  const th='padding:8px;border-bottom:2px solid #000;';
-  document.getElementById('area-impressao').innerHTML=`<div style="font-family:'Segoe UI',Arial,sans-serif;color:#000;padding:20px;max-width:800px;margin:0 auto;box-sizing:border-box;">
-  <table style="width:100%;border-bottom:3px solid #000;margin-bottom:18px;"><tr><td style="width:25%">${logoH}</td><td style="text-align:center"><h2 style="margin:0;text-transform:uppercase">${esc(c.nome||'Minha Empresa')}</h2><p style="margin:4px 0 0;font-size:13px;color:#444">Relatório de Estoque</p></td><td style="width:25%;text-align:right;font-size:12px;color:#555">Emitido em<br><b>${dHj}</b> às ${hHj}</td></tr></table>
-  <div style="display:flex;gap:10px;margin-bottom:18px;">
-    <div style="flex:1;border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center"><span style="font-size:10px;color:#555">PRODUTOS</span><br><b style="font-size:18px">${dadosEstoque.length}</b></div>
-    <div style="flex:1;border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center"><span style="font-size:10px;color:#555">TOTAL DE UNIDADES</span><br><b style="font-size:18px">${tu}</b></div>
-    <div style="flex:1;border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center"><span style="font-size:10px;color:#555">VALOR TOTAL</span><br><b style="font-size:18px">R$ ${formatMoeda(tv)}</b></div>
-  </div>
-  <table style="width:100%;border-collapse:collapse;font-size:12px;"><thead style="display:table-header-group;background:#e9ecef"><tr><th style="${th}">#</th><th style="${th}text-align:left">Item</th><th style="${th}text-align:left">Localização</th><th style="${th}text-align:left">Link</th><th style="${th}">Qtd</th><th style="${th}text-align:right">Valor Un.</th><th style="${th}text-align:right">Subtotal</th></tr></thead><tbody>${linhas}</tbody>
-  <tfoot><tr><td colspan="4" style="padding:10px;text-align:right;font-weight:bold">TOTAIS:</td><td style="padding:10px;text-align:center;font-weight:bold">${tu}</td><td></td><td style="padding:10px;text-align:right;font-weight:bold;font-size:14px">R$ ${formatMoeda(tv)}</td></tr></tfoot></table></div>`;
-  setTimeout(()=>window.print(),300);
-}
-
-/* ---------- 2) PARCELAMENTO NO A PAGAR ---------- */
+<script>
+/* ===== PATCH CORRIGIDO: PARCELAMENTO NO A PAGAR ===== */
 let parcelasTempAPagar=[];
 
 function addMesesISO(iso,n){
@@ -1687,13 +1657,13 @@ function addMesesISO(iso,n){
 /* interface dentro do modal */
 document.getElementById('ap_restante_box').insertAdjacentHTML('beforebegin',`
 <div id="secao_parcelas" style="background:rgba(10,132,255,0.08);border:1px solid rgba(10,132,255,0.3);border-radius:10px;padding:12px;margin:10px 0;">
-  <label style="color:var(--blue);margin-bottom:8px;"><i class="fas fa-calendar-check"></i> Parcelamento</label>
-  <div style="display:flex;gap:8px;">
-    <div style="flex:1"><label style="font-size:10px">Nº de parcelas</label><input type="number" id="ap_qtd_parcelas" value="12" min="1"></div>
-    <div style="flex:1"><label style="font-size:10px">1º vencimento</label><input type="date" id="ap_primeiro_venc"></div>
-  </div>
-  <button class="btn-outline" style="color:var(--blue);border-color:var(--blue);margin-bottom:5px" onclick="gerarParcelasAPagar()"><i class="fas fa-magic"></i> GERAR PARCELAS</button>
-  <div id="ap_parcelas_container"></div>
+<label style="color:var(--blue);margin-bottom:8px;"><i class="fas fa-calendar-check"></i> Parcelamento</label>
+<div style="display:flex;gap:8px;">
+<div style="flex:1"><label style="font-size:10px">Nº de parcelas</label><input type="number" id="ap_qtd_parcelas" value="12" min="1"></div>
+<div style="flex:1"><label style="font-size:10px">1º vencimento</label><input type="date" id="ap_primeiro_venc"></div>
+</div>
+<button class="btn-outline" style="color:var(--blue);border-color:var(--blue);margin-bottom:5px" onclick="gerarParcelasAPagar()"><i class="fas fa-magic"></i> GERAR PARCELAS</button>
+<div id="ap_parcelas_container"></div>
 </div>`);
 
 function gerarParcelasAPagar(){
@@ -1712,9 +1682,10 @@ function gerarParcelasAPagar(){
     const v=i===n-1?+(total-base*(n-1)).toFixed(2):base;
     parcelasTempAPagar.push({id:generateID()+i,num:i+1,valor:v,venc:addMesesISO(d1,i),pago:false});
   }
-  rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8(); calcularRestanteAPagar();
+  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8(); calcularRestanteAPagar();
   showToast(n+' parcelas geradas!','success');
 }
+
 function renderParcelasAPagar(){
   const c=document.getElementById('ap_parcelas_container'); if(!c) return;
   if(!parcelasTempAPagar.length){c.innerHTML='<div style="text-align:center;color:#666;font-size:12px;padding:8px">Sem parcelas. Informe e toque em GERAR.</div>';return;}
@@ -1722,14 +1693,15 @@ function renderParcelasAPagar(){
   const total=parseFloat(document.getElementById('ap_valor_total').value)||0;
   c.innerHTML='<div class="pagamento-historico" style="max-height:280px">'+parcelasTempAPagar.map((p,i)=>`
   <div class="pagamento-row" style="gap:6px;${p.pago?'opacity:.6':''}">
-    <div class="todo-circle ${p.pago?'done':''}" style="cursor:pointer;margin-right:2px" onclick="togglePagoParcela(${i})">${p.pago?'<i class="fas fa-check"></i>':''}</div>
-    <span style="font-size:11px;color:#888;min-width:32px">${p.num}/${n}</span>
-    <input type="date" value="${p.venc}" onchange="editarParcela(${i},'venc',this.value)" style="margin:0;padding:6px;font-size:12px;width:135px">
-    <input type="number" step="0.01" value="${p.valor}" onchange="editarParcela(${i},'valor',this.value)" style="margin:0;padding:6px;font-size:12px;width:90px">
-    <i class="fas fa-trash" style="color:var(--red);cursor:pointer;padding:6px" onclick="removerParcela(${i})"></i>
+  <div class="todo-circle ${p.pago?'done':''}" style="cursor:pointer;margin-right:2px" onclick="togglePagoParcela(${i})">${p.pago?'<i class="fas fa-check"></i>':''}</div>
+  <span style="font-size:11px;color:#888;min-width:32px">${p.num}/${n}</span>
+  <input type="date" value="${p.venc}" onchange="editarParcela(${i},'venc',this.value)" style="margin:0;padding:6px;font-size:12px;width:135px">
+  <input type="number" step="0.01" value="${p.valor}" onchange="editarParcela(${i},'valor',this.value)" style="margin:0;padding:6px;font-size:12px;width:90px">
+  <i class="fas fa-trash" style="color:var(--red);cursor:pointer;padding:6px" onclick="removerParcela(${i})"></i>
   </div>`).join('')+'</div>'
   +`<div style="font-size:11px;margin-top:6px;color:${Math.abs(soma-total)>0.01?'var(--orange)':'#888'}">Soma das parcelas: R$ ${formatMoeda(soma)}${Math.abs(soma-total)>0.01?' (difere do valor total!)':''} • Toque no círculo para marcar como paga.</div>`;
 }
+
 function togglePagoParcela(i){
   const p=parcelasTempAPagar[i], n=parcelasTempAPagar.length;
   if(!p.pago){
@@ -1739,35 +1711,47 @@ function togglePagoParcela(i){
     pagamentosTempAPagar=pagamentosTempAPagar.filter(x=>x.parcela_id!==p.id);
     p.pago=false;
   }
-  rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8(); calcularRestanteAPagar();
+  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8(); calcularRestanteAPagar();
 }
+
 function editarParcela(i,campo,val){
   const p=parcelasTempAPagar[i];
   if(campo==='valor'){
     p.valor=parseFloat(val)||0;
     const pg=pagamentosTempAPagar.find(x=>x.parcela_id===p.id); if(pg) pg.valor=p.valor;
   }else p.venc=val;
-rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8(); calcularRestanteAPagar();
+  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8(); calcularRestanteAPagar();
 }
+
 function removerParcela(i){
   const p=parcelasTempAPagar[i];
   pagamentosTempAPagar=pagamentosTempAPagar.filter(x=>x.parcela_id!==p.id);
   parcelasTempAPagar.splice(i,1);
   parcelasTempAPagar.forEach((x,k)=>x.num=k+1);
-  rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8(); calcularRestanteAPagar();
+  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8(); calcularRestanteAPagar();
 }
-/* corrige a lixeira do histórico de pagamentos (estava sem efeito) e atualiza as parcelas */
+
+/* corrige a lixeira do histórico de pagamentos e atualiza as parcelas */
 function removerPagamentoAPagar(i){
   const pg=pagamentosTempAPagar[i]; if(!pg) return;
   if(pg.parcela_id){const p=parcelasTempAPagar.find(x=>x.id===pg.parcela_id); if(p) p.pago=false;}
   pagamentosTempAPagar.splice(i,1);
-  rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8(); calcularRestanteAPagar();
+  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8(); calcularRestanteAPagar();
 }
-const _renderPgOrig=rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8;
-window.rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8=function(){
-  _renderPgOrig();
+
+/* ✅ CORREÇÃO: usa o NOME REAL da função do código original */
+const _renderPgOrig = window.rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8;
+window.rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8 = function(){
+  if(_renderPgOrig) _renderPgOrig();
   document.querySelectorAll('#ap_historico_container .pagamento-row .fa-trash').forEach((el,i)=>{el.onclick=()=>removerPagamentoAPagar(i);});
   renderParcelasAPagar();
+};
+
+/* ✅ CORREÇÃO: alias correto para chamadas externas */
+window.r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8 = function(){
+  if(typeof window.rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8 === 'function'){
+    window.rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8();
+  }
 };
 
 /* salvar / editar / novo */
@@ -1777,11 +1761,12 @@ window.salvarAPagar=function(){
   const nome=g('ap_nome').value.trim(); if(!nome) return showToast("Digite o nome!","error");
   const total=parseFloat(g('ap_valor_total').value)||0; if(total<=0) return showToast("Valor total deve ser maior que zero!","error");
   const o={id:g('ap_id').value||generateID(),tipo:g('ap_tipo').value,nome:nome,descricao:g('ap_descricao').value,valor_total:total,
-    data_criacao:g('ap_data_criacao').value,data_vencimento:g('ap_data_vencimento').value,
-    pagamentos:pagamentosTempAPagar,parcelas:parcelasTempAPagar,observacoes:g('ap_observacoes').value};
+  data_criacao:g('ap_data_criacao').value,data_vencimento:g('ap_data_vencimento').value,
+  pagamentos:pagamentosTempAPagar,parcelas:parcelasTempAPagar,observacoes:g('ap_observacoes').value};
   if(g('ap_id').value){const i=DB.a_pagar.findIndex(x=>x.id==o.id);if(i>-1)DB.a_pagar[i]=o}else DB.a_pagar.push(o);
   saveDB().then(()=>{fecharModais();renderizarTudo();showToast("Conta salva!","success")}).catch(e=>showToast("Erro: "+e.message,"error"));
 };
+
 const _editarAPagarOrig=editarAPagar;
 window.editarAPagar=function(id){
   _editarAPagarOrig(id);
@@ -1791,6 +1776,7 @@ window.editarAPagar=function(id){
   document.getElementById('ap_primeiro_venc').value=parcelasTempAPagar.length?parcelasTempAPagar[0].venc:'';
   renderParcelasAPagar();
 };
+
 const _abrirModalOrig2=window.abrirModalPorTela;
 window.abrirModalPorTela=function(){
   _abrirModalOrig2();
@@ -1802,7 +1788,7 @@ window.abrirModalPorTela=function(){
   }
 };
 
-/* ---------- 3) SOMA SÓ DAS PARCELAS DO MÊS ---------- */
+/* ---------- Parcelas do mês ---------- */
 function parcelasDoMes(ym){
   let total=0,pago=0,qtd=0;
   (dadosAPagar||[]).forEach(a=>(a.parcelas||[]).forEach(p=>{
@@ -1810,24 +1796,26 @@ function parcelasDoMes(ym){
   }));
   return {total,pago,pendente:total-pago,qtd};
 }
-/* caixa na tela A Pagar */
+
 document.querySelector('#tela_a_pagar .apagar-summary').insertAdjacentHTML('afterend',`
 <div style="background:var(--card);border:1px solid var(--blue);border-radius:10px;padding:12px;margin-bottom:15px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-    <span style="font-size:11px;color:var(--blue);font-weight:bold;text-transform:uppercase"><i class="fas fa-calendar-alt"></i> Parcelas do mês</span>
-    <input type="month" id="ap_mes_ref" onchange="renderizarAPagar()" style="width:auto;margin:0;padding:6px;font-size:12px">
-  </div>
-  <div style="text-align:center;margin-top:8px"><span style="font-size:10px;color:#888">AINDA A PAGAR NO MÊS</span><br><strong id="ap_mes_pendente" style="font-size:22px;color:var(--orange)">R$ 0,00</strong><div id="ap_mes_detalhe" style="font-size:11px;color:#888;margin-top:3px"></div></div>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+<span style="font-size:11px;color:var(--blue);font-weight:bold;text-transform:uppercase"><i class="fas fa-calendar-alt"></i> Parcelas do mês</span>
+<input type="month" id="ap_mes_ref" onchange="renderizarAPagar()" style="width:auto;margin:0;padding:6px;font-size:12px">
+</div>
+<div style="text-align:center;margin-top:8px"><span style="font-size:10px;color:#888">AINDA A PAGAR NO MÊS</span><br><strong id="ap_mes_pendente" style="font-size:22px;color:var(--orange)">R$ 0,00</strong><div id="ap_mes_detalhe" style="font-size:11px;color:#888;margin-top:3px"></div></div>
 </div>`);
 document.getElementById('ap_mes_ref').value=hojeLocal().slice(0,7);
-/* caixa no painel */
+
 document.getElementById('h_total_apagar').parentElement.parentElement.insertAdjacentHTML('afterend',`
 <div style="background:rgba(10,132,255,0.05);border:1px solid rgba(10,132,255,0.25);padding:12px;border-radius:12px;text-align:center;margin-bottom:10px;"><span style="color:#aaa;font-size:10px;font-weight:bold;text-transform:uppercase;display:block;margin-bottom:5px;"><i class="fas fa-calendar-alt"></i> Parcelas a pagar no mês selecionado</span><strong id="h_parcelas_mes" style="font-size:17px;color:var(--blue);">R$ 0,00</strong></div>`);
+
 function atualizarParcelasHome(){
   const ym=document.getElementById('filtro_ano').value+'-'+document.getElementById('filtro_mes').value;
   const r=parcelasDoMes(ym), el=document.getElementById('h_parcelas_mes');
   if(el) el.innerText='R$ '+formatMoeda(r.pendente);
 }
+
 const _rgOrig=renderizarGrafico;
 window.renderizarGrafico=function(){_rgOrig();atualizarParcelasHome();};
 
@@ -1837,7 +1825,6 @@ window.renderizarAPagar=function(){
   const ym=document.getElementById('ap_mes_ref').value||hojeLocal().slice(0,7), r=parcelasDoMes(ym);
   document.getElementById('ap_mes_pendente').innerText='R$ '+formatMoeda(r.pendente);
   document.getElementById('ap_mes_detalhe').innerText=r.qtd?`${r.qtd} parcela(s) • total do mês R$ ${formatMoeda(r.total)} • já pago R$ ${formatMoeda(r.pago)}`:'Nenhuma parcela neste mês';
-  /* info da próxima parcela em cada cartão */
   document.querySelectorAll('#listaAPagar .item-card').forEach(card=>{
     const h=card.querySelector('h4'); if(!h) return;
     const m=(h.getAttribute('onclick')||'').match(/editarAPagar\((\d+)\)/); if(!m) return;
@@ -1849,186 +1836,6 @@ window.renderizarAPagar=function(){
   });
 };
 try{renderizarTudo();}catch(e){}
-</script>
-  <script>
-/* ===== PATCH: ATUALIZAÇÃO AUTOMÁTICA (dados + versão do app) ===== */
-
-/* ---------- 1) DADOS: busca na nuvem sem precisar de F5 ---------- */
-let _sincRodando=false;
-function atualizarDaNuvem(silencioso){
-  if(!navigator.onLine||isSyncing||_sincRodando) return;
-  if(!firebase.auth().currentUser) return;
-  _sincRodando=true;
-  database.ref('alvesProDB').once('value').then(s=>{
-    const nuvem=s.val();
-    if(!nuvem) return;
-    /* só aplica se a nuvem for mais nova que o que está no aparelho */
-    if((nuvem.last_updated||0)>(DB.last_updated||0)){
-      DB=nuvem;
-      garantirArraysDB();
-      try{localStorage.setItem('alvesProDB',JSON.stringify(DB));}catch(e){}
-      carregarDados();
-      if(!silencioso) showToast('Dados atualizados!','info');
-    }
-  }).catch(()=>{}).finally(()=>{_sincRodando=false;});
-}
-
-/* ao voltar para o app (abrir, trocar de aba, desbloquear celular) */
-document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden){
-    try{database.goOnline();}catch(e){}
-    atualizarDaNuvem(false);
-  }
-});
-window.addEventListener('focus',()=>atualizarDaNuvem(true));
-window.addEventListener('online',()=>{
-  try{database.goOnline();}catch(e){}
-  setTimeout(()=>atualizarDaNuvem(false),800);
-});
-
-/* a cada 30 segundos, enquanto o app estiver aberto e visível */
-setInterval(()=>{ if(!document.hidden) atualizarDaNuvem(true); },30000);
-
-/* ---------- 2) VERSÃO DO APP: recarrega sozinho quando há código novo ---------- */
-if('serviceWorker' in navigator){
-  const tinhaControlador=!!navigator.serviceWorker.controller;
-  let recarregando=false;
-
-  function haModalAberto(){
-    return [...document.querySelectorAll('.modal')].some(m=>m.style.display==='flex');
-  }
-  function recarregarQuandoSeguro(){
-    if(recarregando) return;
-    if(haModalAberto()){
-      /* não perde o que você está digitando: espera fechar o modal */
-      showToast('Nova versão pronta. Atualizo quando fechar a janela.','info');
-      const t=setInterval(()=>{
-        if(!haModalAberto()){clearInterval(t);recarregando=true;location.reload();}
-      },1500);
-      return;
-    }
-    recarregando=true;
-    location.reload();
-  }
-
-  navigator.serviceWorker.addEventListener('controllerchange',()=>{
-    if(tinhaControlador) recarregarQuandoSeguro();
-  });
-
-  navigator.serviceWorker.getRegistration().then(reg=>{
-    if(!reg) return;
-    const checar=()=>reg.update().catch(()=>{});
-    checar();
-    setInterval(checar,60000);
-    document.addEventListener('visibilitychange',()=>{ if(!document.hidden) checar(); });
-    reg.addEventListener('updatefound',()=>{
-      const nw=reg.installing;
-      if(!nw) return;
-      nw.addEventListener('statechange',()=>{
-        if(nw.state==='installed'&&navigator.serviceWorker.controller){
-          nw.postMessage({type:'SKIP_WAITING'});
-        }
-      });
-    });
-  });
-}
-</script>
-  <script>
-(function(){
-const $=id=>document.getElementById(id);
-const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-
-/* 1) WhatsApp em texto puro (sem &amp; &quot; nas mensagens) */
-function textoPuro(fn){return function(){const o=window.esc;window.esc=v=>v==null?'':String(v);try{return fn.apply(this,arguments)}finally{window.esc=o}}}
-['enviarWhatsAppPedido','enviarWhatsAppAPagar','enviarWhatsAppPendencia'].forEach(n=>{if(typeof window[n]==='function')window[n]=textoPuro(window[n])});
-
-/* 2) Relatório PDF passa a incluir os pagamentos do A Pagar nas saídas (igual ao Painel) */
-const _gr=window.gerarRelatorio;
-window.gerarRelatorio=function(t){
-  const orig=dadosGastos, extra=[];
-  dadosAPagar.forEach(a=>(a.pagamentos||[]).forEach(p=>{
-    if(p.valor>0&&p.tipo!=='desconto_falta'&&p.data)
-      extra.push({id:p.id,descricao:'A Pagar: '+(a.nome||'')+(p.descricao?' - '+p.descricao:''),valor:p.valor,data:p.data});
-  }));
-  dadosGastos=orig.concat(extra);
-  try{_gr(t)}finally{dadosGastos=orig}
-};
-
-/* 3) Avisos de agenda: só com permissão dada por botão; avisa hoje e amanhã */
-window.checarAgendaNotif=function(){
-  if(!('Notification' in window)||Notification.permission!=='granted')return;
-  const a=new Date();a.setDate(a.getDate()+1);
-  const hj=hojeLocal(),am=iso(a);
-  dadosPedidos.forEach(p=>{
-    if(p.tipo==='compromisso'&&p.status==='pendente'&&(p.data===hj||p.data===am)){
-      const k='n_'+p.id+'_'+p.data;
-      if(!localStorage.getItem(k)){
-        new Notification('Agenda: '+(p.cliente||''),{body:(p.data===hj?'Hoje: ':'Amanhã: ')+(p.servico||'')});
-        localStorage.setItem(k,'1');
-      }
-    }
-  });
-};
-$('tela_config').insertAdjacentHTML('afterbegin','<button class="btn-outline" style="color:var(--purple);border-color:var(--purple);margin-bottom:15px" onclick="ativarAvisos()"><i class="fas fa-bell"></i> ATIVAR AVISOS DA AGENDA</button>');
-window.ativarAvisos=function(){
-  if(!('Notification' in window))return showToast('Este aparelho não suporta avisos.','error');
-  Notification.requestPermission().then(p=>{
-    showToast(p==='granted'?'Avisos de agenda ativados!':'Avisos não permitidos.',p==='granted'?'success':'error');
-    window.checarAgendaNotif();
-  });
-};
-
-/* 4) Busca com atraso (não refaz tudo a cada letra) */
-const bi=$('input_busca');
-if(bi){bi.removeAttribute('oninput');let tb;bi.addEventListener('input',()=>{clearTimeout(tb);tb=setTimeout(()=>renderizarTudo(),250)});}
-
-/* 5) Login: mensagens em português, Enter envia, recuperar senha */
-const msgAuth=c=>({'auth/invalid-credential':'E-mail ou senha incorretos.','auth/wrong-password':'E-mail ou senha incorretos.','auth/user-not-found':'E-mail ou senha incorretos.','auth/invalid-email':'E-mail inválido.','auth/too-many-requests':'Muitas tentativas. Aguarde alguns minutos.','auth/network-request-failed':'Sem conexão com a internet.'})[c]||'Não foi possível concluir. Tente novamente.';
-window.fazerLogin=function(){
-  const e=$('login_email').value.trim(),s=$('login_senha').value,m=$('login_msg');
-  m.style.color='var(--red)';
-  if(!e||!s){m.innerText='Digite e-mail e senha.';return}
-  firebase.auth().signInWithEmailAndPassword(e,s).then(()=>{$('tela_login').style.display='none';initDB()}).catch(err=>{m.innerText=msgAuth(err.code)});
-};
-window.recuperarSenha=function(){
-  const e=$('login_email').value.trim(),m=$('login_msg');
-  m.style.color='var(--red)';
-  if(!e){m.innerText='Digite seu e-mail acima e toque em "Esqueci a senha".';return}
-  firebase.auth().sendPasswordResetEmail(e).then(()=>{m.style.color='var(--green)';m.innerText='Enviamos um e-mail para redefinir a senha.'}).catch(err=>{m.innerText=msgAuth(err.code)});
-};
-$('login_msg').insertAdjacentHTML('beforebegin','<div style="margin-top:12px"><a href="#" onclick="recuperarSenha();return false" style="color:var(--cyan);font-size:12px">Esqueci a senha</a></div>');
-['login_email','login_senha'].forEach(i=>$(i).addEventListener('keydown',ev=>{if(ev.key==='Enter')window.fazerLogin()}));
-window.fazerCadastro=function(){};
-
-/* 6) Painel: alerta de contas vencidas e próximos 7 dias */
-const gw=document.querySelector('.grafico-wrapper');
-if(gw)gw.insertAdjacentHTML('beforebegin','<div id="h_alertas"></div>');
-function restanteConta(a){let p=0,d=0;(a.pagamentos||[]).forEach(x=>{if(x.valor<0||x.tipo==='desconto_falta')d+=Math.abs(x.valor||0);else p+=x.valor||0});return Math.max(0,(a.valor_total||0)-p-d)}
-function atualizarAlertas(){
-  const el=$('h_alertas');if(!el)return;
-  const hj=hojeLocal(),l=new Date();l.setDate(l.getDate()+7);const lim=iso(l);
-  const venc=[],prox=[];
-  (dadosAPagar||[]).forEach(a=>{
-    const itens=(a.parcelas&&a.parcelas.length)
-      ?a.parcelas.filter(p=>!p.pago).map(p=>({n:a.nome+' ('+p.num+'/'+a.parcelas.length+')',v:p.venc,val:parseFloat(p.valor)||0}))
-      :(restanteConta(a)>0&&a.data_vencimento?[{n:a.nome,v:a.data_vencimento,val:restanteConta(a)}]:[]);
-    itens.forEach(i=>{if(!i.v)return;if(i.v<hj)venc.push(i);else if(i.v<=lim)prox.push(i)});
-  });
-  const bloco=(arr,cor,tit)=>arr.length?`<div style="margin-top:8px"><div style="font-size:10px;font-weight:bold;color:${cor};text-transform:uppercase">${tit} (${arr.length}) • R$ ${formatMoeda(arr.reduce((s,i)=>s+i.val,0))}</div>`+arr.sort((a,b)=>a.v.localeCompare(b.v)).slice(0,5).map(i=>`<div style="font-size:12px;color:#ccc;padding:3px 0">${formatarDataBR(i.v)} • ${esc(i.n)} • R$ ${formatMoeda(i.val)}</div>`).join('')+'</div>':'';
-  el.innerHTML=(venc.length||prox.length)?`<div style="background:var(--card);border:1px solid var(--red);border-radius:12px;padding:12px;margin-bottom:15px"><span style="color:var(--red);font-size:12px;font-weight:bold;text-transform:uppercase"><i class="fas fa-bell"></i> Atenção: contas a pagar</span>${bloco(venc,'var(--red)','Vencidas')}${bloco(prox,'var(--orange)','Próximos 7 dias')}</div>`:'';
-}
-const _rg=window.renderizarGrafico;
-window.renderizarGrafico=function(){_rg();atualizarAlertas()};
-
-/* 7) Estoque: rótulo correto (o valor é calculado pelo preço de venda) */
-const lv=$('est_valor_total');
-if(lv&&lv.previousElementSibling)lv.previousElementSibling.innerHTML='<i class="fas fa-coins"></i> Valor em Estoque (Venda)';
-
-/* 8) Erros inesperados viram aviso em vez de falha silenciosa */
-window.addEventListener('unhandledrejection',e=>{console.error(e.reason);showToast('Ocorreu um erro. Tente novamente.','error')});
-
-try{renderizarTudo()}catch(e){console.error(e)}
-})();
 </script>
 </body>
 </html>
