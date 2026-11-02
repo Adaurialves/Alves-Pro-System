@@ -1837,5 +1837,72 @@ window.renderizarAPagar=function(){
 };
 try{renderizarTudo();}catch(e){}
 </script>
+  <script>
+/* ===== CORREÇÃO FINAL: ALIAS DE FUNÇÕES ===== */
+(function(){
+  // A função real que renderiza o histórico
+  const funcReal = window.rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8;
+  
+  // Se não existir, cria uma função vazia para evitar erros
+  if(typeof funcReal !== 'function'){
+    window.rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8 = function(){
+      const c = document.getElementById('ap_historico_container');
+      if(!c) return;
+      if(!pagamentosTempAPagar || pagamentosTempAPagar.length === 0){
+        c.innerHTML = '<div style="text-align:center;color:#666;font-size:12px;padding:10px;">Nenhum pagamento registrado.</div>';
+        return;
+      }
+      let totalPago = 0, totalDescontos = 0;
+      c.innerHTML = pagamentosTempAPagar.map((p,i) => {
+        const isDesconto = p.valor < 0 || p.tipo === 'desconto_falta';
+        const valorAbs = Math.abs(p.valor);
+        if(isDesconto) totalDescontos += valorAbs;
+        else totalPago += valorAbs;
+        const cor = isDesconto ? 'var(--red)' : 'var(--green)';
+        const icone = isDesconto ? 'fa-minus-circle' : 'fa-plus-circle';
+        const label = isDesconto ? 'DESCONTO' : 'PAGAMENTO';
+        const desc = p.descricao || (isDesconto ? 'Desconto aplicado' : 'Pagamento / Adiantamento');
+        return `<div class="pagamento-row" style="background:${isDesconto?'rgba(255,69,58,0.08)':'transparent'}; padding:10px; border-radius:6px; margin-bottom:5px;">
+          <div style="flex:1;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:3px;">
+              <i class="fas ${icone}" style="color:${cor}; font-size:14px;"></i>
+              <span style="font-size:10px; color:${cor}; font-weight:bold; text-transform:uppercase;">${label}</span>
+            </div>
+            <span style="color:${cor}; font-weight:bold; font-size:15px;">${isDesconto?'-':''}R$ ${formatMoeda(valorAbs)}</span>
+            <br><span style="color:#888; font-size:10px;">${formatarDataBR(p.data)}</span>
+            ${desc && desc !== 'Pagamento / Adiantamento' ? `<div style="font-size:11px; color:#aaa; margin-top:3px;">${esc(desc)}</div>` : ''}
+          </div>
+          <i class="fas fa-trash" style="color:var(--red); cursor:pointer; padding:8px;" onclick="window.rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8_remover(${i})"></i>
+        </div>`;
+      }).join('');
+      
+      let resumoHTML = '<div style="border-top:2px solid #444; margin-top:10px; padding-top:10px;">';
+      if(totalPago > 0) resumoHTML += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;"><span style="color:#888;">Total Pago:</span><strong style="color:var(--green);">R$ ${formatMoeda(totalPago)}</strong></div>`;
+      if(totalDescontos > 0) resumoHTML += `<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;"><span style="color:#888;">Total Descontos:</span><strong style="color:var(--red);">- R$ ${formatMoeda(totalDescontos)}</strong></div>`;
+      resumoHTML += '</div>';
+      c.innerHTML += resumoHTML;
+    };
+  }
+  
+  // Função para remover pagamento (usada no onclick)
+  window.rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8_remover = function(i){
+    const pg = pagamentosTempAPagar[i];
+    if(!pg) return;
+    if(pg.parcela_id){
+      const p = parcelasTempAPagar.find(x => x.id === pg.parcela_id);
+      if(p) p.pago = false;
+    }
+    pagamentosTempAPagar.splice(i, 1);
+    window.rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8();
+    calcularRestanteAPagar();
+  };
+  
+  // Cria aliases para todos os nomes possíveis
+  window.r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8 = window.rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8;
+  window.rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8 = window.rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8;
+  
+  console.log('✅ Aliases de funções criados com sucesso');
+})();
+</script>
 </body>
 </html>
