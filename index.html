@@ -1933,5 +1933,102 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
+  <script>
+(function(){
+const $=id=>document.getElementById(id);
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+
+/* 1) WhatsApp em texto puro (sem &amp; &quot; nas mensagens) */
+function textoPuro(fn){return function(){const o=window.esc;window.esc=v=>v==null?'':String(v);try{return fn.apply(this,arguments)}finally{window.esc=o}}}
+['enviarWhatsAppPedido','enviarWhatsAppAPagar','enviarWhatsAppPendencia'].forEach(n=>{if(typeof window[n]==='function')window[n]=textoPuro(window[n])});
+
+/* 2) Relatório PDF passa a incluir os pagamentos do A Pagar nas saídas (igual ao Painel) */
+const _gr=window.gerarRelatorio;
+window.gerarRelatorio=function(t){
+  const orig=dadosGastos, extra=[];
+  dadosAPagar.forEach(a=>(a.pagamentos||[]).forEach(p=>{
+    if(p.valor>0&&p.tipo!=='desconto_falta'&&p.data)
+      extra.push({id:p.id,descricao:'A Pagar: '+(a.nome||'')+(p.descricao?' - '+p.descricao:''),valor:p.valor,data:p.data});
+  }));
+  dadosGastos=orig.concat(extra);
+  try{_gr(t)}finally{dadosGastos=orig}
+};
+
+/* 3) Avisos de agenda: só com permissão dada por botão; avisa hoje e amanhã */
+window.checarAgendaNotif=function(){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  const a=new Date();a.setDate(a.getDate()+1);
+  const hj=hojeLocal(),am=iso(a);
+  dadosPedidos.forEach(p=>{
+    if(p.tipo==='compromisso'&&p.status==='pendente'&&(p.data===hj||p.data===am)){
+      const k='n_'+p.id+'_'+p.data;
+      if(!localStorage.getItem(k)){
+        new Notification('Agenda: '+(p.cliente||''),{body:(p.data===hj?'Hoje: ':'Amanhã: ')+(p.servico||'')});
+        localStorage.setItem(k,'1');
+      }
+    }
+  });
+};
+$('tela_config').insertAdjacentHTML('afterbegin','<button class="btn-outline" style="color:var(--purple);border-color:var(--purple);margin-bottom:15px" onclick="ativarAvisos()"><i class="fas fa-bell"></i> ATIVAR AVISOS DA AGENDA</button>');
+window.ativarAvisos=function(){
+  if(!('Notification' in window))return showToast('Este aparelho não suporta avisos.','error');
+  Notification.requestPermission().then(p=>{
+    showToast(p==='granted'?'Avisos de agenda ativados!':'Avisos não permitidos.',p==='granted'?'success':'error');
+    window.checarAgendaNotif();
+  });
+};
+
+/* 4) Busca com atraso (não refaz tudo a cada letra) */
+const bi=$('input_busca');
+if(bi){bi.removeAttribute('oninput');let tb;bi.addEventListener('input',()=>{clearTimeout(tb);tb=setTimeout(()=>renderizarTudo(),250)});}
+
+/* 5) Login: mensagens em português, Enter envia, recuperar senha */
+const msgAuth=c=>({'auth/invalid-credential':'E-mail ou senha incorretos.','auth/wrong-password':'E-mail ou senha incorretos.','auth/user-not-found':'E-mail ou senha incorretos.','auth/invalid-email':'E-mail inválido.','auth/too-many-requests':'Muitas tentativas. Aguarde alguns minutos.','auth/network-request-failed':'Sem conexão com a internet.'})[c]||'Não foi possível concluir. Tente novamente.';
+window.fazerLogin=function(){
+  const e=$('login_email').value.trim(),s=$('login_senha').value,m=$('login_msg');
+  m.style.color='var(--red)';
+  if(!e||!s){m.innerText='Digite e-mail e senha.';return}
+  firebase.auth().signInWithEmailAndPassword(e,s).then(()=>{$('tela_login').style.display='none';initDB()}).catch(err=>{m.innerText=msgAuth(err.code)});
+};
+window.recuperarSenha=function(){
+  const e=$('login_email').value.trim(),m=$('login_msg');
+  m.style.color='var(--red)';
+  if(!e){m.innerText='Digite seu e-mail acima e toque em "Esqueci a senha".';return}
+  firebase.auth().sendPasswordResetEmail(e).then(()=>{m.style.color='var(--green)';m.innerText='Enviamos um e-mail para redefinir a senha.'}).catch(err=>{m.innerText=msgAuth(err.code)});
+};
+$('login_msg').insertAdjacentHTML('beforebegin','<div style="margin-top:12px"><a href="#" onclick="recuperarSenha();return false" style="color:var(--cyan);font-size:12px">Esqueci a senha</a></div>');
+['login_email','login_senha'].forEach(i=>$(i).addEventListener('keydown',ev=>{if(ev.key==='Enter')window.fazerLogin()}));
+window.fazerCadastro=function(){};
+
+/* 6) Painel: alerta de contas vencidas e próximos 7 dias */
+const gw=document.querySelector('.grafico-wrapper');
+if(gw)gw.insertAdjacentHTML('beforebegin','<div id="h_alertas"></div>');
+function restanteConta(a){let p=0,d=0;(a.pagamentos||[]).forEach(x=>{if(x.valor<0||x.tipo==='desconto_falta')d+=Math.abs(x.valor||0);else p+=x.valor||0});return Math.max(0,(a.valor_total||0)-p-d)}
+function atualizarAlertas(){
+  const el=$('h_alertas');if(!el)return;
+  const hj=hojeLocal(),l=new Date();l.setDate(l.getDate()+7);const lim=iso(l);
+  const venc=[],prox=[];
+  (dadosAPagar||[]).forEach(a=>{
+    const itens=(a.parcelas&&a.parcelas.length)
+      ?a.parcelas.filter(p=>!p.pago).map(p=>({n:a.nome+' ('+p.num+'/'+a.parcelas.length+')',v:p.venc,val:parseFloat(p.valor)||0}))
+      :(restanteConta(a)>0&&a.data_vencimento?[{n:a.nome,v:a.data_vencimento,val:restanteConta(a)}]:[]);
+    itens.forEach(i=>{if(!i.v)return;if(i.v<hj)venc.push(i);else if(i.v<=lim)prox.push(i)});
+  });
+  const bloco=(arr,cor,tit)=>arr.length?`<div style="margin-top:8px"><div style="font-size:10px;font-weight:bold;color:${cor};text-transform:uppercase">${tit} (${arr.length}) • R$ ${formatMoeda(arr.reduce((s,i)=>s+i.val,0))}</div>`+arr.sort((a,b)=>a.v.localeCompare(b.v)).slice(0,5).map(i=>`<div style="font-size:12px;color:#ccc;padding:3px 0">${formatarDataBR(i.v)} • ${esc(i.n)} • R$ ${formatMoeda(i.val)}</div>`).join('')+'</div>':'';
+  el.innerHTML=(venc.length||prox.length)?`<div style="background:var(--card);border:1px solid var(--red);border-radius:12px;padding:12px;margin-bottom:15px"><span style="color:var(--red);font-size:12px;font-weight:bold;text-transform:uppercase"><i class="fas fa-bell"></i> Atenção: contas a pagar</span>${bloco(venc,'var(--red)','Vencidas')}${bloco(prox,'var(--orange)','Próximos 7 dias')}</div>`:'';
+}
+const _rg=window.renderizarGrafico;
+window.renderizarGrafico=function(){_rg();atualizarAlertas()};
+
+/* 7) Estoque: rótulo correto (o valor é calculado pelo preço de venda) */
+const lv=$('est_valor_total');
+if(lv&&lv.previousElementSibling)lv.previousElementSibling.innerHTML='<i class="fas fa-coins"></i> Valor em Estoque (Venda)';
+
+/* 8) Erros inesperados viram aviso em vez de falha silenciosa */
+window.addEventListener('unhandledrejection',e=>{console.error(e.reason);showToast('Ocorreu um erro. Tente novamente.','error')});
+
+try{renderizarTudo()}catch(e){console.error(e)}
+})();
+</script>
 </body>
 </html>
