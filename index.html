@@ -910,14 +910,16 @@ function fazerLogout() {
   firebase.auth().signOut().then(() => location.reload());
 }
 
+let dbIniciado = false;
 firebase.auth().onAuthStateChanged(user => {
-  if (user) {
-    document.getElementById('tela_login').style.display = 'none';
-    if (isInitialLoad) { initDB(); isInitialLoad = false; }
-  } else {
-    document.getElementById('tela_login').style.display = 'flex';
-  }
+  if (user) { document.getElementById('tela_login').style.display = 'none'; initDB(); }
+  else { document.getElementById('tela_login').style.display = 'flex'; }
 });
+
+function initDB() {
+  if (dbIniciado) return;
+  dbIniciado = true;
+  let primeiraCarga = true;
 
 // ============ SERVICE WORKER / PWA ============
 if ('serviceWorker' in navigator) {
@@ -1047,15 +1049,15 @@ function initDB() {
       }
     }
     garantirArraysDB();
-    if (isInitialLoad) {
-      carregarConfiguracoes();
-      carregarDados();
+        garantirArraysDB();
+    if (primeiraCarga) {
+      primeiraCarga = false;
       isInitialLoad = false;
+      carregarConfiguracoes();
       updateSyncStatusBox();
       updateSyncIndicator('synced', 'Sincronizado');
-    } else {
-      carregarDados();
     }
+    carregarDados();
     localDB = JSON.parse(JSON.stringify(DB));
   }, (error) => {
     console.error('Erro no listener:', error);
@@ -1238,6 +1240,8 @@ function carregarDados() {
   dadosPendencias = [...(DB.pendencias || [])].sort((a, b) => b.id - a.id);
   dadosLembretes = [...(DB.lembretes || [])].sort((a, b) => b.id - a.id);
   dadosAPagar = [...(DB.a_pagar || [])].sort((a, b) => b.id - a.id);
+    const ae = document.activeElement;
+  if (!(ae && ae.closest && ae.closest('#tela_config'))) carregarConfiguracoes();
   renderizarTudo();
 }
 
@@ -1288,19 +1292,29 @@ function renderizarFotosPedido() {
   c.innerHTML = html;
 }
 
-function abrirVisualizadorFoto(idx, contexto) {
-  fotoAtualViewer = { idx: parseInt(idx), contexto: contexto };
+function abrirVisualizadorFoto(idx, contexto, idPedido) {
+  fotoAtualViewer = { idx: parseInt(idx), contexto, id: idPedido };
   let url = '';
-  if (contexto === 'temp') {
-    url = fotosTempPedido[parseInt(idx)];
-  } else if (contexto === 'db_pedido') {
-    const id = document.getElementById('f_id').value;
-    const p = DB.servicos.find(x => x.id == id);
+  if (contexto === 'temp') url = fotosTempPedido[parseInt(idx)];
+  else if (contexto === 'db_pedido') {
+    const p = DB.servicos.find(x => x.id == idPedido);
     if (p && p.fotos) url = p.fotos[parseInt(idx)];
   }
   if (!url) return;
   document.getElementById('foto_viewer_img').src = url;
   document.getElementById('foto_viewer').style.display = 'flex';
+}
+function excluirFotoAtual() {
+  if (fotoAtualViewer.idx === null || !confirm('Excluir esta foto?')) return;
+  if (fotoAtualViewer.contexto === 'temp') {
+    fotosTempPedido.splice(fotoAtualViewer.idx, 1);
+    renderizarFotosPedido();
+  } else {
+    const p = DB.servicos.find(x => x.id == fotoAtualViewer.id);
+    if (p && p.fotos) { p.fotos.splice(fotoAtualViewer.idx, 1); saveDB(); renderizarTudo(); }
+  }
+  fecharVisualizadorFoto();
+  showToast('Foto excluída', 'success');
 }
 
 function fecharVisualizadorFoto() {
@@ -1457,6 +1471,14 @@ function renderizarTudo() {
 function renderizarAPagar() {
   const dAP = document.getElementById('listaAPagar');
   if (!dAP) return;
+  function atualizarResumoMesAPagar() {
+  const ym = document.getElementById('ap_mes_ref').value || hojeLocal().slice(0, 7);
+  const r = parcelasDoMes(ym);
+  document.getElementById('ap_mes_pendente').innerText = 'R$ ' + formatMoeda(r.pendente);
+  document.getElementById('ap_mes_detalhe').innerText = r.qtd
+    ? `${r.qtd} parcela(s) • total do mês R$ ${formatMoeda(r.total)} • já pago R$ ${formatMoeda(r.pago)}`
+    : 'Nenhuma parcela neste mês';
+}
   const t = document.getElementById('input_busca').value.toLowerCase();
   let totalDividas = 0, totalPago = 0, totalRestante = 0;
   let filtered = dadosAPagar;
@@ -1543,14 +1565,6 @@ ${parcelasInfo}
 </div>
 </div>`;
   });
-
-  // Parcelas do mês
-  const ym = document.getElementById('ap_mes_ref').value || hojeLocal().slice(0, 7);
-  const r = parcelasDoMes(ym);
-  document.getElementById('ap_mes_pendente').innerText = 'R$ ' + formatMoeda(r.pendente);
-  document.getElementById('ap_mes_detalhe').innerText = r.qtd ? `${r.qtd} parcela(s) • total do mês R$ ${formatMoeda(r.total)} • já pago R$ ${formatMoeda(r.pago)}` : 'Nenhuma parcela neste mês';
-}
-
 function parcelasDoMes(ym) {
   let total = 0, pago = 0, qtd = 0;
   (dadosAPagar || []).forEach(a => (a.parcelas || []).forEach(p => {
@@ -1670,7 +1684,7 @@ function adicionarPagamentoAPagar() {
 }
 
 function removerPagamentoAPagar(i) {
-  const pg = pagamentosTempAPagar[i];
+  const pg = pagamentosTempAPagar[i];renderParcelasAPagar();
   if (!pg) return;
   if (pg.parcela_id) {
     const p = parcelasTempAPagar.find(x => x.id === pg.parcela_id);
@@ -2376,7 +2390,7 @@ function salvarPedido() {
     cliente: document.getElementById('f_cliente').value,
     servico: document.getElementById('f_servico').value,
     itens_usados: itensNoPedido,
-    fotos: fotosTempPedido.length > 0 ? [...fotosTempPedido] : (idAtual ? (DB.servicos.find(x => x.id == idAtual) || {}).fotos || [] : []),
+   fotos: [...fotosTempPedido],
     total_base: parseFloat(document.getElementById('f_total_base').value) || 0,
     multiplicador: parseFloat(document.getElementById('f_multiplicador').value) || 1,
     total: parseFloat(document.getElementById('f_total').value) || 0,
@@ -2593,6 +2607,15 @@ function imprimirPedidoOuOrcamento() {
   }
   const aI = document.getElementById('area-impressao');
   aI.innerHTML = `<div style="font-family:'Segoe UI',Arial,sans-serif; color:#000; padding:30px; max-width:800px; margin:0 auto; box-sizing:border-box; background:white;"><table style="width:100%; border-bottom:3px solid #000; padding-bottom:15px; margin-bottom:25px;"><tr><td style="width:25%; text-align:left; vertical-align:middle;">${logoH}</td><td style="width:50%; text-align:center; vertical-align:middle;"><h1 style="margin:0; font-size:24px; text-transform:uppercase; color:#000;">${esc(eN)}</h1><p style="margin:5px 0 0 0; font-size:13px; color:#444;">${esc(eD)}<br>📞 ${esc(eT)} ${c.chave_pix ? ' | PIX: ' + esc(c.chave_pix) : ''}</p></td><td style="width:25%; text-align:right; vertical-align:middle;"><strong style="font-size:16px; color:#000;">${tD}</strong><br><span style="color:#555; font-size:12px;">Data: ${dHj}</span><br><span style="color:#555; font-size:12px;">Cliente: ${esc(p.cliente) || 'Consumidor Final'}</span></td></tr></table><div style="background:#f9f9f9; padding:15px; border:1px solid #ddd; border-radius:8px; margin-bottom:20px; font-size:14px;"><strong style="font-size:15px; color:#000;"> Cliente:</strong> ${esc(p.cliente) || 'Consumidor Final'}<br>${eC ? `<strong style="color:#555;"> Endereço:</strong> ${esc(eC)}<br>` : ''}${p.cidade ? `<strong style="color:#555;">🏙️ Cidade:</strong> ${esc(p.cidade)}<br>` : ''}${p.lembrete ? `<strong style="color:#555;">📝 Observação:</strong> ${esc(p.lembrete)}` : ''}</div>${secaoDescricaoIA}<table style="width:100%; border-collapse:collapse; margin-bottom:25px; font-size:14px;"><thead><tr style="background:#e0e0e0; border-bottom:2px solid #000;">${tHead}</tr></thead><tbody>${lT}</tbody></table>${fotosHtml}<div style="display:flex; justify-content:space-between; border-top:3px solid #000; padding-top:20px; align-items:flex-start;"><div style="width:55%; font-size:13px; color:#333; line-height:1.5;">${iP ? `<strong style="font-size:14px;">💰 Informações de Pagamento:</strong><br>${iP}` : ''}</div><div style="width:40%; text-align:right;"><div style="background:#f9f9f9; border:2px solid #000; border-radius:8px; padding:15px 20px;"><span style="font-size:12px; color:#555; text-transform:uppercase;">Total Geral</span><br><h2 style="margin:5px 0 0 0; font-size:26px; color:#000;">R$ ${formatMoeda(p.total)}</h2></div></div></div>${obsFooter}<div style="margin-top:40px; padding-top:15px; border-top:2px dashed #999; text-align:center; font-size:10px; color:#666;">Documento gerado automaticamente pelo sistema <strong>${esc(eN)}</strong><br>Emitido em ${dHj} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div></div>`;
+  function ajustarUmaPagina(el) {
+  const w = el.firstElementChild; if (!w) return;
+  const o = el.style.cssText;
+  el.style.cssText = 'display:block;position:absolute;left:-9999px;top:0;width:794px;';
+  w.style.zoom = '';
+  const h = w.scrollHeight;
+  el.style.cssText = o;
+  if (h > 1040) w.style.zoom = (1040 / h).toFixed(3);
+}
   setTimeout(() => window.print(), 300);
 }
 
@@ -2793,7 +2816,7 @@ function salvarEstoque() {
     const i = DB.estoque.findIndex(x => x.id == o.id);
     if (i > -1) DB.estoque[i] = o;
   } else DB.estoque.push(o);
-  saveDB().then(() => { fecharModais(); renderizarTudo(); showToast("Estoque salvo!", "success"); }).catch(e => showToast("Erro: " + e.message, "error"));
+  saveDB().then(() => { fecharModais(); renderizarTudo(); showToast("Estoque salvo!", "success"); }).(e.item || '').toLowerCase().includes(t).catch(e => showToast("Erro: " + e.message, "error"));
 }
 
 function editarEstoque(id) {
