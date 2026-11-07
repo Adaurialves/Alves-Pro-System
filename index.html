@@ -1223,7 +1223,7 @@ function blocoAssinatura(c) {
       <strong>${esc(c.responsavel || c.nome || '')}</strong>${c.cargo ? `<br><span style="font-size:11px;color:#555;">${esc(c.cargo)}</span>` : ''}
     </div></div>`;
 }
-  function carregarConfiguracoes() {
+ function carregarConfiguracoes() {
   const c = DB.config || {};
   document.getElementById('nome_display').innerText = c.nome || "Minha Empresa";
   document.getElementById('contato_display').innerText = [c.telefone, c.endereco].filter(Boolean).join(' • ') || 'Configure seus dados na aba Ajustes';
@@ -1244,6 +1244,10 @@ function blocoAssinatura(c) {
   document.getElementById('cfg_endereco').value = c.endereco || "";
   document.getElementById('cfg_chave_pix').value = c.chave_pix || "";
   document.getElementById('cfg_msg').value = c.mensagem || "";
+  document.getElementById('cfg_responsavel').value = c.responsavel || "";
+  document.getElementById('cfg_cargo').value = c.cargo || "";
+  assinaturaCfg = c.assinatura || '';
+  mostrarAssinatura(assinaturaCfg);
 }
 
 document.getElementById('cfg_logo_file').addEventListener('change', e => {
@@ -1270,15 +1274,10 @@ document.getElementById('cfg_logo_file').addEventListener('change', e => {
   };
   r.readAsDataURL(f);
 });
-  document.getElementById('cfg_responsavel').value = c.responsavel || "";
-  document.getElementById('cfg_cargo').value = c.cargo || "";
-  assinaturaCfg = c.assinatura || '';
-  mostrarAssinatura(assinaturaCfg);
+
 function salvarConfig() {
   const ip = document.getElementById('img_preview');
-  const antiga = (DB.config && DB.config.logo && DB.config.logo.indexOf('data:') === 0) ? DB.config.logo : '';    responsavel: document.getElementById('cfg_responsavel').value.trim(),
-    cargo: document.getElementById('cfg_cargo').value.trim(),
-    assinatura: assinaturaCfg,
+  const antiga = (DB.config && DB.config.logo && DB.config.logo.indexOf('data:') === 0) ? DB.config.logo : '';
   const logo = (ip.src && ip.src.indexOf('data:') === 0) ? ip.src : antiga;
   DB.config = {
     nome: document.getElementById('cfg_nome').value.trim(),
@@ -1286,7 +1285,10 @@ function salvarConfig() {
     endereco: document.getElementById('cfg_endereco').value.trim(),
     chave_pix: document.getElementById('cfg_chave_pix').value.trim(),
     mensagem: document.getElementById('cfg_msg').value.trim(),
-    logo: logo
+    logo: logo,
+    responsavel: document.getElementById('cfg_responsavel').value.trim(),
+    cargo: document.getElementById('cfg_cargo').value.trim(),
+    assinatura: assinaturaCfg
   };
   saveDB().then(() => {
     carregarConfiguracoes();
