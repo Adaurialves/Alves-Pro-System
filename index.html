@@ -2583,10 +2583,11 @@ function editarPedido(id) {
   renderizarFotosPedido();
   document.getElementById('btn_duplicar_pedido').style.display = 'block';
   document.getElementById('btn_imprimir_pedido').style.display = 'block';
-  document.getElementById('btn_zap_pedido').style.display = 'block';
-   if (document.getElementById('container_ocultar_valores')) document.getElementById('container_ocultar_valores').style.display = (p.tipo === 'compra') ? 'none' : 'flex';
+   document.getElementById('btn_zap_pedido').style.display = 'block';
+  if (document.getElementById('container_ocultar_valores')) document.getElementById('container_ocultar_valores').style.display = (p.tipo === 'compra') ? 'none' : 'flex';
   if (document.getElementById('f_ocultar_valores')) document.getElementById('f_ocultar_valores').checked = false;
-  }
+  document.getElementById('modalPedido').style.display = 'flex';
+}
   document.getElementById('modalPedido').style.display = 'flex';
 }
 
