@@ -120,11 +120,10 @@ label{font-size:11px;color:var(--gold);font-weight:bold;text-transform:uppercase
 .estoque-box strong{font-size:15px}
 @media print{
 @page{margin:0}
+html,body{height:auto !important;overflow:visible !important}
 body{background:#fff !important;margin:0;padding:0}
-body *{visibility:hidden}
-#area-impressao,#area-impressao *{visibility:visible}
-#area-impressao{display:block;position:absolute;left:0;top:0;width:100%;background:#fff;color:#000;box-sizing:border-box;min-height:100vh}
-.btn-flutuante,.menu-grid,.busca-container,.empresa-header,.toast-container,.sync-indicator,.pwa-install-btn{display:none !important}
+#app_principal > *:not(#area-impressao){display:none !important}
+#area-impressao{display:block !important;position:static;width:100%;background:#fff;color:#000;box-sizing:border-box}
 }
 </style>
 </head>
@@ -437,6 +436,16 @@ body *{visibility:hidden}
 <label>Endereço</label><input type="text" id="cfg_endereco">
 <label>Chave PIX</label><input type="text" id="cfg_chave_pix">
 <label>Msg Rodapé</label><input type="text" id="cfg_msg">
+  <label>Responsável (nome)</label><input type="text" id="cfg_responsavel">
+<label>Cargo</label><input type="text" id="cfg_cargo" placeholder="Ex: Proprietário">
+<label>Assinatura do responsável</label>
+<div style="background:#fff;border-radius:8px;height:80px;display:flex;align-items:center;justify-content:center;margin:5px 0 8px">
+  <img id="assinatura_preview" style="max-height:70px;max-width:100%;display:none">
+  <span id="assinatura_placeholder" style="color:#666;font-size:10px">Sem assinatura</span>
+</div>
+<button class="btn-outline" style="color:var(--green);border-color:var(--green)" onclick="abrirDesenhoAssinatura()"><i class="fas fa-signature"></i> DESENHAR ASSINATURA</button>
+<input type="file" id="cfg_assinatura_file" accept="image/*" style="background:none;border:none;padding:0">
+<button class="btn-outline" style="color:var(--red);border-color:var(--red)" onclick="removerAssinatura()"><i class="fas fa-eraser"></i> REMOVER ASSINATURA</button>
 <button onclick="salvarConfig()" style="width:100%; padding:15px; background:var(--blue); border:none; border-radius:8px; color:white; font-weight:bold; margin-top:20px; cursor:pointer;">SALVAR AJUSTES</button>
 <button onclick="limparBancoDados()" style="width:100%; padding:15px; background:transparent; border:1px solid var(--red); border-radius:8px; color:var(--red); font-weight:bold; margin-top:10px; cursor:pointer;"><i class="fas fa-trash"></i> APAGAR DADOS NUVEM</button>
 </div>
@@ -519,6 +528,15 @@ body *{visibility:hidden}
 <button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1" onclick="abrirSeletorEstoque('pedido')"><i class="fas fa-box"></i> ADD ESTOQUE</button>
 <button class="btn-outline" style="color:var(--cyan);border-color:var(--cyan);flex:1" onclick="abrirSeletorServico('pedido')"><i class="fas fa-tools"></i> ADD CATÁLOGO</button>
 </div>
+<div style="background:rgba(255,255,255,.05);padding:10px;border-radius:8px;margin-bottom:10px;border:1px solid #444">
+  <label style="color:var(--green)"><i class="fas fa-pen"></i> Item avulso (digitar)</label>
+  <input type="text" id="f_item_nome" placeholder="Nome do item / serviço">
+  <div style="display:flex;gap:10px">
+    <div style="flex:1"><label>Qtd</label><input type="number" id="f_item_qtd" value="1" min="1"></div>
+    <div style="flex:1"><label>Valor Un. (R$)</label><input type="number" id="f_item_valor" placeholder="0.00" step="0.01"></div>
+  </div>
+  <button class="btn-outline" style="color:var(--green);border-color:var(--green);margin:0" onclick="adicionarItemAvulsoPedido()"><i class="fas fa-plus"></i> INCLUIR NO PEDIDO</button>
+</div>  
 <div id="container_itens_venda"></div>
 <button onclick="salvarPedido()" style="width:100%;padding:15px;background:var(--green);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:15px;cursor:pointer">SALVAR</button>
 <label class="label-check" id="container_ocultar_valores" style="display:none; margin-top:15px; border-color:var(--teal); color:var(--teal);"><input type="checkbox" id="f_ocultar_valores" class="check-inline"> Ocultar valores dos itens na impressão</label>
@@ -789,7 +807,17 @@ body *{visibility:hidden}
 </div>
 <button onclick="fecharModais();renderizarItensLembrete();" style="width:100%;background:#333;border:none;border-radius:6px;color:#fff;font-weight:bold;margin-top:15px;padding:15px; font-size:15px; cursor:pointer">FECHAR E SALVAR</button>
 </div></div>
-
+<div id="modalAssinatura" class="modal"><div class="modal-content" style="border-color:var(--green)">
+<h3 style="color:var(--green);margin-top:0"><i class="fas fa-signature"></i> Assine abaixo</h3>
+<div style="background:#fff;border-radius:8px;border:2px dashed #999;">
+<canvas id="canvas_assinatura" width="600" height="240" style="width:100%;height:auto;display:block;touch-action:none;cursor:crosshair;"></canvas>
+</div>
+<div style="display:flex;gap:10px;margin-top:12px;">
+<button class="btn-outline" style="color:var(--orange);border-color:var(--orange);flex:1;margin:0" onclick="limparDesenhoAssinatura()"><i class="fas fa-eraser"></i> LIMPAR</button>
+<button class="btn-outline" style="color:#888;border-color:#888;flex:1;margin:0" onclick="document.getElementById('modalAssinatura').style.display='none'">CANCELAR</button>
+</div>
+<button onclick="salvarDesenhoAssinatura()" style="width:100%;padding:15px;background:var(--green);border:none;border-radius:8px;color:#fff;font-weight:bold;margin-top:10px;cursor:pointer"><i class="fas fa-check"></i> USAR ESTA ASSINATURA</button>
+</div></div>
 <div id="foto_viewer" class="foto-viewer">
 <button class="foto-viewer-close" onclick="fecharVisualizadorFoto()"><i class="fas fa-times"></i></button>
 <img id="foto_viewer_img" src="">
@@ -1160,7 +1188,102 @@ function importarBackup(e) {
 }
 
 // ============ CONFIGURAÇÕES ============
-function carregarConfiguracoes() {
+let assinaturaCfg = '';
+
+function mostrarAssinatura(src) {
+  const p = document.getElementById('assinatura_preview');
+  const h = document.getElementById('assinatura_placeholder');
+  if (src) { p.src = src; p.style.display = 'block'; h.style.display = 'none'; }
+  else { p.removeAttribute('src'); p.style.display = 'none'; h.style.display = 'block'; }
+}
+
+function removerAssinatura() {
+  assinaturaCfg = '';
+  mostrarAssinatura('');
+  showToast('Assinatura removida. Toque em SALVAR AJUSTES.', 'info');
+}let sigDesenhando = false, sigTemTraco = false;
+
+function abrirDesenhoAssinatura() {
+  document.getElementById('modalAssinatura').style.display = 'flex';
+  limparDesenhoAssinatura();
+}
+
+function limparDesenhoAssinatura() {
+  const cv = document.getElementById('canvas_assinatura');
+  cv.getContext('2d').clearRect(0, 0, cv.width, cv.height);
+  sigTemTraco = false;
+}
+
+function salvarDesenhoAssinatura() {
+  if (!sigTemTraco) return showToast('Desenhe a assinatura primeiro!', 'error');
+  assinaturaCfg = document.getElementById('canvas_assinatura').toDataURL('image/png');
+  mostrarAssinatura(assinaturaCfg);
+  document.getElementById('modalAssinatura').style.display = 'none';
+  showToast('Assinatura pronta. Toque em SALVAR AJUSTES.', 'info');
+}
+
+(function () {
+  const cv = document.getElementById('canvas_assinatura');
+  const ctx = cv.getContext('2d');
+  function pos(e) {
+    const r = cv.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * cv.width / r.width, y: (e.clientY - r.top) * cv.height / r.height };
+  }
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    cv.setPointerCapture(e.pointerId);
+    sigDesenhando = true;
+    sigTemTraco = true;
+    const p = pos(e);
+    ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#000';
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(p.x + 0.1, p.y + 0.1);
+    ctx.stroke();
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!sigDesenhando) return;
+    e.preventDefault();
+    const p = pos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev =>
+    cv.addEventListener(ev, () => { sigDesenhando = false; })
+  );
+})();
+
+document.getElementById('cfg_assinatura_file').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    const im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, 400 / Math.max(im.width, im.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      const x = c.getContext('2d');
+      x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+      x.drawImage(im, 0, 0, c.width, c.height);
+      assinaturaCfg = c.toDataURL('image/jpeg', 0.8);
+      mostrarAssinatura(assinaturaCfg);
+      showToast('Assinatura carregada. Toque em SALVAR AJUSTES.', 'info');
+    };
+    im.src = ev.target.result;
+  };
+  r.readAsDataURL(f);
+});
+
+function blocoAssinatura(c) {
+  if (!c.assinatura && !c.responsavel) return '';
+  return `<div style="margin-top:35px;text-align:center;page-break-inside:avoid;">
+    ${c.assinatura ? `<img src="${c.assinatura}" style="max-height:70px;max-width:220px;object-fit:contain;display:block;margin:0 auto -8px;">` : '<div style="height:50px"></div>'}
+    <div style="width:260px;margin:0 auto;border-top:1px solid #000;padding-top:6px;font-size:12px;color:#000;">
+      <strong>${esc(c.responsavel || c.nome || '')}</strong>${c.cargo ? `<br><span style="font-size:11px;color:#555;">${esc(c.cargo)}</span>` : ''}
+    </div></div>`;
+}
+ function carregarConfiguracoes() {
   const c = DB.config || {};
   document.getElementById('nome_display').innerText = c.nome || "Minha Empresa";
   document.getElementById('contato_display').innerText = [c.telefone, c.endereco].filter(Boolean).join(' • ') || 'Configure seus dados na aba Ajustes';
@@ -1181,6 +1304,10 @@ function carregarConfiguracoes() {
   document.getElementById('cfg_endereco').value = c.endereco || "";
   document.getElementById('cfg_chave_pix').value = c.chave_pix || "";
   document.getElementById('cfg_msg').value = c.mensagem || "";
+  document.getElementById('cfg_responsavel').value = c.responsavel || "";
+  document.getElementById('cfg_cargo').value = c.cargo || "";
+  assinaturaCfg = c.assinatura || '';
+  mostrarAssinatura(assinaturaCfg);
 }
 
 document.getElementById('cfg_logo_file').addEventListener('change', e => {
@@ -1218,7 +1345,10 @@ function salvarConfig() {
     endereco: document.getElementById('cfg_endereco').value.trim(),
     chave_pix: document.getElementById('cfg_chave_pix').value.trim(),
     mensagem: document.getElementById('cfg_msg').value.trim(),
-    logo: logo
+    logo: logo,
+    responsavel: document.getElementById('cfg_responsavel').value.trim(),
+    cargo: document.getElementById('cfg_cargo').value.trim(),
+    assinatura: assinaturaCfg
   };
   saveDB().then(() => {
     carregarConfiguracoes();
@@ -1624,7 +1754,7 @@ function aplicarDescontoFalta() {
   });
   document.getElementById('ap_dias_faltados').value = '0';
   preview.style.display = 'none';
-  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8();
+  rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8();
   calcularRestanteAPagar();
   showToast(`Desconto de R$ ${formatMoeda(valorDesconto)} aplicado!`, "success");
 }
@@ -1660,7 +1790,7 @@ function adicionarPagamentoAPagar() {
   pagamentosTempAPagar.push({ valor: val, data: dt, id: generateID() });
   document.getElementById('ap_novo_pagamento').value = "0";
   document.getElementById('ap_data_pagamento').value = "";
-  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8();
+  rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8();
   calcularRestanteAPagar();
   showToast("Pagamento registrado!", "success");
 }
@@ -1673,12 +1803,12 @@ function removerPagamentoAPagar(i) {
     if (p) p.pago = false;
   }
   pagamentosTempAPagar.splice(i, 1);
-  r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8();
+  rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8();
   renderParcelasAPagar();
   calcularRestanteAPagar();
 }
 
-function r9yMnTm4NSzvG9rrwjM2ec8xZgh1cafXH8() {
+function rahJ91ZuNL8Y2px8iYciYeHN8sfSh5eXH8() {
   const c = document.getElementById('ap_historico_container');
   if (!c) return;
   if (pagamentosTempAPagar.length === 0) {
@@ -1922,7 +2052,7 @@ function imprimirReciboAPagar() {
     histH = '<p style="text-align:center; color:#888; padding:15px; font-style:italic;">Nenhum pagamento registrado até o momento.</p>';
   }
   const aI = document.getElementById('area-impressao');
-  aI.innerHTML = `<div style="font-family:'Segoe UI',Arial,sans-serif; color:#000; padding:14px; max-width:780px; margin:0 auto; box-sizing:border-box;"><div style="border:3px double #000; padding:14px;"><table style="width:100%; border-bottom:2px solid #000; padding-bottom:15px; margin-bottom:20px;"><tr><td style="width:25%; text-align:left; vertical-align:middle;">${logoH}</td><td style="width:50%; text-align:center; vertical-align:middle;"><h2 style="margin:0; font-size:22px; text-transform:uppercase;">${esc(eN)}</h2><p style="margin:5px 0 0 0; font-size:12px; color:#444;">${esc(eD)}${eT ? '<br>📞 ' + esc(eT) : ''}</p></td><td style="width:25%; text-align:right; vertical-align:middle; font-size:12px;"><strong style="font-size:14px; display:block;">RECIBO A PAGAR</strong><span style="color:#555;">Nº ${numRecibo}</span><br><span style="color:#555;">Emissão: ${dHj}</span><br><span style="color:#555;">Hora: ${hHj}</span></td></tr></table><div style="background:${statusColor}15; border:2px solid ${statusColor}; border-radius:8px; padding:15px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;"><div><span style="font-size:11px; color:#555; text-transform:uppercase; font-weight:bold;">Status da Conta</span><br><strong style="font-size:22px; color:${statusColor};">${tipoIco} ${status}</strong></div><div style="text-align:right;"><span style="font-size:11px; color:#555; text-transform:uppercase; font-weight:bold;">Tipo</span><br><strong style="font-size:16px; color:#000;">${tipoLabel}</strong></div></div><div style="background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:15px; margin-bottom:20px;"><h3 style="margin:0 0 10px 0; font-size:14px; color:#333; text-transform:uppercase; border-bottom:1px solid #ccc; padding-bottom:5px;">📋 Dados do Credor / Beneficiário</h3><table style="width:100%; font-size:13px; line-height:1.8;"><tr><td style="width:30%; color:#555; font-weight:bold;">Nome:</td><td style="font-size:16px; font-weight:bold; color:#000;">${esc(a.nome) || '-'}</td></tr><tr><td style="color:#555; font-weight:bold;">Descrição:</td><td>${esc(a.descricao) || '-'}</td></tr><tr><td style="color:#555; font-weight:bold;">Data de Criação:</td><td>${formatarDataBR(a.data_criacao) || '-'}</td></tr><tr><td style="color:#555; font-weight:bold;">Data de Vencimento:</td><td style="font-weight:bold; color:${status === 'VENCIDO' ? '#ff453a' : '#000'};">${formatarDataBR(a.data_vencimento) || 'Sem vencimento'} ${status === 'VENCIDO' ? ' ⚠️ VENCIDO' : ''}</td></tr></table></div><div style="background:#fff; border:2px solid #000; border-radius:8px; padding:20px; margin-bottom:20px;"><h3 style="margin:0 0 15px 0; font-size:14px; color:#333; text-transform:uppercase; text-align:center; border-bottom:1px solid #ccc; padding-bottom:8px;">💰 Resumo Financeiro</h3><table style="width:100%; font-size:14px;"><tr style="border-bottom:1px dashed #ccc;"><td style="padding:10px; color:#555;">Valor Total da Conta:</td><td style="padding:10px; text-align:right; font-weight:bold; font-size:16px;">R$ ${formatMoeda(a.valor_total)}</td></tr><tr style="border-bottom:1px dashed #ccc; background:#f1f8f1;"><td style="padding:10px; color:green; font-weight:bold;">(-) Total Pago:</td><td style="padding:10px; text-align:right; font-weight:bold; font-size:16px; color:green;">R$ ${formatMoeda(pagos)}</td></tr>${descontos > 0 ? `<tr style="border-bottom:1px dashed #ccc; background:#fff5f5;"><td style="padding:10px; color:#ff453a; font-weight:bold;">(-) Total Descontos (Faltas):</td><td style="padding:10px; text-align:right; font-weight:bold; font-size:16px; color:#ff453a;">- R$ ${formatMoeda(descontos)}</td></tr>` : ''}<tr style="background:${rest > 0 ? '#fff5f5' : '#f1f8f1'};"><td style="padding:12px; color:${rest > 0 ? '#ff453a' : '#30d158'}; font-weight:bold; font-size:15px;">${rest > 0 ? '(=) RESTANTE A PAGAR:' : '(=) QUITADO'}</td><td style="padding:12px; text-align:right; font-weight:bold; font-size:18px; color:${rest > 0 ? '#ff453a' : '#30d158'};">R$ ${formatMoeda(rest)}</td></tr></table></div><div style="margin-bottom:20px;"><h3 style="font-size:14px; color:#333; text-transform:uppercase; border-bottom:2px solid #000; padding-bottom:5px; margin-bottom:10px;">📜 Histórico de Pagamentos / Adiantamentos</h3>${histH}</div>${a.observacoes ? `<div style="background:#fffbe6; border-left:4px solid #ff9f0a; padding:12px; border-radius:4px; margin-bottom:20px;"><strong style="font-size:12px; color:#b45309; text-transform:uppercase;">📝 Observações:</strong><p style="margin:5px 0 0 0; font-size:13px; color:#333; line-height:1.5;">${esc(a.observacoes).replace(/\n/g, '<br>')}</p></div>` : ''}<div style="margin-top:22px; display:flex; justify-content:space-around; gap:20px;"><div style="flex:1; text-align:center;"><div style="border-top:1px solid #000; padding-top:8px; font-size:12px; color:#333;"><strong>${esc(eN)}</strong><br><span style="font-size:10px; color:#555;">Emitente</span></div></div><div style="flex:1; text-align:center;"><div style="border-top:1px solid #000; padding-top:8px; font-size:12px; color:#333;"><strong>${esc(a.nome)}</strong><br><span style="font-size:10px; color:#555;">Beneficiário / Credor</span></div></div></div><div style="margin-top:30px; padding-top:15px; border-top:1px dashed #999; text-align:center; font-size:10px; color:#666;">${eP ? '<strong>Chave PIX:</strong> ' + esc(eP) + '<br>' : ''}Documento gerado automaticamente pelo sistema <strong>${esc(eN)}</strong> em ${dHj} às ${hHj}.<br>Este recibo é válido como comprovante de dívida/acordo entre as partes.</div></div></div>`;
+  aI.innerHTML = `<div style="font-family:'Segoe UI',Arial,sans-serif; color:#000; padding:14px; max-width:780px; margin:0 auto; box-sizing:border-box;"><div style="border:3px double #000; padding:14px;"><table style="width:100%; border-bottom:2px solid #000; padding-bottom:15px; margin-bottom:20px;"><tr><td style="width:25%; text-align:left; vertical-align:middle;">${logoH}</td><td style="width:50%; text-align:center; vertical-align:middle;"><h2 style="margin:0; font-size:22px; text-transform:uppercase;">${esc(eN)}</h2><p style="margin:5px 0 0 0; font-size:12px; color:#444;">${esc(eD)}${eT ? '<br>📞 ' + esc(eT) : ''}</p></td><td style="width:25%; text-align:right; vertical-align:middle; font-size:12px;"><strong style="font-size:14px; display:block;">RECIBO A PAGAR</strong><span style="color:#555;">Nº ${numRecibo}</span><br><span style="color:#555;">Emissão: ${dHj}</span><br><span style="color:#555;">Hora: ${hHj}</span></td></tr></table><div style="background:${statusColor}15; border:2px solid ${statusColor}; border-radius:8px; padding:15px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;"><div><span style="font-size:11px; color:#555; text-transform:uppercase; font-weight:bold;">Status da Conta</span><br><strong style="font-size:22px; color:${statusColor};">${tipoIco} ${status}</strong></div><div style="text-align:right;"><span style="font-size:11px; color:#555; text-transform:uppercase; font-weight:bold;">Tipo</span><br><strong style="font-size:16px; color:#000;">${tipoLabel}</strong></div></div><div style="background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:15px; margin-bottom:20px;"><h3 style="margin:0 0 10px 0; font-size:14px; color:#333; text-transform:uppercase; border-bottom:1px solid #ccc; padding-bottom:5px;">📋 Dados do Credor / Beneficiário</h3><table style="width:100%; font-size:13px; line-height:1.8;"><tr><td style="width:30%; color:#555; font-weight:bold;">Nome:</td><td style="font-size:16px; font-weight:bold; color:#000;">${esc(a.nome) || '-'}</td></tr><tr><td style="color:#555; font-weight:bold;">Descrição:</td><td>${esc(a.descricao) || '-'}</td></tr><tr><td style="color:#555; font-weight:bold;">Data de Criação:</td><td>${formatarDataBR(a.data_criacao) || '-'}</td></tr><tr><td style="color:#555; font-weight:bold;">Data de Vencimento:</td><td style="font-weight:bold; color:${status === 'VENCIDO' ? '#ff453a' : '#000'};">${formatarDataBR(a.data_vencimento) || 'Sem vencimento'} ${status === 'VENCIDO' ? ' ⚠️ VENCIDO' : ''}</td></tr></table></div><div style="background:#fff; border:2px solid #000; border-radius:8px; padding:20px; margin-bottom:20px;"><h3 style="margin:0 0 15px 0; font-size:14px; color:#333; text-transform:uppercase; text-align:center; border-bottom:1px solid #ccc; padding-bottom:8px;">💰 Resumo Financeiro</h3><table style="width:100%; font-size:14px;"><tr style="border-bottom:1px dashed #ccc;"><td style="padding:10px; color:#555;">Valor Total da Conta:</td><td style="padding:10px; text-align:right; font-weight:bold; font-size:16px;">R$ ${formatMoeda(a.valor_total)}</td></tr><tr style="border-bottom:1px dashed #ccc; background:#f1f8f1;"><td style="padding:10px; color:green; font-weight:bold;">(-) Total Pago:</td><td style="padding:10px; text-align:right; font-weight:bold; font-size:16px; color:green;">R$ ${formatMoeda(pagos)}</td></tr>${descontos > 0 ? `<tr style="border-bottom:1px dashed #ccc; background:#fff5f5;"><td style="padding:10px; color:#ff453a; font-weight:bold;">(-) Total Descontos (Faltas):</td><td style="padding:10px; text-align:right; font-weight:bold; font-size:16px; color:#ff453a;">- R$ ${formatMoeda(descontos)}</td></tr>` : ''}<tr style="background:${rest > 0 ? '#fff5f5' : '#f1f8f1'};"><td style="padding:12px; color:${rest > 0 ? '#ff453a' : '#30d158'}; font-weight:bold; font-size:15px;">${rest > 0 ? '(=) RESTANTE A PAGAR:' : '(=) QUITADO'}</td><td style="padding:12px; text-align:right; font-weight:bold; font-size:18px; color:${rest > 0 ? '#ff453a' : '#30d158'};">R$ ${formatMoeda(rest)}</td></tr></table></div><div style="margin-bottom:20px;"><h3 style="font-size:14px; color:#333; text-transform:uppercase; border-bottom:2px solid #000; padding-bottom:5px; margin-bottom:10px;">📜 Histórico de Pagamentos / Adiantamentos</h3>${histH}</div>${a.observacoes ? `<div style="background:#fffbe6; border-left:4px solid #ff9f0a; padding:12px; border-radius:4px; margin-bottom:20px;"><strong style="font-size:12px; color:#b45309; text-transform:uppercase;">📝 Observações:</strong><p style="margin:5px 0 0 0; font-size:13px; color:#333; line-height:1.5;">${esc(a.observacoes).replace(/\n/g, '<br>')}</p></div>` : ''}<div style="margin-top:22px; display:flex; justify-content:space-around; gap:20px;"><div style="flex:1; text-align:center;">${c.assinatura ? `<img src="${c.assinatura}" style="max-height:60px;max-width:200px;object-fit:contain;display:block;margin:0 auto -6px;">` : ''}<div style="border-top:1px solid #000; padding-top:8px; font-size:12px; color:#333;"><strong>${esc(c.responsavel || eN)}</strong><br><span style="font-size:10px; color:#555;">Emitente${c.cargo ? ' • ' + esc(c.cargo) : ''}</span></div></div><div style="flex:1; text-align:center;"><div style="border-top:1px solid #000; padding-top:8px; font-size:12px; color:#333;"><strong>${esc(a.nome)}</strong><br><span style="font-size:10px; color:#555;">Beneficiário / Credor</span></div></div></div><div style="margin-top:30px; padding-top:15px; border-top:1px dashed #999; text-align:center; font-size:10px; color:#666;">${eP ? '<strong>Chave PIX:</strong> ' + esc(eP) + '<br>' : ''}Documento gerado automaticamente pelo sistema <strong>${esc(eN)}</strong> em ${dHj} às ${hHj}.<br>Este recibo é válido como comprovante de dívida/acordo entre as partes.</div></div></div>`;
   ajustarUmaPagina(aI);
   setTimeout(() => window.print(), 300);
 }
@@ -2172,8 +2302,8 @@ function ajustarCamposModal() {
     if (pg) pg.style.display = 'none';
   } else {
     document.getElementById('label_servico').innerText = "Serviço Principal";
-    s.innerHTML = `<option value="pendente">Pendente</option><option value="andamento">Em Andamento</option><option value="concluido">Concluído</option>`;
-    if (cv) cv.style.display = 'none';
+      s.innerHTML = `<option value="pendente">Pendente</option><option value="andamento">Em Andamento</option><option value="concluido">Concluído</option>`;
+    if (cv) cv.style.display = 'flex';
     if (pg) pg.style.display = 'block';
   }
 }
@@ -2453,15 +2583,11 @@ function editarPedido(id) {
   renderizarFotosPedido();
   document.getElementById('btn_duplicar_pedido').style.display = 'block';
   document.getElementById('btn_imprimir_pedido').style.display = 'block';
-  document.getElementById('btn_zap_pedido').style.display = 'block';
-  if (p.tipo === 'orcamento') {
-    if (document.getElementById('container_ocultar_valores')) document.getElementById('container_ocultar_valores').style.display = 'flex';
-  } else {
-    if (document.getElementById('container_ocultar_valores')) document.getElementById('container_ocultar_valores').style.display = 'none';
-  }
+   document.getElementById('btn_zap_pedido').style.display = 'block';
+  if (document.getElementById('container_ocultar_valores')) document.getElementById('container_ocultar_valores').style.display = (p.tipo === 'compra') ? 'none' : 'flex';
+  if (document.getElementById('f_ocultar_valores')) document.getElementById('f_ocultar_valores').checked = false;
   document.getElementById('modalPedido').style.display = 'flex';
 }
-
 // ============ AGENDA ============
 function salvarAgenda() {
   garantirArraysDB();
@@ -2552,7 +2678,7 @@ function imprimirPedidoOuOrcamento() {
   const dHj = formatarDataBR(hojeLocal());
   const tD = p.tipo === 'orcamento' ? `ORÇAMENTO Nº ${String(p.id).slice(-4)}` : `PEDIDO Nº ${String(p.id).slice(-4)}`;
   const eC = [p.endereco, p.numero, p.complemento, p.cidade].filter(Boolean).join(', ');
-  const ocultarValores = document.getElementById('f_ocultar_valores') && document.getElementById('f_ocultar_valores').checked && p.tipo === 'orcamento';
+  const ocultarValores = !!(document.getElementById('f_ocultar_valores') && document.getElementById('f_ocultar_valores').checked);
   const colSpan = ocultarValores ? 2 : 4;
   let secaoDescricaoIA = '';
   if (p.servico && p.servico.trim().length > 50) {
@@ -2582,13 +2708,17 @@ function imprimirPedidoOuOrcamento() {
   if (!ocultarValores) { tHead += `<th style="padding:10px;text-align:right;width:20%;">Unit.</th><th style="padding:10px;text-align:right;width:20%;">Subtotal</th>`; }
   let iP = "";
   let obsFooter = "";
+  let restaBox = "";
   if (p.tipo === 'orcamento') {
     iP = '';
     obsFooter = `<div style="margin-top:20px; padding:15px; background:#f9f9f9; border-left:4px solid #5ac8fa; border-radius:4px; font-size:13px; color:#333; line-height:1.6;"><strong style="font-size:14px; color:#000;">Observações Importantes:</strong><br>• Neste valor estão inclusos: todos os materiais descritos, fabricação sob medida, frete e mão de obra de montagem no local.<br>• Limpeza pós-obra e regulagem fina das portas e gavetas já contempladas.<br>• Validade deste orçamento: 15 dias.<br><br><em>Fico à inteira disposição para esclarecer qualquer dúvida ou ajustarmos os detalhes.</em></div>`;
   } else {
     let vD = p.total - p.pago;
     if (vD <= 0) iP = `<strong style="color:green;font-size:16px;">TOTALMENTE PAGO</strong>`;
-    else iP = `Meios de Pagamento: Dinheiro ou Pix.<br><strong>Chave PIX:</strong> ${esc(eP)}<br><strong>Resta Pagar:</strong> R$ ${formatMoeda(vD)}`;
+       else {
+      iP = `Meios de Pagamento: Dinheiro ou Pix.<br><strong>Chave PIX:</strong> ${esc(eP)}`;
+      restaBox = `<div style="background:#f9f9f9; border:2px solid #000; border-radius:8px; padding:15px 20px; margin-top:10px;"><span style="font-size:12px; color:#555; text-transform:uppercase;">Resta Pagar</span><br><h2 style="margin:5px 0 0 0; font-size:26px; color:#000;">R$ ${formatMoeda(vD)}</h2></div>`;
+    }
     let dPg = '';
     if (p.pago_entrada > 0) dPg += `• Entrada: R$ ${formatMoeda(p.pago_entrada)} (Venc: ${formatarDataBR(p.data_entrada) || '-'})<br>`;
     if (p.pago_parcela1 > 0) dPg += `• Parcela 1: R$ ${formatMoeda(p.pago_parcela1)} (Venc: ${formatarDataBR(p.data_parcela1) || '-'})<br>`;
@@ -2605,7 +2735,7 @@ function imprimirPedidoOuOrcamento() {
     fotosHtml += '</div></div>';
   }
   const aI = document.getElementById('area-impressao');
-  aI.innerHTML = `<div style="font-family:'Segoe UI',Arial,sans-serif; color:#000; padding:30px; max-width:800px; margin:0 auto; box-sizing:border-box; background:white;"><table style="width:100%; border-bottom:3px solid #000; padding-bottom:15px; margin-bottom:25px;"><tr><td style="width:25%; text-align:left; vertical-align:middle;">${logoH}</td><td style="width:50%; text-align:center; vertical-align:middle;"><h1 style="margin:0; font-size:24px; text-transform:uppercase; color:#000;">${esc(eN)}</h1><p style="margin:5px 0 0 0; font-size:13px; color:#444;">${esc(eD)}<br>📞 ${esc(eT)} ${c.chave_pix ? ' | PIX: ' + esc(c.chave_pix) : ''}</p></td><td style="width:25%; text-align:right; vertical-align:middle;"><strong style="font-size:16px; color:#000;">${tD}</strong><br><span style="color:#555; font-size:12px;">Data: ${dHj}</span><br><span style="color:#555; font-size:12px;">Cliente: ${esc(p.cliente) || 'Consumidor Final'}</span></td></tr></table><div style="background:#f9f9f9; padding:15px; border:1px solid #ddd; border-radius:8px; margin-bottom:20px; font-size:14px;"><strong style="font-size:15px; color:#000;"> Cliente:</strong> ${esc(p.cliente) || 'Consumidor Final'}<br>${eC ? `<strong style="color:#555;"> Endereço:</strong> ${esc(eC)}<br>` : ''}${p.cidade ? `<strong style="color:#555;">🏙️ Cidade:</strong> ${esc(p.cidade)}<br>` : ''}${p.lembrete ? `<strong style="color:#555;">📝 Observação:</strong> ${esc(p.lembrete)}` : ''}</div>${secaoDescricaoIA}<table style="width:100%; border-collapse:collapse; margin-bottom:25px; font-size:14px;"><thead><tr style="background:#e0e0e0; border-bottom:2px solid #000;">${tHead}</tr></thead><tbody>${lT}</tbody></table>${fotosHtml}<div style="display:flex; justify-content:space-between; border-top:3px solid #000; padding-top:20px; align-items:flex-start;"><div style="width:55%; font-size:13px; color:#333; line-height:1.5;">${iP ? `<strong style="font-size:14px;">💰 Informações de Pagamento:</strong><br>${iP}` : ''}</div><div style="width:40%; text-align:right;"><div style="background:#f9f9f9; border:2px solid #000; border-radius:8px; padding:15px 20px;"><span style="font-size:12px; color:#555; text-transform:uppercase;">Total Geral</span><br><h2 style="margin:5px 0 0 0; font-size:26px; color:#000;">R$ ${formatMoeda(p.total)}</h2></div></div></div>${obsFooter}<div style="margin-top:40px; padding-top:15px; border-top:2px dashed #999; text-align:center; font-size:10px; color:#666;">Documento gerado automaticamente pelo sistema <strong>${esc(eN)}</strong><br>Emitido em ${dHj} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div></div>`;
+  aI.innerHTML = `<div style="font-family:'Segoe UI',Arial,sans-serif; color:#000; padding:30px; max-width:800px; margin:0 auto; box-sizing:border-box; background:white;"><table style="width:100%; border-bottom:3px solid #000; padding-bottom:15px; margin-bottom:25px;"><tr><td style="width:25%; text-align:left; vertical-align:middle;">${logoH}</td><td style="width:50%; text-align:center; vertical-align:middle;"><h1 style="margin:0; font-size:24px; text-transform:uppercase; color:#000;">${esc(eN)}</h1><p style="margin:5px 0 0 0; font-size:13px; color:#444;">${esc(eD)}<br>📞 ${esc(eT)} ${c.chave_pix ? ' | PIX: ' + esc(c.chave_pix) : ''}</p></td><td style="width:25%; text-align:right; vertical-align:middle;"><strong style="font-size:16px; color:#000;">${tD}</strong><br><span style="color:#555; font-size:12px;">Data: ${dHj}</span><br><span style="color:#555; font-size:12px;">Cliente: ${esc(p.cliente) || 'Consumidor Final'}</span></td></tr></table><div style="background:#f9f9f9; padding:15px; border:1px solid #ddd; border-radius:8px; margin-bottom:20px; font-size:14px;"><strong style="font-size:15px; color:#000;"> Cliente:</strong> ${esc(p.cliente) || 'Consumidor Final'}<br>${eC ? `<strong style="color:#555;"> Endereço:</strong> ${esc(eC)}<br>` : ''}${p.cidade ? `<strong style="color:#555;">🏙️ Cidade:</strong> ${esc(p.cidade)}<br>` : ''}${p.lembrete ? `<strong style="color:#555;">📝 Observação:</strong> ${esc(p.lembrete)}` : ''}</div>${secaoDescricaoIA}<table style="width:100%; border-collapse:collapse; margin-bottom:25px; font-size:14px;"><thead><tr style="background:#e0e0e0; border-bottom:2px solid #000;">${tHead}</tr></thead><tbody>${lT}</tbody></table>${fotosHtml}<div style="display:flex; justify-content:space-between; border-top:3px solid #000; padding-top:20px; align-items:flex-start;"><div style="width:55%; font-size:13px; color:#333; line-height:1.5;">${iP ? `<strong style="font-size:14px;">💰 Informações de Pagamento:</strong><br>${iP}` : ''}</div><div style="width:40%; text-align:right;"><div style="background:#f9f9f9; border:2px solid #000; border-radius:8px; padding:15px 20px;"><span style="font-size:12px; color:#555; text-transform:uppercase;">Total Geral</span><br><h2 style="margin:5px 0 0 0; font-size:26px; color:#000;">R$ ${formatMoeda(p.total)}</h2></div>${restaBox}</div></div>${obsFooter}${blocoAssinatura(c)}<div style="margin-top:40px; padding-top:15px; border-top:2px dashed #999; text-align:center; font-size:10px; color:#666;">Documento gerado automaticamente pelo sistema <strong>${esc(eN)}</strong><br>Emitido em ${dHj} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div></div>`;
   setTimeout(() => window.print(), 300);
 }
 
@@ -2618,7 +2748,7 @@ function enviarWhatsAppPedido() {
   const eN = c.nome || "Minha Empresa";
   const eT = c.telefone || "";
   const eP = c.chave_pix || "";
-  const ocultarValores = document.getElementById('f_ocultar_valores') && document.getElementById('f_ocultar_valores').checked && p.tipo === 'orcamento';
+   const ocultarValores = !!(document.getElementById('f_ocultar_valores') && document.getElementById('f_ocultar_valores').checked);
   let tipoTxt = p.tipo === 'orcamento' ? 'ORÇAMENTO' : 'PEDIDO / FATURA';
   let txt = `*${tipoTxt} Nº ${String(p.id).slice(-4)}*\n*${esc(eN)}*\n`;
   if (eT) txt += `Contato: ${esc(eT)}\n`;
@@ -2873,7 +3003,20 @@ function editarServicoCatalogo(id) {
 }
 
 // ============ ITENS DO PEDIDO ============
-function recalcularTotal() {
+function adicionarItemAvulsoPedido() {
+  const n = document.getElementById('f_item_nome').value.trim();
+  const q = parseInt(document.getElementById('f_item_qtd').value) || 1;
+  const v = parseFloat(document.getElementById('f_item_valor').value) || 0;
+  if (!n) return showToast("Digite o nome do item!", "error");
+  itensNoPedido.push({ id_referencia: generateID(), item: n, qtd: q, valor: v, tipo_item: 'avulso' });
+  document.getElementById('f_item_nome').value = '';
+  document.getElementById('f_item_qtd').value = '1';
+  document.getElementById('f_item_valor').value = '';
+  renderizarItensPedido();
+  recalcularTotal();
+  showToast("Item incluído!", "success");
+}
+  function recalcularTotal() {
   const m = parseFloat(document.getElementById('f_mao_obra').value) || 0;
   const s = itensNoPedido.reduce((a, i) => a + (i.qtd * i.valor), 0);
   const tb = m + s;
@@ -2896,7 +3039,10 @@ function editarItemVenda(idx) {
 
 function renderizarItensPedido() {
   document.getElementById('container_itens_venda').innerHTML = itensNoPedido.map((i, idx) => {
-    let ic = i.tipo_item === 'servico' ? '<i class="fas fa-tools" style="color:var(--cyan);margin-right:5px"></i>' : (i.tipo_item === 'compra' ? '<i class="fas fa-shopping-cart" style="color:var(--pink);margin-right:5px"></i>' : '<i class="fas fa-box" style="color:var(--orange);margin-right:5px"></i>');
+  let ic = i.tipo_item === 'servico' ? '<i class="fas fa-tools" style="color:var(--cyan);margin-right:5px"></i>'
+  : (i.tipo_item === 'compra' ? '<i class="fas fa-shopping-cart" style="color:var(--pink);margin-right:5px"></i>'
+  : (i.tipo_item === 'avulso' ? '<i class="fas fa-pen" style="color:var(--green);margin-right:5px"></i>'
+  : '<i class="fas fa-box" style="color:var(--orange);margin-right:5px"></i>'));
     return `<div class="item-selecionado"><span style="display:flex;align-items:center">${ic}<div>${i.qtd}x ${esc(i.item)}<br><b style="color:var(--green)">R$ ${formatMoeda(i.qtd * i.valor)}</b></div></span><div style="display:flex; gap:15px;"><i class="fas fa-edit" style="color:var(--blue);cursor:pointer" onclick="editarItemVenda(${idx})"></i><i class="fas fa-trash" style="color:var(--red);cursor:pointer" onclick="removerItem(${idx})"></i></div></div>`;
   }).join('');
 }
