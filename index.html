@@ -2302,8 +2302,8 @@ function ajustarCamposModal() {
     if (pg) pg.style.display = 'none';
   } else {
     document.getElementById('label_servico').innerText = "Serviço Principal";
-    s.innerHTML = `<option value="pendente">Pendente</option><option value="andamento">Em Andamento</option><option value="concluido">Concluído</option>`;
-    if (cv) cv.style.display = 'none';
+      s.innerHTML = `<option value="pendente">Pendente</option><option value="andamento">Em Andamento</option><option value="concluido">Concluído</option>`;
+    if (cv) cv.style.display = 'flex';
     if (pg) pg.style.display = 'block';
   }
 }
@@ -2584,10 +2584,8 @@ function editarPedido(id) {
   document.getElementById('btn_duplicar_pedido').style.display = 'block';
   document.getElementById('btn_imprimir_pedido').style.display = 'block';
   document.getElementById('btn_zap_pedido').style.display = 'block';
-  if (p.tipo === 'orcamento') {
-    if (document.getElementById('container_ocultar_valores')) document.getElementById('container_ocultar_valores').style.display = 'flex';
-  } else {
-    if (document.getElementById('container_ocultar_valores')) document.getElementById('container_ocultar_valores').style.display = 'none';
+   if (document.getElementById('container_ocultar_valores')) document.getElementById('container_ocultar_valores').style.display = (p.tipo === 'compra') ? 'none' : 'flex';
+  if (document.getElementById('f_ocultar_valores')) document.getElementById('f_ocultar_valores').checked = false;
   }
   document.getElementById('modalPedido').style.display = 'flex';
 }
@@ -2682,7 +2680,7 @@ function imprimirPedidoOuOrcamento() {
   const dHj = formatarDataBR(hojeLocal());
   const tD = p.tipo === 'orcamento' ? `ORÇAMENTO Nº ${String(p.id).slice(-4)}` : `PEDIDO Nº ${String(p.id).slice(-4)}`;
   const eC = [p.endereco, p.numero, p.complemento, p.cidade].filter(Boolean).join(', ');
-  const ocultarValores = document.getElementById('f_ocultar_valores') && document.getElementById('f_ocultar_valores').checked && p.tipo === 'orcamento';
+  const ocultarValores = !!(document.getElementById('f_ocultar_valores') && document.getElementById('f_ocultar_valores').checked);
   const colSpan = ocultarValores ? 2 : 4;
   let secaoDescricaoIA = '';
   if (p.servico && p.servico.trim().length > 50) {
@@ -2752,7 +2750,7 @@ function enviarWhatsAppPedido() {
   const eN = c.nome || "Minha Empresa";
   const eT = c.telefone || "";
   const eP = c.chave_pix || "";
-  const ocultarValores = document.getElementById('f_ocultar_valores') && document.getElementById('f_ocultar_valores').checked && p.tipo === 'orcamento';
+   const ocultarValores = !!(document.getElementById('f_ocultar_valores') && document.getElementById('f_ocultar_valores').checked);
   let tipoTxt = p.tipo === 'orcamento' ? 'ORÇAMENTO' : 'PEDIDO / FATURA';
   let txt = `*${tipoTxt} Nº ${String(p.id).slice(-4)}*\n*${esc(eN)}*\n`;
   if (eT) txt += `Contato: ${esc(eT)}\n`;
