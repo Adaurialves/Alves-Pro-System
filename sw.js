@@ -1,4 +1,4 @@
-const CACHE = 'alves-pro-ocr-v2';
+const CACHE = 'alves-pro-ocr-v3';
 const APP_SHELL = ['./', './index.html', './icone.png', './manifest.json'];
 const CDN_HOSTS = ['cdn.jsdelivr.net', 'tessdata.projectnaptha.com', 'cdnjs.cloudflare.com', 'www.gstatic.com'];
 
