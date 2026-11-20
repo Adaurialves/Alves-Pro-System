@@ -132,6 +132,14 @@ label{font-size:11px;color:var(--gold);font-weight:bold;text-transform:uppercase
 .campo-ocr{border-color:var(--gold)!important;animation:ocrPulse 1.2s ease-out 2}
 .chip-ocr{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:bold;padding:4px 8px;border-radius:20px;background:rgba(10,132,255,.12);border:1px solid rgba(10,132,255,.35);color:var(--cyan);margin:2px}
 .badge-categoria{display:inline-block;padding:3px 8px;border-radius:4px;font-size:9px;font-weight:bold;text-transform:uppercase;background:rgba(255,255,255,.04)}
+.filtro-chips{display:flex;gap:8px;margin-bottom:15px;flex-wrap:wrap}
+.filtro-chips button{flex:1;min-width:70px;padding:8px 6px;background:var(--card);border:1px solid #444;border-radius:8px;color:#888;font-size:10px;font-weight:bold;cursor:pointer;text-transform:uppercase;transition:.2s;display:flex;align-items:center;justify-content:center;gap:5px}
+.filtro-chips button.ativo{border-color:var(--fc,var(--gold));color:var(--fc,var(--gold));background:rgba(255,255,255,.06)}
+.chip-count{font-size:9px;background:rgba(255,255,255,.08);border:1px solid #444;border-radius:10px;padding:1px 6px;min-width:14px;text-align:center;font-weight:bold}
+.filtro-chips button.ativo .chip-count{border-color:var(--fc,var(--gold));color:var(--fc,var(--gold))}
+.badge-urgencia{display:inline-block;padding:2px 7px;border-radius:20px;font-size:9px;font-weight:bold;text-transform:uppercase;background:rgba(255,255,255,.03)}
+.lista-vazia{text-align:center;color:#666;padding:30px;font-size:13px}
+.lista-vazia i{font-size:30px;display:block;margin-bottom:10px;color:#444}
 @media print{
 @page{margin:0}
 html,body{height:auto !important;overflow:visible !important}
@@ -223,7 +231,15 @@ body{background:#fff !important;margin:0;padding:0}
 </div>
 <div class="grafico-wrapper"><canvas id="graficoFinanceiro"></canvas></div>
 </div>
-<div id="tela_pedidos" class="tela"><div id="listaPedidosFull"></div></div>
+<div id="tela_pedidos" class="tela">
+<div class="filtro-chips" id="pedidos_filtros">
+<button class="ativo" style="--fc:var(--gold)" onclick="filtrarPedidos('todos',this)">Todos <b class="chip-count" id="cnt_ped_todos">0</b></button>
+<button style="--fc:var(--red)" onclick="filtrarPedidos('pendente',this)">Pendentes <b class="chip-count" id="cnt_ped_pendente">0</b></button>
+<button style="--fc:var(--blue)" onclick="filtrarPedidos('andamento',this)">Em Andamento <b class="chip-count" id="cnt_ped_andamento">0</b></button>
+<button style="--fc:var(--green)" onclick="filtrarPedidos('concluido',this)">Concluídos <b class="chip-count" id="cnt_ped_concluido">0</b></button>
+</div>
+<div id="listaPedidosFull"></div>
+</div>
 <div id="tela_orcamentos" class="tela"><div id="listaOrcamentos"></div></div>
 <div id="tela_compras" class="tela"><div id="listaCompras"></div></div>
 <div id="tela_agenda" class="tela"><div id="listaCompromissos"></div></div>
@@ -289,15 +305,28 @@ body{background:#fff !important;margin:0;padding:0}
 </div>
 <div id="todo_tasks_container"></div>
 </div>
-<div id="tela_lembretes" class="tela"><div style="margin-bottom:15px;font-size:12px;color:#aaa;"><i class="fas fa-info-circle"></i> Crie grupos de lembretes no <b>+</b></div><div id="listaLembretes"></div></div>
+<div id="tela_lembretes" class="tela"><div style="margin-bottom:15px;font-size:12px;color:#aaa;"><i class="fas fa-info-circle"></i> Crie grupos de lembretes no <b>+</b> • Os cards mostram o resumo de urgência</div><div id="listaLembretes"></div></div>
 <div id="tela_lembretes_detalhes" class="tela">
 <div class="todo-title">
 <div style="display:flex;align-items:center;gap:15px;"><i class="fas fa-arrow-left" style="cursor:pointer;color:#888;" onclick="mudarTela('tela_lembretes');renderizarTudo();"></i><span id="lembrete_list_title">Nome</span></div>
 <i class="fas fa-file-pdf" style="color:var(--orange); cursor:pointer; font-size:26px;" onclick="imprimirLembrete()"></i>
 </div>
+<div class="filtro-chips" id="lembrete_filtros">
+<button class="ativo" style="--fc:var(--gold)" onclick="filtrarLembretes('todos',this)">Todos <b class="chip-count" id="cnt_lem_todos">0</b></button>
+<button style="--fc:var(--red)" onclick="filtrarLembretes('urgente',this)">🔴 Urgente <b class="chip-count" id="cnt_lem_urgente">0</b></button>
+<button style="--fc:var(--orange)" onclick="filtrarLembretes('prioridade',this)">🟠 Prioridade <b class="chip-count" id="cnt_lem_prioridade">0</b></button>
+<button style="--fc:var(--blue)" onclick="filtrarLembretes('dia_a_dia',this)">🔵 Dia a dia <b class="chip-count" id="cnt_lem_dia_a_dia">0</b></button>
+<button style="--fc:#8a8a8e" onclick="filtrarLembretes('sem_pressa',this)">⚪ Sem pressa <b class="chip-count" id="cnt_lem_sem_pressa">0</b></button>
+</div>
 <div class="todo-input-row" style="flex-wrap:wrap; gap:10px; padding:10px;">
-<input type="text" id="lembrete_new_task" class="todo-input" placeholder="Novo Lembrete..." style="flex:1; min-width:180px; margin-left:0;">
+<input type="text" id="lembrete_new_task" class="todo-input" placeholder="Novo Lembrete..." style="flex:1; min-width:180px; margin-left:0;" onkeypress="if(event.key==='Enter'){event.preventDefault();adicionarTarefaLembrete();}">
 <input type="date" id="lembrete_new_date" style="width:auto; margin:0; padding:8px; background:transparent; color:#fff; border:1px solid #444; border-radius:4px;">
+<select id="lembrete_new_urgencia" style="width:auto; margin:0; padding:8px; background:transparent; color:#fff; border:1px solid #444; border-radius:4px; font-size:12px;">
+<option value="urgente">🔴 Urgente</option>
+<option value="prioridade">🟠 Prioridade</option>
+<option value="dia_a_dia" selected>🔵 Dia a dia</option>
+<option value="sem_pressa">⚪ Sem pressa</option>
+</select>
 <div class="todo-circle" style="border-color:var(--orange);cursor:pointer;margin:0;width:35px;height:35px;border-radius:4px;" onclick="adicionarTarefaLembrete()"><i class="fas fa-plus" style="color:var(--orange);"></i></div>
 </div>
 <div id="lembrete_tasks_container"></div>
@@ -827,10 +856,16 @@ body{background:#fff !important;margin:0;padding:0}
 <button onclick="fecharModais()" style="width:100%;background:none;border:none;color:#888;margin-top:10px;cursor:pointer">Cancelar</button>
 </div></div>
 <div id="modalLembreteTarefaDetalhes" class="modal"><div class="modal-content modal-large" style="border-color:var(--orange); background:#1e1f27; padding:25px;">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;margin-bottom:15px;">
 <div class="todo-circle" id="modal_lem_check" onclick="toggleMainLem()" style="cursor:pointer;margin:0; width:24px; height:24px;"></div>
-<input type="text" id="modal_lem_titulo" style="flex:1;background:transparent;border:none;color:var(--orange);font-size:22px;font-weight:bold;outline:none;margin-left:15px;" onchange="salvarLembreteData()">
-<input type="date" id="modal_lem_data" style="width:130px;margin:0 10px;padding:8px;font-size:14px; background:rgba(255,255,255,0.05); color:#fff; border:1px solid #444; border-radius:6px;" onchange="salvarLembreteData()">
+<input type="text" id="modal_lem_titulo" style="flex:1;min-width:150px;background:transparent;border:none;color:var(--orange);font-size:22px;font-weight:bold;outline:none;margin-left:5px;" onchange="salvarLembreteData()">
+<input type="date" id="modal_lem_data" style="width:130px;margin:0;padding:8px;font-size:14px; background:rgba(255,255,255,0.05); color:#fff; border:1px solid #444; border-radius:6px;" onchange="salvarLembreteData()">
+<select id="modal_lem_urgencia" style="width:125px;margin:0;padding:8px;font-size:12px;background:rgba(255,255,255,0.05);color:#fff;border:1px solid #444;border-radius:6px;" onchange="salvarLembreteData()">
+<option value="urgente">🔴 Urgente</option>
+<option value="prioridade">🟠 Prioridade</option>
+<option value="dia_a_dia">🔵 Dia a dia</option>
+<option value="sem_pressa">⚪ Sem pressa</option>
+</select>
 <i class="fas fa-trash" style="color:var(--red);cursor:pointer;padding:10px; font-size:18px;" onclick="excluirTarefaLem()"></i>
 </div>
 <div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:10px;">
@@ -899,7 +934,27 @@ let pagamentosTempAPagar = [];
 let parcelasTempAPagar = [];
 let idxPecaEditando = null;
 let deferredPrompt = null;
-// ============ OCR / GASTOS (OPÇÃO A) ============
+// ============ FILTROS NOVOS ============
+let filtroPedidoAtual = 'todos';
+let filtroLembreteAtual = 'todos';
+const URG_LEMBRETE = {
+urgente: { nome: 'Urgente', emoji: '🔴', cor: 'var(--red)', peso: 0 },
+prioridade: { nome: 'Prioridade', emoji: '🟠', cor: 'var(--orange)', peso: 1 },
+dia_a_dia: { nome: 'Dia a dia', emoji: '🔵', cor: 'var(--blue)', peso: 2 },
+sem_pressa: { nome: 'Sem pressa', emoji: '⚪', cor: '#8a8a8e', peso: 3 }
+};
+function urgDe(item) {
+return (item && item.urgencia && URG_LEMBRETE[item.urgencia]) ? item.urgencia : 'dia_a_dia';
+}
+function ordenarPorUrgencia(a, b) {
+const ca = a.concluido ? 1 : 0, cb = b.concluido ? 1 : 0;
+if (ca !== cb) return ca - cb;
+const pa = URG_LEMBRETE[urgDe(a)].peso, pb = URG_LEMBRETE[urgDe(b)].peso;
+if (pa !== pb) return pa - pb;
+const da = a.data || '9999-12-31', db = b.data || '9999-12-31';
+return da.localeCompare(db);
+}
+// ============ OCR / GASTOS ============
 let fotoReciboTemp = null;
 let ocrWorkerGasto = null;
 let ocrOcupado = false;
@@ -1494,6 +1549,18 @@ if (elProd) elProd.innerText = totalProdutos;
 if (elUnid) elUnid.innerText = totalUnidades;
 if (elVal) elVal.innerText = "R$ " + formatMoeda(valorTotal);
 }
+function filtrarPedidos(status, btn) {
+filtroPedidoAtual = status;
+document.querySelectorAll('#pedidos_filtros button').forEach(b => b.classList.remove('ativo'));
+if (btn) btn.classList.add('ativo');
+renderizarTudo();
+}
+function filtrarLembretes(u, btn) {
+filtroLembreteAtual = u;
+document.querySelectorAll('#lembrete_filtros button').forEach(b => b.classList.remove('ativo'));
+if (btn) btn.classList.add('ativo');
+renderizarItensLembrete();
+}
 function renderizarTudo() {
 const dP = document.getElementById('listaPedidosFull');
 const dE = document.getElementById('listaEstoque');
@@ -1514,7 +1581,16 @@ if (dC) dC.innerHTML = "";
 if (dComp) dComp.innerHTML = "";
 if (dPend) dPend.innerHTML = "";
 if (dL) dL.innerHTML = "";
+const cntPed = { todos: 0, pendente: 0, andamento: 0, concluido: 0 };
 dadosPedidos.forEach(p => {
+const ehPedido = p.tipo !== 'compromisso' && p.tipo !== 'orcamento';
+const st = p.status || 'pendente';
+const buscaOk = (p.cliente || '').toLowerCase().includes(t) || (p.servico || '').toLowerCase().includes(t) || (p.endereco || '').toLowerCase().includes(t);
+if (ehPedido && buscaOk) {
+cntPed.todos++;
+if (cntPed[st] !== undefined) cntPed[st]++;
+}
+if (ehPedido && filtroPedidoAtual !== 'todos' && st !== filtroPedidoAtual) return;
 let vD = p.total - p.pago;
 let iS = '';
 let eF = [p.endereco, p.numero, p.complemento, p.cidade].filter(Boolean).join(', ');
@@ -1539,12 +1615,19 @@ let bC = p.tipo === 'orcamento' ? 'var(--teal)' : 'var(--blue)';
 let isAgenda = p.tipo === 'compromisso';
 let clickFunc = isAgenda ? `editarAgenda(${p.id})` : `editarPedido(${p.id})`;
 let hC = `<div class="item-card" style="border-left-color:${bC}"><div class="card-header"><h4 onclick="${clickFunc}">${esc(p.cliente) || 'Sem Nome'}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('servicos', ${p.id})"></i></div><span class="badge-status status-${p.status || 'pendente'}">${p.status}</span><div class="info-linha"><span class="label-mini">DESCRIÇÃO / SERVIÇO</span><div class="texto-info" style="font-weight:bold; color:white;">${esc(p.servico || '').replace(/\n/g, '<br>')}</div><span style="font-size:10px; color:#888;">Data: ${formatarDataBR(p.data)}</span><br>${iS}${fotosHtml}</div>${hF}</div>`;
-if ((p.cliente || '').toLowerCase().includes(t) || (p.servico || '').toLowerCase().includes(t) || (p.endereco || '').toLowerCase().includes(t)) {
+if (buscaOk) {
 if (p.tipo === 'compromisso') { if (dA) dA.innerHTML += hC; }
 else if (p.tipo === 'orcamento') { if (dO) dO.innerHTML += hC; }
 else { if (dP) dP.innerHTML += hC; }
 }
 });
+['todos', 'pendente', 'andamento', 'concluido'].forEach(k => {
+const el = document.getElementById('cnt_ped_' + k);
+if (el) el.innerText = cntPed[k];
+});
+if (dP && !dP.innerHTML) dP.innerHTML = `<div class="lista-vazia"><i class="fas fa-list"></i>${filtroPedidoAtual !== 'todos' ? 'Nenhum pedido com este status.' : 'Nenhum pedido encontrado.'}<br>Toque no <b>+</b> para criar.</div>`;
+if (dO && !dO.innerHTML) dO.innerHTML = '<div class="lista-vazia"><i class="fas fa-file-invoice-dollar"></i>Nenhum orçamento ainda.<br>Toque no <b>+</b> para criar.</div>';
+if (dA && !dA.innerHTML) dA.innerHTML = '<div class="lista-vazia"><i class="fas fa-calendar"></i>Nenhum compromisso.<br>Toque no <b>+</b> para agendar.</div>';
 dadosCompras.forEach(c => {
 if ((c.cliente || '').toLowerCase().includes(t)) {
 let rI = c.itens && c.itens.length > 0 ? c.itens.map(i => `${i.qtd}x ${esc(i.item)}`).join(', ') : 'Nenhum item';
@@ -1575,13 +1658,31 @@ let sTxt = isComp ? 'Tudo Concluído' : `${concluidos} de ${totalItens} tarefas 
 if (dPend) dPend.innerHTML += `<div class="item-card" style="border-left-color:${bCol}; cursor:pointer;" onclick="abrirDetalhesPendencia(${p.id})"><div class="card-header" style="margin-bottom:0;"><h4 style="width:85%;"><i class="fas ${iT}" style="margin-right:8px; color:${bCol};"></i> ${esc(p.titulo)}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red); font-size:16px;" onclick="event.stopPropagation(); excluirRegistro('pendencias', ${p.id})"></i></div><div style="font-size:11px; color:${isComp ? 'var(--green)' : '#888'}; font-weight:${isComp ? 'bold' : 'normal'}; margin-top:8px;">${sTxt}</div></div>`;
 }
 });
+const hjLem = hojeLocal();
 dadosLembretes.forEach(l => {
 if ((l.titulo || '').toLowerCase().includes(t)) {
 let cTotal = l.itens ? l.itens.length : 0;
 let cFeitos = l.itens ? l.itens.filter(i => i.concluido).length : 0;
 let status = (cTotal > 0 && cTotal === cFeitos) ? 'Tudo Concluído' : `${cFeitos} de ${cTotal} concluídos`;
 let color = (cTotal > 0 && cTotal === cFeitos) ? 'var(--green)' : 'var(--orange)';
-if (dL) dL.innerHTML += `<div class="item-card" style="border-left-color:${color}; cursor:pointer;" onclick="abrirDetalhesLembrete(${l.id})"><div class="card-header" style="margin-bottom:0;"><h4 style="width:85%;"><i class="fas fa-bell" style="margin-right:8px; color:${color};"></i> ${esc(l.titulo)}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red); font-size:16px;" onclick="event.stopPropagation(); excluirRegistro('lembretes', ${l.id})"></i></div><div style="font-size:11px; color:${(cTotal > 0 && cTotal === cFeitos) ? 'var(--green)' : '#888'}; font-weight:${(cTotal > 0 && cTotal === cFeitos) ? 'bold' : 'normal'}; margin-top:8px;">${status}</div></div>`;
+const cntU = { urgente: 0, prioridade: 0, dia_a_dia: 0, sem_pressa: 0 };
+let atrasados = 0;
+(l.itens || []).forEach(it => {
+if (!it.concluido) {
+cntU[urgDe(it)]++;
+if (it.data && it.data < hjLem) atrasados++;
+}
+});
+let pills = '';
+['urgente', 'prioridade', 'dia_a_dia', 'sem_pressa'].forEach(k => {
+if (cntU[k] > 0) {
+const u = URG_LEMBRETE[k];
+pills += `<span class="badge-urgencia" style="color:${u.cor};border:1px solid ${u.cor};margin:2px 4px 0 0">${u.emoji} ${cntU[k]}</span>`;
+}
+});
+if (atrasados > 0) pills += `<span class="badge-urgencia" style="color:var(--red);border:1px solid var(--red);background:rgba(255,69,58,.12);margin:2px 4px 0 0">⚠️ ${atrasados} atrasado(s)</span>`;
+const urgHtml = pills ? `<div style="margin-top:6px">${pills}</div>` : '';
+if (dL) dL.innerHTML += `<div class="item-card" style="border-left-color:${color}; cursor:pointer;" onclick="abrirDetalhesLembrete(${l.id})"><div class="card-header" style="margin-bottom:0;"><h4 style="width:85%;"><i class="fas fa-bell" style="margin-right:8px; color:${color};"></i> ${esc(l.titulo)}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red); font-size:16px;" onclick="event.stopPropagation(); excluirRegistro('lembretes', ${l.id})"></i></div><div style="font-size:11px; color:${(cTotal > 0 && cTotal === cFeitos) ? 'var(--green)' : '#888'}; font-weight:${(cTotal > 0 && cTotal === cFeitos) ? 'bold' : 'normal'}; margin-top:8px;">${status}</div>${urgHtml}</div>`;
 }
 });
 renderizarAPagar();
@@ -1609,7 +1710,7 @@ html += `<div class="item-card" style="border-left-color:${info.cor}">
 <span class="badge-categoria" style="color:${info.cor};border:1px solid ${info.cor}"><i class="fas ${info.icone}"></i> ${info.nome}</span>
 <div class="info-linha"><span>Data: <b>${formatarDataBR(g.data)}</b></span> | <span>Valor: <b style="color:var(--red)">R$ ${formatMoeda(g.valor)}</b></span>${recibo}</div></div>`;
 });
-dG.innerHTML = html || '<div style="text-align:center;color:#666;padding:30px;font-size:13px;"><i class="fas fa-receipt" style="font-size:30px;display:block;margin-bottom:10px;color:#444;"></i>Nenhum gasto neste filtro.<br>Toque no <b>+</b> para lançar ou escanear um recibo.</div>';
+dG.innerHTML = html || '<div class="lista-vazia"><i class="fas fa-receipt"></i>Nenhum gasto neste filtro.<br>Toque no <b>+</b> para lançar ou escanear um recibo.</div>';
 const elM = document.getElementById('g_resumo_mes');
 const elT = document.getElementById('g_resumo_total');
 if (elM) elM.innerText = 'R$ ' + formatMoeda(totalMes);
@@ -2292,6 +2393,7 @@ if (id === 'tela_venda_m2') renderizarPecasVendaM2();
 if (id === 'tela_a_pagar') renderizarAPagar();
 if (id === 'tela_estoque') renderizarResumoEstoque();
 if (id === 'tela_gastos') renderizarListaGastos(document.getElementById('input_busca').value.toLowerCase());
+if (id === 'tela_pedidos') renderizarTudo();
 }
 // ============ MODAL PEDIDO ============
 function somarPagamentos() {
@@ -2952,7 +3054,7 @@ document.getElementById('e_qtd').value = e.quantidade;
 document.getElementById('e_venda').value = e.valor_venda;
 document.getElementById('modalEstoque').style.display = 'flex';
 }
-// ============ GASTOS + OCR (OPÇÃO A: TESSERACT.JS) ============
+// ============ GASTOS + OCR ============
 function mostrarStatusOCR(msg, pct, done) {
 const box = document.getElementById('g_ocr_status');
 if (!box) return;
@@ -3001,7 +3103,6 @@ r.onload = e => {
 const img = new Image();
 img.onload = () => {
 try {
-// Versão grande + contraste para o OCR ler melhor recibo térmico
 const maxOCR = 1600;
 const k = Math.min(1, maxOCR / Math.max(img.width, img.height));
 const w = Math.round(img.width * k), h = Math.round(img.height * k);
@@ -3021,7 +3122,6 @@ d[i] = d[i + 1] = d[i + 2] = g;
 cx.putImageData(id, 0, 0);
 } catch (err) { console.warn('Contraste OCR:', err); }
 const ocrURL = cv.toDataURL('image/png');
-// Versão leve para salvar junto do gasto
 const maxStore = 1000;
 const k2 = Math.min(1, maxStore / Math.max(img.width, img.height));
 const w2 = Math.round(img.width * k2), h2 = Math.round(img.height * k2);
@@ -3210,15 +3310,11 @@ function interpretarReciboOCR(texto) {
 const linhas = texto.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
 const resultado = { valor: 0, data: '', estabelecimento: '', cnpj: '', categoria: 'outros' };
 if (!linhas.length) return resultado;
-// CNPJ
 const textoNum = texto.replace(/[oO]/g, '0');
 const mCnpj = textoNum.match(/\d{2}[.\s]?\d{3}[.\s]?\d{3}[\/\s]?\d{4}[-\s]?\d{2}/);
 if (mCnpj) resultado.cnpj = mCnpj[0].trim();
-// Data
 resultado.data = extrairDataOCR(texto);
-// Estabelecimento
 resultado.estabelecimento = extrairEstabelecimentoOCR(linhas);
-// Valor total: procura linhas-chave de baixo para cima (total fica no fim)
 const exclusao = /SUBTOTAL|TROCO|DESCONTO|ACR[ÉE]SCIMO|TAXA|CNPJ|CPF|TELEFONE|\bTEL\b/;
 const prioridades = [
 /VALOR\s+(A\s+)?PAGAR/,
@@ -3238,7 +3334,6 @@ if (vals.length) { resultado.valor = vals[vals.length - 1]; break; }
 }
 if (resultado.valor > 0) break;
 }
-// Fallback: maior valor monetário do texto (ignorando linhas de documento/data)
 if (resultado.valor <= 0) {
 let maior = 0;
 linhas.forEach(l => {
@@ -3248,7 +3343,6 @@ extrairValoresLinha(l).forEach(v => { if (v > maior) maior = v; });
 });
 resultado.valor = maior;
 }
-// Categoria
 resultado.categoria = sugerirCategoriaOCR(texto);
 return resultado;
 }
@@ -4296,6 +4390,8 @@ window.open(`https://wa.me/?text=${encodeURIComponent(tx)}`, '_blank');
 // ============ LEMBRETES ============
 function abrirDetalhesLembrete(id) {
 idLembreteAberto = id;
+filtroLembreteAtual = 'todos';
+document.querySelectorAll('#lembrete_filtros button').forEach((b, i) => b.classList.toggle('ativo', i === 0));
 mudarTela('tela_lembretes_detalhes');
 renderizarItensLembrete();
 }
@@ -4304,27 +4400,45 @@ const p = DB.lembretes.find(x => x.id == idLembreteAberto);
 if (!p) return mudarTela('tela_lembretes');
 document.getElementById('lembrete_list_title').innerText = p.titulo;
 const c = document.getElementById('lembrete_tasks_container');
-if (!p.itens || p.itens.length === 0) {
-c.innerHTML = `<div style="text-align:center; padding:30px; color:#666; font-size:13px;">Sem lembretes.<br>Adicione no campo acima.</div>`;
+const itens = p.itens || [];
+const hj = hojeLocal();
+const cnt = { todos: itens.length, urgente: 0, prioridade: 0, dia_a_dia: 0, sem_pressa: 0 };
+itens.forEach(it => { cnt[urgDe(it)]++; });
+['todos', 'urgente', 'prioridade', 'dia_a_dia', 'sem_pressa'].forEach(k => {
+const el = document.getElementById('cnt_lem_' + k);
+if (el) el.innerText = cnt[k];
+});
+let lista = itens.map((item, idx) => ({ item, idx }));
+if (filtroLembreteAtual !== 'todos') lista = lista.filter(w => urgDe(w.item) === filtroLembreteAtual);
+lista.sort((a, b) => ordenarPorUrgencia(a.item, b.item));
+if (!lista.length) {
+c.innerHTML = `<div class="lista-vazia"><i class="fas fa-bell"></i>${itens.length ? 'Nenhum lembrete nesta urgência.' : 'Sem lembretes.<br>Adicione no campo acima.'}</div>`;
 return;
 }
-c.innerHTML = p.itens.map((item, idx) => {
-let status = item.concluido ? '<span style="color:var(--green);font-size:10px;margin-left:5px;">[Concluído]</span>' : '<span style="color:var(--orange);font-size:10px;margin-left:5px;">[A fazer]</span>';
-return `<div class="todo-row"><div class="todo-circle ${item.concluido ? 'done' : ''}" onclick="toggleConcluidoLem(${idx})">${item.concluido ? '<i class="fas fa-check"></i>' : ''}</div><div style="flex:1; cursor:pointer;" onclick="abrirTarefaLemModal(${idx})"><div style="font-size:15px; ${item.concluido ? 'text-decoration:line-through; color:#666;' : 'color:#ddd;'}">${esc(item.nome)} ${status}</div><div style="font-size:11px;color:var(--orange);margin-top:4px;">📅 ${formatarDataBR(item.data) || 'Sem data definida'}</div></div></div>`;
+c.innerHTML = lista.map(({ item, idx }) => {
+const u = URG_LEMBRETE[urgDe(item)];
+const atrasado = !item.concluido && item.data && item.data < hj;
+const status = item.concluido ? '<span style="color:var(--green);font-size:10px;margin-left:5px;">[Concluído]</span>' : '<span style="color:var(--orange);font-size:10px;margin-left:5px;">[A fazer]</span>';
+const badge = `<span class="badge-urgencia" style="color:${u.cor};border:1px solid ${u.cor}">${u.emoji} ${u.nome}</span>`;
+const dataTxt = `📅 ${formatarDataBR(item.data) || 'Sem data definida'}${atrasado ? ' <b style="color:var(--red)">⚠️ ATRASADO</b>' : ''}`;
+return `<div class="todo-row" style="border-left:3px solid ${u.cor};${item.concluido ? 'opacity:.65;' : ''}"><div class="todo-circle ${item.concluido ? 'done' : ''}" onclick="toggleConcluidoLem(${idx})">${item.concluido ? '<i class="fas fa-check"></i>' : ''}</div><div style="flex:1; cursor:pointer;" onclick="abrirTarefaLemModal(${idx})"><div style="font-size:15px; ${item.concluido ? 'text-decoration:line-through; color:#666;' : 'color:#ddd;'}">${esc(item.nome)} ${status}</div><div style="margin-top:4px">${badge}</div><div style="font-size:11px;color:var(--orange);margin-top:4px;">${dataTxt}</div></div></div>`;
 }).join('');
 }
 function adicionarTarefaLembrete() {
 const n = document.getElementById('lembrete_new_task').value.trim();
 const d = document.getElementById('lembrete_new_date').value;
+const u = document.getElementById('lembrete_new_urgencia').value || 'dia_a_dia';
 if (!n) return showToast("Digite o lembrete!", "error");
 garantirArraysDB();
 const p = DB.lembretes.find(x => x.id == idLembreteAberto);
 if (!p.itens) p.itens = [];
-p.itens.unshift({ nome: n, data: d, concluido: false, subitens: [] });
+p.itens.unshift({ nome: n, data: d, urgencia: u, concluido: false, subitens: [] });
 saveDB().then(() => {
 document.getElementById('lembrete_new_task').value = "";
 document.getElementById('lembrete_new_date').value = "";
+document.getElementById('lembrete_new_urgencia').value = "dia_a_dia";
 renderizarItensLembrete();
+renderizarTudo();
 showToast("Lembrete salvo!", "success");
 });
 }
@@ -4344,7 +4458,7 @@ showToast("Grupo criado!", "success");
 function toggleConcluidoLem(idx) {
 const p = DB.lembretes.find(x => x.id == idLembreteAberto);
 p.itens[idx].concluido = !p.itens[idx].concluido;
-saveDB().then(() => renderizarItensLembrete());
+saveDB().then(() => { renderizarItensLembrete(); renderizarTudo(); });
 }
 function abrirTarefaLemModal(idx) {
 idxLembreteEditando = idx;
@@ -4352,6 +4466,7 @@ const p = DB.lembretes.find(x => x.id == idLembreteAberto);
 const t = p.itens[idx];
 document.getElementById('modal_lem_titulo').value = t.nome;
 document.getElementById('modal_lem_data').value = t.data || '';
+document.getElementById('modal_lem_urgencia').value = urgDe(t);
 atualizarCheckLemModal();
 renderizarSubLembretesModal();
 document.getElementById('modalLembreteTarefaDetalhes').style.display = 'flex';
@@ -4377,7 +4492,8 @@ const p = DB.lembretes.find(x => x.id == idLembreteAberto);
 const t = p.itens[idxLembreteEditando];
 t.nome = document.getElementById('modal_lem_titulo').value.trim();
 t.data = document.getElementById('modal_lem_data').value;
-saveDB();
+t.urgencia = document.getElementById('modal_lem_urgencia').value || 'dia_a_dia';
+saveDB().then(() => { renderizarItensLembrete(); renderizarTudo(); });
 }
 function excluirTarefaLem() {
 if (confirm("Excluir lembrete e subitens?")) {
@@ -4386,6 +4502,7 @@ p.itens.splice(idxLembreteEditando, 1);
 saveDB().then(() => {
 fecharModais();
 renderizarItensLembrete();
+renderizarTudo();
 });
 }
 }
@@ -4455,32 +4572,38 @@ if (!p) return;
 const c = DB.config || {};
 const eN = c.nome || "Minha Empresa";
 const dHj = formatarDataBR(hojeLocal());
+const hj = hojeLocal();
 const logoH = c.logo ? `<img src="${c.logo}" style="max-height:60px; max-width:120px; object-fit:contain;">` : '';
+const coresPrint = { urgente: '#d70015', prioridade: '#c93400', dia_a_dia: '#0040dd', sem_pressa: '#6e6e73' };
 let lT = "";
 if (!p.itens || p.itens.length === 0) {
-lT = `<tr><td colspan="3" style="text-align:center;padding:15px;border-bottom:1px solid #ccc;">Nenhum lembrete registrado.</td></tr>`;
+lT = `<tr><td colspan="4" style="text-align:center;padding:15px;border-bottom:1px solid #ccc;">Nenhum lembrete registrado.</td></tr>`;
 } else {
-p.itens.forEach(t => {
-let status = t.concluido ? '<span style="color:green;font-weight:bold;">Concluído</span>' : 'A Fazer';
+const ordenados = [...p.itens].sort(ordenarPorUrgencia);
+ordenados.forEach(t => {
+const u = URG_LEMBRETE[urgDe(t)];
+const corU = coresPrint[urgDe(t)] || '#333';
+const atrasado = !t.concluido && t.data && t.data < hj;
+let status = t.concluido ? '<span style="color:green;font-weight:bold;">Concluído</span>' : (atrasado ? '<span style="color:#d70015;font-weight:bold;">⚠️ Atrasado</span>' : 'A Fazer');
 let dataT = t.data ? formatarDataBR(t.data) : '-';
-lT += `<tr style="background:#fdfdfd;"><td style="padding:10px; border-bottom:1px solid #ccc;"><b>${esc(t.nome)}</b></td><td style="padding:10px; border-bottom:1px solid #ccc; text-align:center;">${dataT}</td><td style="padding:10px; border-bottom:1px solid #ccc; text-align:center;">${status}</td></tr>`;
+lT += `<tr style="background:#fdfdfd;"><td style="padding:10px; border-bottom:1px solid #ccc;"><b>${esc(t.nome)}</b></td><td style="padding:10px; border-bottom:1px solid #ccc; text-align:center; color:${corU}; font-weight:bold; font-size:12px;">${u.emoji} ${u.nome}</td><td style="padding:10px; border-bottom:1px solid #ccc; text-align:center;">${dataT}</td><td style="padding:10px; border-bottom:1px solid #ccc; text-align:center;">${status}</td></tr>`;
 if (t.subitens && t.subitens.length > 0) {
 t.subitens.forEach(s => {
 let sStatus = s.concluido ? '<span style="color:green;">Concluído</span>' : 'A Fazer';
 let sData = s.data ? formatarDataBR(s.data) : '-';
-lT += `<tr><td style="padding:8px; border-bottom:1px dashed #eee; padding-left:30px; color:#555;">↳ ${esc(s.nome)}</td><td style="padding:8px; border-bottom:1px dashed #eee; text-align:center; color:#555;">${sData}</td><td style="padding:8px; border-bottom:1px dashed #eee; text-align:center; color:#555;">${sStatus}</td></tr>`;
+lT += `<tr><td style="padding:8px; border-bottom:1px dashed #eee; padding-left:30px; color:#555;">↳ ${esc(s.nome)}</td><td style="padding:8px; border-bottom:1px dashed #eee; text-align:center; color:#999;">—</td><td style="padding:8px; border-bottom:1px dashed #eee; text-align:center; color:#555;">${sData}</td><td style="padding:8px; border-bottom:1px dashed #eee; text-align:center; color:#555;">${sStatus}</td></tr>`;
 if (s.subrotinas && s.subrotinas.length > 0) {
 s.subrotinas.forEach(sr => {
 let srStatus = sr.concluido ? '<span style="color:green;">Concluído</span>' : 'A Fazer';
 let srData = sr.data ? formatarDataBR(sr.data) : '-';
-lT += `<tr><td style="padding:6px; border-bottom:1px dashed #f9f9f9; padding-left:50px; color:#888; font-size:12px;">- ${esc(sr.nome)}</td><td style="padding:6px; border-bottom:1px dashed #f9f9f9; text-align:center; color:#888; font-size:12px;">${srData}</td><td style="padding:6px; border-bottom:1px dashed #f9f9f9; text-align:center; color:#888; font-size:12px;">${srStatus}</td></tr>`;
+lT += `<tr><td style="padding:6px; border-bottom:1px dashed #f9f9f9; padding-left:50px; color:#888; font-size:12px;">- ${esc(sr.nome)}</td><td style="padding:6px; border-bottom:1px dashed #f9f9f9; text-align:center; color:#bbb; font-size:12px;">—</td><td style="padding:6px; border-bottom:1px dashed #f9f9f9; text-align:center; color:#888; font-size:12px;">${srData}</td><td style="padding:6px; border-bottom:1px dashed #f9f9f9; text-align:center; color:#888; font-size:12px;">${srStatus}</td></tr>`;
 });
 }
 });
 }
 });
 }
-document.getElementById('area-impressao').innerHTML = `<div style="font-family:'Segoe UI',Arial,sans-serif; color:#000; padding:20px; border:1px solid #000; max-width:800px; margin:0 auto; box-sizing:border-box;"><table style="width:100%; border-bottom:2px solid #000; padding-bottom:15px; margin-bottom:20px;"><tr><td style="width:25%; text-align:left; vertical-align:middle;">${logoH}</td><td style="width:50%; text-align:center; vertical-align:middle;"><h2 style="margin:0; font-size:22px;">${esc(eN)}</h2><p style="margin:5px 0 0 0; font-size:13px; color:#444;">Relatório de Lembretes / Tarefas</p></td><td style="width:25%; text-align:right; vertical-align:middle; font-size:13px;"><span style="color:#555;">Gerado em:<br><b>${dHj}</b></span></td></tr></table><div style="background:#f9f9f9; padding:15px; border-left:4px solid #ff9f0a; border-radius:6px; margin-bottom:20px; font-size:16px;"><strong>Grupo de Lembretes:</strong> ${esc(p.titulo)}</div><table style="width:100%; border-collapse:collapse; margin-bottom:25px; font-size:14px;"><thead><tr style="background:#e0e0e0; border-bottom:2px solid #000;"><th style="padding:10px; text-align:left;">Descrição</th><th style="padding:10px; text-align:center; width:20%;">Data Prevista</th><th style="padding:10px; text-align:center; width:20%;">Status</th></tr></thead><tbody>${lT}</tbody></table></div>`;
+document.getElementById('area-impressao').innerHTML = `<div style="font-family:'Segoe UI',Arial,sans-serif; color:#000; padding:20px; border:1px solid #000; max-width:800px; margin:0 auto; box-sizing:border-box;"><table style="width:100%; border-bottom:2px solid #000; padding-bottom:15px; margin-bottom:20px;"><tr><td style="width:25%; text-align:left; vertical-align:middle;">${logoH}</td><td style="width:50%; text-align:center; vertical-align:middle;"><h2 style="margin:0; font-size:22px;">${esc(eN)}</h2><p style="margin:5px 0 0 0; font-size:13px; color:#444;">Relatório de Lembretes / Tarefas</p></td><td style="width:25%; text-align:right; vertical-align:middle; font-size:13px;"><span style="color:#555;">Gerado em:<br><b>${dHj}</b></span></td></tr></table><div style="background:#f9f9f9; padding:15px; border-left:4px solid #ff9f0a; border-radius:6px; margin-bottom:20px; font-size:16px;"><strong>Grupo de Lembretes:</strong> ${esc(p.titulo)}<br><span style="font-size:11px;color:#666;">Ordenado por urgência: 🔴 Urgente → 🟠 Prioridade → 🔵 Dia a dia → ⚪ Sem pressa</span></div><table style="width:100%; border-collapse:collapse; margin-bottom:25px; font-size:14px;"><thead><tr style="background:#e0e0e0; border-bottom:2px solid #000;"><th style="padding:10px; text-align:left;">Descrição</th><th style="padding:10px; text-align:center; width:16%;">Urgência</th><th style="padding:10px; text-align:center; width:16%;">Data Prevista</th><th style="padding:10px; text-align:center; width:16%;">Status</th></tr></thead><tbody>${lT}</tbody></table></div>`;
 setTimeout(() => window.print(), 300);
 }
 // ============ INICIALIZAÇÃO ============
