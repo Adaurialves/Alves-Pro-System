@@ -242,7 +242,17 @@ body{background:#fff !important;margin:0;padding:0}
 </div>
 <div id="tela_orcamentos" class="tela"><div id="listaOrcamentos"></div></div>
 <div id="tela_compras" class="tela"><div id="listaCompras"></div></div>
-<div id="tela_agenda" class="tela"><div id="listaCompromissos"></div></div>
+<div id="tela_agenda" class="tela">
+<div class="filtro-chips" id="agenda_filtros">
+<button class="ativo" style="--fc:var(--gold)" onclick="filtrarAgenda('todos',this)">Todos <b class="chip-count" id="cnt_ag_todos">0</b></button>
+<button style="--fc:var(--red)" onclick="filtrarAgenda('urgente',this)">🔴 Urgente <b class="chip-count" id="cnt_ag_urgente">0</b></button>
+<button style="--fc:var(--orange)" onclick="filtrarAgenda('prioridade',this)">🟠 Prioridade <b class="chip-count" id="cnt_ag_prioridade">0</b></button>
+<button style="--fc:var(--blue)" onclick="filtrarAgenda('dia_a_dia',this)">🔵 Dia a dia <b class="chip-count" id="cnt_ag_dia_a_dia">0</b></button>
+<button style="--fc:#8a8a8e" onclick="filtrarAgenda('sem_pressa',this)">⚪ Sem pressa <b class="chip-count" id="cnt_ag_sem_pressa">0</b></button>
+<button style="--fc:var(--green)" onclick="filtrarAgenda('concluido',this)">✅ Concluídos <b class="chip-count" id="cnt_ag_concluido">0</b></button>
+</div>
+<div id="listaCompromissos"></div>
+</div>
 <div id="tela_estoque" class="tela">
 <div class="estoque-summary">
 <div class="estoque-box" style="border-color:rgba(90,200,250,0.3);"><span><i class="fas fa-boxes"></i> Produtos Diferentes</span><strong id="est_total_produtos" style="color:var(--cyan);">0</strong></div>
@@ -606,6 +616,13 @@ body{background:#fff !important;margin:0;padding:0}
 </select>
 </div>
 </div>
+<label>Urgência</label>
+<select id="a_urgencia">
+<option value="urgente">🔴 Urgente</option>
+<option value="prioridade">🟠 Prioridade</option>
+<option value="dia_a_dia" selected>🔵 Dia a dia</option>
+<option value="sem_pressa">⚪ Sem pressa</option>
+</select>
 <label>Endereço</label><input type="text" id="a_endereco">
 <div style="display:flex;gap:10px">
 <div style="flex:1"><label>Nº</label><input type="text" id="a_numero"></div>
@@ -703,7 +720,6 @@ body{background:#fff !important;margin:0;padding:0}
 </div>
 <div style="flex:1"><label>Data de Vencimento</label><input type="date" id="ap_data_vencimento"></div>
 </div>
-<!-- SEÇÃO DE FALTAS FUNCIONÁRIO -->
 <div id="secao_faltas_funcionario" style="display:none; background:rgba(255,159,10,0.08); border:1px solid rgba(255,159,10,0.3); border-radius:10px; padding:12px; margin:10px 0;">
 <label style="color:var(--orange); font-size:11px; margin-bottom:8px; display:block;"><i class="fas fa-user-times"></i> DESCONTO POR FALTAS (FUNCIONÁRIO)</label>
 <div style="display:flex; gap:8px; align-items:flex-end;">
@@ -726,7 +742,6 @@ body{background:#fff !important;margin:0;padding:0}
 <div style="font-size:10px; color:#888;" id="descricao_desconto_preview"></div>
 </div>
 </div>
-<!-- SEÇÃO DE PARCELAMENTO -->
 <div id="secao_parcelas" style="background:rgba(10,132,255,0.08);border:1px solid rgba(10,132,255,0.3);border-radius:10px;padding:12px;margin:10px 0;">
 <label style="color:var(--blue);margin-bottom:8px;"><i class="fas fa-calendar-check"></i> Parcelamento</label>
 <div style="display:flex;gap:8px;">
@@ -872,7 +887,7 @@ body{background:#fff !important;margin:0;padding:0}
 <div style="display:flex;gap:10px;align-items:center;margin-bottom:15px;border-bottom:1px solid #444;padding-bottom:15px;">
 <i class="fas fa-plus" style="color:var(--orange); font-size:18px;"></i>
 <input type="text" id="input_nova_sub_lem" placeholder="Adicionar Subtarefa..." style="background:transparent;border:none;padding:0;margin:0;outline:none;font-size:16px;flex:1;color:#fff;">
-<input type="date" id="input_nova_sub_lem_data" style="width:130px;margin:0;padding:8px;font-size:13px; background:rgba(255,255,255,0.05);color:#fff;border:1px solid #444;border-radius:6px;" onkeypress="if(event.key==='Enter') {event.preventDefault();adicionarSubLembrete();}">
+<input type="date" id="input_nova_sub_lem_data" style="width:130px;margin:0;padding:8px;font-size:13px; background:rgba(255,255,255,0.05); color:#fff; border:1px solid #444; border-radius:6px;" onkeypress="if(event.key==='Enter') {event.preventDefault();adicionarSubLembrete();}">
 <i class="fas fa-save" style="color:var(--green);cursor:pointer;padding:10px; font-size:18px;" onclick="adicionarSubLembrete()"></i>
 </div>
 <div id="lista_sub_lem_modal" style="max-height:60vh;overflow-y:auto;padding-right:10px;"></div>
@@ -934,25 +949,26 @@ let pagamentosTempAPagar = [];
 let parcelasTempAPagar = [];
 let idxPecaEditando = null;
 let deferredPrompt = null;
-// ============ FILTROS NOVOS ============
+// ============ FILTROS + URGÊNCIA (PEDIDOS / AGENDA / LEMBRETES) ============
 let filtroPedidoAtual = 'todos';
+let filtroAgendaAtual = 'todos';
 let filtroLembreteAtual = 'todos';
-const URG_LEMBRETE = {
+const URG = {
 urgente: { nome: 'Urgente', emoji: '🔴', cor: 'var(--red)', peso: 0 },
 prioridade: { nome: 'Prioridade', emoji: '🟠', cor: 'var(--orange)', peso: 1 },
 dia_a_dia: { nome: 'Dia a dia', emoji: '🔵', cor: 'var(--blue)', peso: 2 },
 sem_pressa: { nome: 'Sem pressa', emoji: '⚪', cor: '#8a8a8e', peso: 3 }
 };
-function urgDe(item) {
-return (item && item.urgencia && URG_LEMBRETE[item.urgencia]) ? item.urgencia : 'dia_a_dia';
-}
-function ordenarPorUrgencia(a, b) {
-const ca = a.concluido ? 1 : 0, cb = b.concluido ? 1 : 0;
+function urgDe(o) { return (o && o.urgencia && URG[o.urgencia]) ? o.urgencia : 'dia_a_dia'; }
+function estaConcluido(o) { return !!(o && (o.concluido || o.status === 'concluido')); }
+function cmpUrgencia(a, b) {
+const ca = estaConcluido(a) ? 1 : 0, cb = estaConcluido(b) ? 1 : 0;
 if (ca !== cb) return ca - cb;
-const pa = URG_LEMBRETE[urgDe(a)].peso, pb = URG_LEMBRETE[urgDe(b)].peso;
+const pa = URG[urgDe(a)].peso, pb = URG[urgDe(b)].peso;
 if (pa !== pb) return pa - pb;
 const da = a.data || '9999-12-31', db = b.data || '9999-12-31';
-return da.localeCompare(db);
+if (da !== db) return da.localeCompare(db);
+return (b.id || 0) - (a.id || 0);
 }
 // ============ OCR / GASTOS ============
 let fotoReciboTemp = null;
@@ -1555,6 +1571,12 @@ document.querySelectorAll('#pedidos_filtros button').forEach(b => b.classList.re
 if (btn) btn.classList.add('ativo');
 renderizarTudo();
 }
+function filtrarAgenda(f, btn) {
+filtroAgendaAtual = f;
+document.querySelectorAll('#agenda_filtros button').forEach(b => b.classList.remove('ativo'));
+if (btn) btn.classList.add('ativo');
+renderizarTudo();
+}
 function filtrarLembretes(u, btn) {
 filtroLembreteAtual = u;
 document.querySelectorAll('#lembrete_filtros button').forEach(b => b.classList.remove('ativo'));
@@ -1583,9 +1605,10 @@ if (dPend) dPend.innerHTML = "";
 if (dL) dL.innerHTML = "";
 const cntPed = { todos: 0, pendente: 0, andamento: 0, concluido: 0 };
 dadosPedidos.forEach(p => {
-const ehPedido = p.tipo !== 'compromisso' && p.tipo !== 'orcamento';
+if (p.tipo === 'compromisso') return; // Agenda tem renderização própria (urgência)
 const st = p.status || 'pendente';
 const buscaOk = (p.cliente || '').toLowerCase().includes(t) || (p.servico || '').toLowerCase().includes(t) || (p.endereco || '').toLowerCase().includes(t);
+const ehPedido = p.tipo !== 'orcamento';
 if (ehPedido && buscaOk) {
 cntPed.todos++;
 if (cntPed[st] !== undefined) cntPed[st]++;
@@ -1610,14 +1633,11 @@ fotosHtml += `<img src="${f}" class="foto-thumb" style="width:50px;height:50px;"
 if (p.fotos.length > 4) fotosHtml += `<div style="width:50px;height:50px;background:rgba(0,0,0,0.5);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:bold;">+${p.fotos.length - 4}</div>`;
 fotosHtml += '</div>';
 }
-let hF = p.tipo !== 'compromisso' ? `<div class="financeiro-grid"><div class="fin-box"><span>Total</span><strong style="color:var(--green)">R$ ${formatMoeda(p.total)}</strong></div><div class="fin-box"><span>Resto a Pagar</span><strong style="color:var(--orange)">R$ ${formatMoeda(vD)}</strong></div></div>` : '';
+let hF = `<div class="financeiro-grid"><div class="fin-box"><span>Total</span><strong style="color:var(--green)">R$ ${formatMoeda(p.total)}</strong></div><div class="fin-box"><span>Resto a Pagar</span><strong style="color:var(--orange)">R$ ${formatMoeda(vD)}</strong></div></div>`;
 let bC = p.tipo === 'orcamento' ? 'var(--teal)' : 'var(--blue)';
-let isAgenda = p.tipo === 'compromisso';
-let clickFunc = isAgenda ? `editarAgenda(${p.id})` : `editarPedido(${p.id})`;
-let hC = `<div class="item-card" style="border-left-color:${bC}"><div class="card-header"><h4 onclick="${clickFunc}">${esc(p.cliente) || 'Sem Nome'}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('servicos', ${p.id})"></i></div><span class="badge-status status-${p.status || 'pendente'}">${p.status}</span><div class="info-linha"><span class="label-mini">DESCRIÇÃO / SERVIÇO</span><div class="texto-info" style="font-weight:bold; color:white;">${esc(p.servico || '').replace(/\n/g, '<br>')}</div><span style="font-size:10px; color:#888;">Data: ${formatarDataBR(p.data)}</span><br>${iS}${fotosHtml}</div>${hF}</div>`;
+let hC = `<div class="item-card" style="border-left-color:${bC}"><div class="card-header"><h4 onclick="editarPedido(${p.id})">${esc(p.cliente) || 'Sem Nome'}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('servicos', ${p.id})"></i></div><span class="badge-status status-${p.status || 'pendente'}">${p.status}</span><div class="info-linha"><span class="label-mini">DESCRIÇÃO / SERVIÇO</span><div class="texto-info" style="font-weight:bold; color:white;">${esc(p.servico || '').replace(/\n/g, '<br>')}</div><span style="font-size:10px; color:#888;">Data: ${formatarDataBR(p.data)}</span><br>${iS}${fotosHtml}</div>${hF}</div>`;
 if (buscaOk) {
-if (p.tipo === 'compromisso') { if (dA) dA.innerHTML += hC; }
-else if (p.tipo === 'orcamento') { if (dO) dO.innerHTML += hC; }
+if (p.tipo === 'orcamento') { if (dO) dO.innerHTML += hC; }
 else { if (dP) dP.innerHTML += hC; }
 }
 });
@@ -1627,7 +1647,7 @@ if (el) el.innerText = cntPed[k];
 });
 if (dP && !dP.innerHTML) dP.innerHTML = `<div class="lista-vazia"><i class="fas fa-list"></i>${filtroPedidoAtual !== 'todos' ? 'Nenhum pedido com este status.' : 'Nenhum pedido encontrado.'}<br>Toque no <b>+</b> para criar.</div>`;
 if (dO && !dO.innerHTML) dO.innerHTML = '<div class="lista-vazia"><i class="fas fa-file-invoice-dollar"></i>Nenhum orçamento ainda.<br>Toque no <b>+</b> para criar.</div>';
-if (dA && !dA.innerHTML) dA.innerHTML = '<div class="lista-vazia"><i class="fas fa-calendar"></i>Nenhum compromisso.<br>Toque no <b>+</b> para agendar.</div>';
+renderizarListaAgenda(t);
 dadosCompras.forEach(c => {
 if ((c.cliente || '').toLowerCase().includes(t)) {
 let rI = c.itens && c.itens.length > 0 ? c.itens.map(i => `${i.qtd}x ${esc(i.item)}`).join(', ') : 'Nenhum item';
@@ -1676,7 +1696,7 @@ if (it.data && it.data < hjLem) atrasados++;
 let pills = '';
 ['urgente', 'prioridade', 'dia_a_dia', 'sem_pressa'].forEach(k => {
 if (cntU[k] > 0) {
-const u = URG_LEMBRETE[k];
+const u = URG[k];
 pills += `<span class="badge-urgencia" style="color:${u.cor};border:1px solid ${u.cor};margin:2px 4px 0 0">${u.emoji} ${cntU[k]}</span>`;
 }
 });
@@ -1689,7 +1709,51 @@ renderizarAPagar();
 renderizarResumoEstoque();
 renderizarGrafico();
 }
-// ============ LISTA DE GASTOS (COM CATEGORIA + RECIBO) ============
+// ============ AGENDA (URGÊNCIA + FILTROS + ORDENAÇÃO) ============
+function renderizarListaAgenda(t) {
+const dA = document.getElementById('listaCompromissos');
+if (!dA) return;
+const hj = hojeLocal();
+const todos = (dadosPedidos || []).filter(p => p.tipo === 'compromisso');
+const cnt = { todos: todos.length, urgente: 0, prioridade: 0, dia_a_dia: 0, sem_pressa: 0, concluido: 0 };
+todos.forEach(p => {
+if (p.status === 'concluido') cnt.concluido++;
+else cnt[urgDe(p)]++;
+});
+['todos', 'urgente', 'prioridade', 'dia_a_dia', 'sem_pressa', 'concluido'].forEach(k => {
+const el = document.getElementById('cnt_ag_' + k);
+if (el) el.innerText = cnt[k];
+});
+let lista = todos.filter(p => {
+const alvo = ((p.cliente || '') + ' ' + (p.servico || '') + ' ' + (p.endereco || '') + ' ' + (p.cidade || '')).toLowerCase();
+if (!alvo.includes(t)) return false;
+if (filtroAgendaAtual === 'todos') return true;
+if (filtroAgendaAtual === 'concluido') return p.status === 'concluido';
+return p.status !== 'concluido' && urgDe(p) === filtroAgendaAtual;
+});
+lista.sort(cmpUrgencia);
+if (!lista.length) {
+dA.innerHTML = '<div class="lista-vazia"><i class="fas fa-calendar"></i>' + (todos.length ? 'Nenhum compromisso neste filtro.' : 'Nenhum compromisso.<br>Toque no <b>+</b> para agendar.') + '</div>';
+return;
+}
+dA.innerHTML = lista.map(p => {
+const u = URG[urgDe(p)];
+const conc = p.status === 'concluido';
+const atrasado = !conc && p.data && p.data < hj;
+const eF = [p.endereco, p.numero, p.complemento, p.cidade].filter(Boolean).join(', ');
+const gps = eF ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eF)}" target="_blank" style="display:inline-block;font-size:11px;color:var(--cyan);margin-top:5px;text-decoration:none;padding:4px 8px;background:rgba(90,200,250,0.1);border-radius:4px;border:1px solid rgba(90,200,250,0.2);"><i class="fas fa-map-marked-alt"></i> ${esc(eF)} (Abrir GPS)</a>` : '';
+const badge = `<span class="badge-urgencia" style="color:${u.cor};border:1px solid ${u.cor}">${u.emoji} ${u.nome}</span>`;
+const statusBadge = conc ? '<span class="badge-status status-concluido">concluido</span>' : '<span class="badge-status status-pendente">pendente</span>';
+const dataTxt = `Data: ${formatarDataBR(p.data) || '-'}${atrasado ? ' <b style="color:var(--red)">⚠️ ATRASADO</b>' : ''}`;
+const lemb = p.lembrete ? `<div style="font-size:11px;color:#aaa;margin-top:5px;"><i class="fas fa-sticky-note" style="color:var(--gold)"></i> ${esc(p.lembrete)}</div>` : '';
+return `<div class="item-card" style="border-left-color:${conc ? 'var(--green)' : u.cor};${conc ? 'opacity:.7;' : ''}">
+<div class="card-header"><h4 onclick="editarAgenda(${p.id})">${esc(p.cliente) || 'Sem Nome'}</h4><i class="fas fa-trash btn-acao-card" style="color:var(--red)" onclick="excluirRegistro('servicos', ${p.id})"></i></div>
+${statusBadge} ${badge}
+<div class="info-linha"><span class="label-mini">DESCRIÇÃO / ASSUNTO</span><div class="texto-info" style="font-weight:bold;color:white;">${esc(p.servico || '').replace(/\n/g, '<br>')}</div><span style="font-size:10px;color:#888;">${dataTxt}</span><br>${gps}${lemb}</div>
+</div>`;
+}).join('');
+}
+// ============ LISTA DE GASTOS (CATEGORIA + RECIBO) ============
 function renderizarListaGastos(t) {
 const dG = document.getElementById('listaGastos');
 if (!dG) return;
@@ -1759,7 +1823,7 @@ document.getElementById('ap_total_pago').innerText = "R$ " + formatMoeda(totalPa
 document.getElementById('ap_total_restante').innerText = "R$ " + formatMoeda(totalRestante);
 dAP.innerHTML = "";
 if (filtered.length === 0) {
-dAP.innerHTML = '<div style="text-align:center;color:#666;padding:30px;font-size:13px;"><i class="fas fa-check-circle" style="font-size:30px;color:var(--green);display:block;margin-bottom:10px;"></i>Nenhuma conta a pagar.<br>Tudo em dia!</div>';
+dAP.innerHTML = '<div class="lista-vazia"><i class="fas fa-check-circle" style="color:var(--green)"></i>Nenhuma conta a pagar.<br>Tudo em dia!</div>';
 return;
 }
 filtered.forEach(a => {
@@ -2156,9 +2220,7 @@ else if (pagos > 0 || descontos > 0) { status = 'PARCIAL'; statusColor = '#ff9f0
 let hoje = hojeLocal();
 if (rest > 0 && a.data_vencimento && a.data_vencimento < hoje) { status = 'VENCIDO'; statusColor = '#ff453a'; }
 let tipoTxt = { funcionario: 'FUNCIONÁRIO', emprestimo: 'EMPRÉSTIMO', fornecedor: 'FORNECEDOR', aluguel: 'ALUGUEL', outro: 'OUTRO' };
-let tipoIcon = { funcionario: '', emprestimo: '🏦', fornecedor: '🏭', aluguel: '🏠', outro: '' };
 let tipoLabel = tipoTxt[a.tipo] || 'OUTRO';
-let tipoIco = tipoIcon[a.tipo] || '📋';
 let logoH = c.logo ? `<img src="${c.logo}" style="max-height:100px; max-width:180px; object-fit:contain;">` : '';
 let histH = '';
 if (a.pagamentos && a.pagamentos.length > 0) {
@@ -2179,7 +2241,7 @@ histH += `</tbody></table>`;
 histH = '<p style="text-align:center; color:#888; padding:15px; font-style:italic;">Nenhum pagamento registrado até o momento.</p>';
 }
 const aI = document.getElementById('area-impressao');
-aI.innerHTML = `<div style="font-family:'Segoe UI',Arial,sans-serif; color:#000; padding:14px; max-width:780px; margin:0 auto; box-sizing:border-box;"><div style="border:3px double #000; padding:14px;"><table style="width:100%; border-bottom:2px solid #000; padding-bottom:15px; margin-bottom:20px;"><tr><td style="width:25%; text-align:left; vertical-align:middle;">${logoH}</td><td style="width:50%; text-align:center; vertical-align:middle;"><h2 style="margin:0; font-size:22px; text-transform:uppercase;">${esc(eN)}</h2><p style="margin:5px 0 0 0; font-size:12px; color:#444;">${esc(eD)}${eT ? '<br>📞 ' + esc(eT) : ''}</p></td><td style="width:25%; text-align:right; vertical-align:middle; font-size:12px;"><strong style="font-size:14px; display:block;">RECIBO A PAGAR</strong><span style="color:#555;">Nº ${numRecibo}</span><br><span style="color:#555;">Emissão: ${dHj}</span><br><span style="color:#555;">Hora: ${hHj}</span></td></tr></table><div style="background:${statusColor}15; border:2px solid ${statusColor}; border-radius:8px; padding:15px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;"><div><span style="font-size:11px; color:#555; text-transform:uppercase; font-weight:bold;">Status da Conta</span><br><strong style="font-size:22px; color:${statusColor};">${tipoIco} ${status}</strong></div><div style="text-align:right;"><span style="font-size:11px; color:#555; text-transform:uppercase; font-weight:bold;">Tipo</span><br><strong style="font-size:16px; color:#000;">${tipoLabel}</strong></div></div><div style="background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:15px; margin-bottom:20px;"><h3 style="margin:0 0 10px 0; font-size:14px; color:#333; text-transform:uppercase; border-bottom:1px solid #ccc; padding-bottom:5px;">📋 Dados do Credor / Beneficiário</h3><table style="width:100%; font-size:13px; line-height:1.8;"><tr><td style="width:30%; color:#555; font-weight:bold;">Nome:</td><td style="font-size:16px; font-weight:bold; color:#000;">${esc(a.nome) || '-'}</td></tr><tr><td style="color:#555; font-weight:bold;">Descrição:</td><td>${esc(a.descricao) || '-'}</td></tr><tr><td style="color:#555; font-weight:bold;">Data de Criação:</td><td>${formatarDataBR(a.data_criacao) || '-'}</td></tr><tr><td style="color:#555; font-weight:bold;">Data de Vencimento:</td><td style="font-weight:bold; color:${status === 'VENCIDO' ? '#ff453a' : '#000'};">${formatarDataBR(a.data_vencimento) || 'Sem vencimento'} ${status === 'VENCIDO' ? ' ⚠️ VENCIDO' : ''}</td></tr></table></div><div style="background:#fff; border:2px solid #000; border-radius:8px; padding:20px; margin-bottom:20px;"><h3 style="margin:0 0 15px 0; font-size:14px; color:#333; text-transform:uppercase; text-align:center; border-bottom:1px solid #ccc; padding-bottom:8px;">💰 Resumo Financeiro</h3><table style="width:100%; font-size:14px;"><tr style="border-bottom:1px dashed #ccc;"><td style="padding:10px; color:#555;">Valor Total da Conta:</td><td style="padding:10px; text-align:right; font-weight:bold; font-size:16px;">R$ ${formatMoeda(a.valor_total)}</td></tr><tr style="border-bottom:1px dashed #ccc; background:#f1f8f1;"><td style="padding:10px; color:green; font-weight:bold;">(-) Total Pago:</td><td style="padding:10px; text-align:right; font-weight:bold; font-size:16px; color:green;">R$ ${formatMoeda(pagos)}</td></tr>${descontos > 0 ? `<tr style="border-bottom:1px dashed #ccc; background:#fff5f5;"><td style="padding:10px; color:#ff453a; font-weight:bold;">(-) Total Descontos (Faltas):</td><td style="padding:10px; text-align:right; font-weight:bold; font-size:16px; color:#ff453a;">- R$ ${formatMoeda(descontos)}</td></tr>` : ''}<tr style="background:${rest > 0 ? '#fff5f5' : '#f1f8f1'};"><td style="padding:12px; color:${rest > 0 ? '#ff453a' : '#30d158'}; font-weight:bold; font-size:15px;">${rest > 0 ? '(=) RESTANTE A PAGAR:' : '(=) QUITADO'}</td><td style="padding:12px; text-align:right; font-weight:bold; font-size:18px; color:${rest > 0 ? '#ff453a' : '#30d158'};">R$ ${formatMoeda(rest)}</td></tr></table></div><div style="margin-bottom:20px;"><h3 style="font-size:14px; color:#333; text-transform:uppercase; border-bottom:2px solid #000; padding-bottom:5px; margin-bottom:10px;">📜 Histórico de Pagamentos / Adiantamentos</h3>${histH}</div>${a.observacoes ? `<div style="background:#fffbe6; border-left:4px solid #ff9f0a; padding:12px; border-radius:4px; margin-bottom:20px;"><strong style="font-size:12px; color:#b45309; text-transform:uppercase;">📝 Observações:</strong><p style="margin:5px 0 0 0; font-size:13px; color:#333; line-height:1.5;">${esc(a.observacoes).replace(/\n/g, '<br>')}</p></div>` : ''}<div style="margin-top:22px; display:flex; justify-content:space-around; gap:20px;"><div style="flex:1; text-align:center;">${c.assinatura ? `<img src="${c.assinatura}" style="max-height:60px;max-width:200px;object-fit:contain;display:block;margin:0 auto -6px;">` : ''}<div style="border-top:1px solid #000; padding-top:8px; font-size:12px; color:#333;"><strong>${esc(c.responsavel || eN)}</strong><br><span style="font-size:10px; color:#555;">Emitente${c.cargo ? ' • ' + esc(c.cargo) : ''}</span></div></div><div style="flex:1; text-align:center;"><div style="border-top:1px solid #000; padding-top:8px; font-size:12px; color:#333;"><strong>${esc(a.nome)}</strong><br><span style="font-size:10px; color:#555;">Beneficiário / Credor</span></div></div></div><div style="margin-top:30px; padding-top:15px; border-top:1px dashed #999; text-align:center; font-size:10px; color:#666;">${eP ? '<strong>Chave PIX:</strong> ' + esc(eP) + '<br>' : ''}Documento gerado automaticamente pelo sistema <strong>${esc(eN)}</strong> em ${dHj} às ${hHj}.<br>Este recibo é válido como comprovante de dívida/acordo entre as partes.</div></div></div>`;
+aI.innerHTML = `<div style="font-family:'Segoe UI',Arial,sans-serif; color:#000; padding:14px; max-width:780px; margin:0 auto; box-sizing:border-box;"><div style="border:3px double #000; padding:14px;"><table style="width:100%; border-bottom:2px solid #000; padding-bottom:15px; margin-bottom:20px;"><tr><td style="width:25%; text-align:left; vertical-align:middle;">${logoH}</td><td style="width:50%; text-align:center; vertical-align:middle;"><h2 style="margin:0; font-size:22px; text-transform:uppercase;">${esc(eN)}</h2><p style="margin:5px 0 0 0; font-size:12px; color:#444;">${esc(eD)}${eT ? '<br>📞 ' + esc(eT) : ''}</p></td><td style="width:25%; text-align:right; vertical-align:middle; font-size:12px;"><strong style="font-size:14px; display:block;">RECIBO A PAGAR</strong><span style="color:#555;">Nº ${numRecibo}</span><br><span style="color:#555;">Emissão: ${dHj}</span><br><span style="color:#555;">Hora: ${hHj}</span></td></tr></table><div style="background:${statusColor}15; border:2px solid ${statusColor}; border-radius:8px; padding:15px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;"><div><span style="font-size:11px; color:#555; text-transform:uppercase; font-weight:bold;">Status da Conta</span><br><strong style="font-size:22px; color:${statusColor};">${status}</strong></div><div style="text-align:right;"><span style="font-size:11px; color:#555; text-transform:uppercase; font-weight:bold;">Tipo</span><br><strong style="font-size:16px; color:#000;">${tipoLabel}</strong></div></div><div style="background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:15px; margin-bottom:20px;"><h3 style="margin:0 0 10px 0; font-size:14px; color:#333; text-transform:uppercase; border-bottom:1px solid #ccc; padding-bottom:5px;">📋 Dados do Credor / Beneficiário</h3><table style="width:100%; font-size:13px; line-height:1.8;"><tr><td style="width:30%; color:#555; font-weight:bold;">Nome:</td><td style="font-size:16px; font-weight:bold; color:#000;">${esc(a.nome) || '-'}</td></tr><tr><td style="color:#555; font-weight:bold;">Descrição:</td><td>${esc(a.descricao) || '-'}</td></tr><tr><td style="color:#555; font-weight:bold;">Data de Criação:</td><td>${formatarDataBR(a.data_criacao) || '-'}</td></tr><tr><td style="color:#555; font-weight:bold;">Data de Vencimento:</td><td style="font-weight:bold; color:${status === 'VENCIDO' ? '#ff453a' : '#000'};">${formatarDataBR(a.data_vencimento) || 'Sem vencimento'} ${status === 'VENCIDO' ? ' ⚠️ VENCIDO' : ''}</td></tr></table></div><div style="background:#fff; border:2px solid #000; border-radius:8px; padding:20px; margin-bottom:20px;"><h3 style="margin:0 0 15px 0; font-size:14px; color:#333; text-transform:uppercase; text-align:center; border-bottom:1px solid #ccc; padding-bottom:8px;">💰 Resumo Financeiro</h3><table style="width:100%; font-size:14px;"><tr style="border-bottom:1px dashed #ccc;"><td style="padding:10px; color:#555;">Valor Total da Conta:</td><td style="padding:10px; text-align:right; font-weight:bold; font-size:16px;">R$ ${formatMoeda(a.valor_total)}</td></tr><tr style="border-bottom:1px dashed #ccc; background:#f1f8f1;"><td style="padding:10px; color:green; font-weight:bold;">(-) Total Pago:</td><td style="padding:10px; text-align:right; font-weight:bold; font-size:16px; color:green;">R$ ${formatMoeda(pagos)}</td></tr>${descontos > 0 ? `<tr style="border-bottom:1px dashed #ccc; background:#fff5f5;"><td style="padding:10px; color:#ff453a; font-weight:bold;">(-) Total Descontos (Faltas):</td><td style="padding:10px; text-align:right; font-weight:bold; font-size:16px; color:#ff453a;">- R$ ${formatMoeda(descontos)}</td></tr>` : ''}<tr style="background:${rest > 0 ? '#fff5f5' : '#f1f8f1'};"><td style="padding:12px; color:${rest > 0 ? '#ff453a' : '#30d158'}; font-weight:bold; font-size:15px;">${rest > 0 ? '(=) RESTANTE A PAGAR:' : '(=) QUITADO'}</td><td style="padding:12px; text-align:right; font-weight:bold; font-size:18px; color:${rest > 0 ? '#ff453a' : '#30d158'};">R$ ${formatMoeda(rest)}</td></tr></table></div><div style="margin-bottom:20px;"><h3 style="font-size:14px; color:#333; text-transform:uppercase; border-bottom:2px solid #000; padding-bottom:5px; margin-bottom:10px;">📜 Histórico de Pagamentos / Adiantamentos</h3>${histH}</div>${a.observacoes ? `<div style="background:#fffbe6; border-left:4px solid #ff9f0a; padding:12px; border-radius:4px; margin-bottom:20px;"><strong style="font-size:12px; color:#b45309; text-transform:uppercase;">📝 Observações:</strong><p style="margin:5px 0 0 0; font-size:13px; color:#333; line-height:1.5;">${esc(a.observacoes).replace(/\n/g, '<br>')}</p></div>` : ''}<div style="margin-top:22px; display:flex; justify-content:space-around; gap:20px;"><div style="flex:1; text-align:center;">${c.assinatura ? `<img src="${c.assinatura}" style="max-height:60px;max-width:200px;object-fit:contain;display:block;margin:0 auto -6px;">` : ''}<div style="border-top:1px solid #000; padding-top:8px; font-size:12px; color:#333;"><strong>${esc(c.responsavel || eN)}</strong><br><span style="font-size:10px; color:#555;">Emitente${c.cargo ? ' • ' + esc(c.cargo) : ''}</span></div></div><div style="flex:1; text-align:center;"><div style="border-top:1px solid #000; padding-top:8px; font-size:12px; color:#333;"><strong>${esc(a.nome)}</strong><br><span style="font-size:10px; color:#555;">Beneficiário / Credor</span></div></div></div><div style="margin-top:30px; padding-top:15px; border-top:1px dashed #999; text-align:center; font-size:10px; color:#666;">${eP ? '<strong>Chave PIX:</strong> ' + esc(eP) + '<br>' : ''}Documento gerado automaticamente pelo sistema <strong>${esc(eN)}</strong> em ${dHj} às ${hHj}.<br>Este recibo é válido como comprovante de dívida/acordo entre as partes.</div></div></div>`;
 ajustarUmaPagina(aI);
 setTimeout(() => window.print(), 300);
 }
@@ -2231,9 +2293,7 @@ const desc = isDesc ? (p.descricao || 'Falta(s)') : 'Pagamento';
 txt += `*${i + 1}.* ${desc}: ${isDesc ? '-' : ''}R$ ${formatMoeda(vAbs)} - ${formatarDataBR(p.data) || '-'}\n`;
 });
 }
-if (a.observacoes) {
-txt += `\n━━━━━━━━━━━━━━━━━━━━\n*📝 Observações:*\n${esc(a.observacoes)}\n`;
-}
+if (a.observacoes) txt += `\n━━━━━━━━━━━━━━━━━━━━\n*📝 Observações:*\n${esc(a.observacoes)}\n`;
 txt += `\n━━━━━━━━━━━━━━━━━━━━\n`;
 if (eP) txt += `*Chave PIX:* ${esc(eP)}\n`;
 txt += `_Recibo emitido em ${dHj} via ${esc(eN)}_`;
@@ -2393,6 +2453,7 @@ if (id === 'tela_venda_m2') renderizarPecasVendaM2();
 if (id === 'tela_a_pagar') renderizarAPagar();
 if (id === 'tela_estoque') renderizarResumoEstoque();
 if (id === 'tela_gastos') renderizarListaGastos(document.getElementById('input_busca').value.toLowerCase());
+if (id === 'tela_agenda') renderizarListaAgenda(document.getElementById('input_busca').value.toLowerCase());
 if (id === 'tela_pedidos') renderizarTudo();
 }
 // ============ MODAL PEDIDO ============
@@ -2546,6 +2607,7 @@ document.getElementById('a_id').value = "";
 document.querySelectorAll('#modalAgenda input, #modalAgenda textarea').forEach(i => i.value = '');
 document.getElementById('a_data').value = hojeLocal();
 document.getElementById('a_status').value = 'pendente';
+document.getElementById('a_urgencia').value = 'dia_a_dia';
 itensNaAgenda = [];
 renderizarItensAgenda();
 document.getElementById('modalAgenda').style.display = 'flex';
@@ -2734,7 +2796,8 @@ pago_parcela1: 0, data_parcela1: '', pago_parcela2: 0, data_parcela2: '', pago_p
 data: document.getElementById('a_data').value, tipo: tA, status: sA,
 endereco: document.getElementById('a_endereco').value, numero: document.getElementById('a_numero').value,
 complemento: document.getElementById('a_complemento').value, cidade: document.getElementById('a_cidade').value,
-lembrete: document.getElementById('a_lembrete').value, mao_obra: 0
+lembrete: document.getElementById('a_lembrete').value, mao_obra: 0,
+urgencia: document.getElementById('a_urgencia').value || 'dia_a_dia'
 };
 if (idAtual) {
 const i = DB.servicos.findIndex(x => x.id == o.id);
@@ -2755,6 +2818,7 @@ document.getElementById('a_numero').value = p.numero || '';
 document.getElementById('a_complemento').value = p.complemento || '';
 document.getElementById('a_cidade').value = p.cidade || '';
 document.getElementById('a_lembrete').value = p.lembrete || '';
+document.getElementById('a_urgencia').value = urgDe(p);
 itensNaAgenda = p.itens_usados || [];
 renderizarItensAgenda();
 document.getElementById('modalAgenda').style.display = 'flex';
@@ -2878,11 +2942,8 @@ txt += `- ${i.qtd}x ${esc(i.item)}\n`;
 });
 }
 if (p.mao_obra > 0) {
-if (!ocultarValores) {
-txt += `- Mão de Obra / Serviço:\n*Sub:* R$ ${formatMoeda(p.mao_obra)}\n`;
-} else {
-txt += `- Mão de Obra / Serviço\n`;
-}
+if (!ocultarValores) txt += `- Mão de Obra / Serviço:\n*Sub:* R$ ${formatMoeda(p.mao_obra)}\n`;
+else txt += `- Mão de Obra / Serviço\n`;
 }
 txt += `--------------------------------------\n*TOTAL GERAL: R$ ${formatMoeda(p.total)}*\n--------------------------------------\n`;
 if (p.tipo !== 'orcamento') {
@@ -2903,9 +2964,7 @@ txt += `\n*STATUS: TOTALMENTE PAGO*\n`;
 } else {
 txt += `\n_Orçamento sujeito a validade e aprovação. Valores incluem material, mão de obra e montagem conforme acordado._\n`;
 }
-if (p.fotos && p.fotos.length > 0) {
-txt += `\n📸 *${p.fotos.length} foto(s) anexada(s) - envie em seguida*\n`;
-}
+if (p.fotos && p.fotos.length > 0) txt += `\n📸 *${p.fotos.length} foto(s) anexada(s) - envie em seguida*\n`;
 txt += `\nObrigado pela preferência!`;
 window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`, '_blank');
 }
@@ -3054,7 +3113,7 @@ document.getElementById('e_qtd').value = e.quantidade;
 document.getElementById('e_venda').value = e.valor_venda;
 document.getElementById('modalEstoque').style.display = 'flex';
 }
-// ============ GASTOS + OCR ============
+// ============ GASTOS + OCR (TESSERACT.JS) ============
 function mostrarStatusOCR(msg, pct, done) {
 const box = document.getElementById('g_ocr_status');
 if (!box) return;
@@ -3145,11 +3204,8 @@ mostrarStatusOCR('Carregando leitor (1ª vez baixa o modelo)...', 0.05);
 ocrWorkerGasto = await Tesseract.createWorker('por', 1, {
 logger: m => {
 if (!m || !m.status) return;
-if (m.status === 'recognizing text') {
-mostrarStatusOCR('Lendo recibo...', 0.3 + (m.progress || 0) * 0.7);
-} else {
-mostrarStatusOCR('Preparando modelo de leitura...', 0.05 + (m.progress || 0) * 0.2);
-}
+if (m.status === 'recognizing text') mostrarStatusOCR('Lendo recibo...', 0.3 + (m.progress || 0) * 0.7);
+else mostrarStatusOCR('Preparando modelo de leitura...', 0.05 + (m.progress || 0) * 0.2);
 }
 });
 return ocrWorkerGasto;
@@ -4195,7 +4251,7 @@ if (!p) return mudarTela('tela_pendencias');
 document.getElementById('todo_list_title').innerText = p.titulo;
 const c = document.getElementById('todo_tasks_container');
 if (!p.itens || p.itens.length === 0) {
-c.innerHTML = `<div style="text-align:center; padding:30px; color:#666; font-size:13px;">Lista vazia.</div>`;
+c.innerHTML = `<div class="lista-vazia"><i class="fas fa-list-ul"></i>Lista vazia.</div>`;
 return;
 }
 c.innerHTML = p.itens.map((item, idx) => {
@@ -4410,13 +4466,13 @@ if (el) el.innerText = cnt[k];
 });
 let lista = itens.map((item, idx) => ({ item, idx }));
 if (filtroLembreteAtual !== 'todos') lista = lista.filter(w => urgDe(w.item) === filtroLembreteAtual);
-lista.sort((a, b) => ordenarPorUrgencia(a.item, b.item));
+lista.sort((a, b) => cmpUrgencia(a.item, b.item));
 if (!lista.length) {
 c.innerHTML = `<div class="lista-vazia"><i class="fas fa-bell"></i>${itens.length ? 'Nenhum lembrete nesta urgência.' : 'Sem lembretes.<br>Adicione no campo acima.'}</div>`;
 return;
 }
 c.innerHTML = lista.map(({ item, idx }) => {
-const u = URG_LEMBRETE[urgDe(item)];
+const u = URG[urgDe(item)];
 const atrasado = !item.concluido && item.data && item.data < hj;
 const status = item.concluido ? '<span style="color:var(--green);font-size:10px;margin-left:5px;">[Concluído]</span>' : '<span style="color:var(--orange);font-size:10px;margin-left:5px;">[A fazer]</span>';
 const badge = `<span class="badge-urgencia" style="color:${u.cor};border:1px solid ${u.cor}">${u.emoji} ${u.nome}</span>`;
@@ -4431,6 +4487,7 @@ const u = document.getElementById('lembrete_new_urgencia').value || 'dia_a_dia';
 if (!n) return showToast("Digite o lembrete!", "error");
 garantirArraysDB();
 const p = DB.lembretes.find(x => x.id == idLembreteAberto);
+if (!p) return;
 if (!p.itens) p.itens = [];
 p.itens.unshift({ nome: n, data: d, urgencia: u, concluido: false, subitens: [] });
 saveDB().then(() => {
@@ -4579,9 +4636,9 @@ let lT = "";
 if (!p.itens || p.itens.length === 0) {
 lT = `<tr><td colspan="4" style="text-align:center;padding:15px;border-bottom:1px solid #ccc;">Nenhum lembrete registrado.</td></tr>`;
 } else {
-const ordenados = [...p.itens].sort(ordenarPorUrgencia);
+const ordenados = [...p.itens].sort(cmpUrgencia);
 ordenados.forEach(t => {
-const u = URG_LEMBRETE[urgDe(t)];
+const u = URG[urgDe(t)];
 const corU = coresPrint[urgDe(t)] || '#333';
 const atrasado = !t.concluido && t.data && t.data < hj;
 let status = t.concluido ? '<span style="color:green;font-weight:bold;">Concluído</span>' : (atrasado ? '<span style="color:#d70015;font-weight:bold;">⚠️ Atrasado</span>' : 'A Fazer');
